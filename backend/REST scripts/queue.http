@@ -1,0 +1,53 @@
+### Join queue (player 1)
+POST http://localhost:3000/matches/queue
+Content-Type: application/json
+
+{
+    "userId": "69cd7f06a5fd0a6f13e52fb7",
+    "gameCategoryId": "69cd7f06a5fd0a6f13e52fde"
+}
+
+### Join queue (player 2) - same category, should auto-match and create a match
+POST http://localhost:3000/matches/queue
+Content-Type: application/json
+
+{
+    "userId": "69cd7f06a5fd0a6f13e52fb9",
+    "gameCategoryId": "69cd7f06a5fd0a6f13e52fde"
+}
+
+### Leave queue
+DELETE http://localhost:3000/matches/queue
+Content-Type: application/json
+
+{
+    "userId": "69cd7f06a5fd0a6f13e52fb7"
+}
+
+### Try joining queue twice
+POST http://localhost:3000/matches/queue
+Content-Type: application/json
+
+{
+    "userId": "69cd7f06a5fd0a6f13e52fb7",
+    "gameCategoryId": "69cd7f06a5fd0a6f13e52fde"
+}
+
+### Join queue anonymously
+POST http://localhost:3000/matches/queue
+Content-Type: application/json
+
+{
+    "gameCategoryId": "69cd7f06a5fd0a6f13e52fde"
+}
+
+### To check if the anonymous players match get the correct result
+PUT http://localhost:3000/matches/899532540331593/record
+Content-Type: application/json
+
+{
+    "outcome": "player1 wins",
+    "rolls": [],
+    "holds": []
+}
+

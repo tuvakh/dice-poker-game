@@ -1,0 +1,35 @@
+.greeting {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding-inline: 1rem;
+    
+    &__button {
+        min-width: 130px;
+        text-align: center;
+    }
+    &__image {
+        display: flex;
+        align-items: center;
+        justify-content: end;
+        gap: 1rem;
+        text-decoration: underline;
+    }
+    &__coins {
+        font-weight: 600;
+        padding: 0.2rem 0.6rem;
+        border-radius: 999px;
+        background: rgba(0, 0, 0, 0.08);
+    }
+    @media (max-width: 600px) {
+        padding-block-start: 1rem;
+    }
+    &--game {
+        margin-block-start: var(--mini-space);
+        justify-content: center;
+        text-align: center;
+        @media (max-width: 600px) {
+            margin-block-start: 0;
+        }
+    }
+}

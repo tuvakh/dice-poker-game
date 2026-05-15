@@ -1,0 +1,69 @@
+.game-card {
+    background-color: var(--secondary-color);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-color);
+    padding-block: var(--big-space);
+    border-radius: var(--border-radius);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+
+    &:hover {
+        transform: translateY(-4px);
+        box-shadow: 4px 8px 10px #131212a9;
+    }
+
+    &__title {
+        padding-block: var(--normal-space);
+    }
+    &__usernames {
+        display: flex;
+        align-items: end;
+        justify-content: center;
+        gap: 0.5rem;
+        line-height: 1;
+    }
+
+    &__vs {
+        color: var(--info-color);
+        font-style: italic;
+        font-size: 1.8rem;
+    }
+    
+    &__rank {
+        color: var(--info-color);
+        font-size: 1.5rem;
+        font-weight: bold;
+        padding-block-end: 0.5rem;
+    }
+
+    &__fake-link {
+        color: var(--fake-link-color);
+        font-weight: bold;
+        text-decoration: underline;
+    }
+    &--top-games {
+        background-color: var(--box-color);
+        padding-block: var(--medium-space);
+    }
+    &--recent-games {
+        background-color: var(--secondary-color);
+        align-items: start;
+        padding: var(--medium-space);
+        width: 100%;
+        .game-card__title {
+            padding-block: var(--mini-space);
+        }
+        .game-card__usernames {
+            display: inline-flex;
+            align-items: center;
+            justify-content: start;
+        }
+        .game-card__vs {
+            padding-inline-start: var(--mini-space);
+        }
+    }
+}
+

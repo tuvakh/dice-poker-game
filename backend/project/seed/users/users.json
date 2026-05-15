@@ -1,0 +1,162 @@
+[
+    {
+        "username": "dragonslayer",
+        "email": "dragon@test.com",
+        "password": "Dragon123!",
+        "age": 25,
+        "eloRating": 1200,
+        "role": "user"
+    },
+    {
+        "username": "thunderbolt",
+        "email": "thunder@test.com",
+        "password": "Thunder456!",
+        "age": 30,
+        "eloRating": 1150,
+        "role": "user"
+    },
+    {
+        "username": "shadowfox",
+        "email": "shadow@test.com",
+        "password": "Shadow789!",
+        "age": 22,
+        "eloRating": 950,
+        "role": "user"
+    },
+    {
+        "username": "ironwolf",
+        "email": "ironwolf@test.com",
+        "password": "Ironwolf1!",
+        "age": 28,
+        "eloRating": 1050,
+        "role": "user"
+    },
+    {
+        "username": "stargazer",
+        "email": "star@test.com",
+        "password": "Stargazer2!",
+        "age": 35,
+        "eloRating": 1300,
+        "role": "user"
+    },
+    {
+        "username": "frostbite",
+        "email": "frost@test.com",
+        "password": "Frostbite3!",
+        "age": 19,
+        "eloRating": 900,
+        "role": "user"
+    },
+    {
+        "username": "blazewing",
+        "email": "blaze@test.com",
+        "password": "Blazewing4!",
+        "age": 45,
+        "eloRating": 1100,
+        "role": "user"
+    },
+    {
+        "username": "nighthawk",
+        "email": "night@test.com",
+        "password": "Nighthawk5!",
+        "age": 23,
+        "eloRating": 1000,
+        "role": "user"
+    },
+    {
+        "username": "stormrider",
+        "email": "storm@test.com",
+        "password": "Stormrider6!",
+        "age": 31,
+        "eloRating": 1250,
+        "role": "user"
+    },
+    {
+        "username": "dicemaster",
+        "email": "dice@test.com",
+        "password": "Dicemaster7!",
+        "age": 27,
+        "eloRating": 1175,
+        "role": "user"
+    },
+    {
+        "username": "pokerking",
+        "email": "poker@test.com",
+        "password": "Pokerking8!",
+        "age": 33,
+        "eloRating": 1080,
+        "role": "user"
+    },
+    {
+        "username": "luckyroll",
+        "email": "lucky@test.com",
+        "password": "Luckyroll9!",
+        "age": 21,
+        "eloRating": 975,
+        "role": "user"
+    },
+    {
+        "username": "wildcarda",
+        "email": "wild@test.com",
+        "password": "Wildcarda10!",
+        "age": 40,
+        "eloRating": 1125,
+        "role": "user"
+    },
+    {
+        "username": "rollmaster",
+        "email": "roll@test.com",
+        "password": "Rollmaster1!",
+        "age": 26,
+        "eloRating": 1025,
+        "role": "user"
+    },
+    {
+        "username": "aceofspades",
+        "email": "ace@test.com",
+        "password": "Aceofspades2!",
+        "age": 38,
+        "eloRating": 1350,
+        "role": "user"
+    },
+    {
+        "username": "doubldown",
+        "email": "double@test.com",
+        "password": "Doubldown3!",
+        "age": 29,
+        "eloRating": 925,
+        "role": "user"
+    },
+    {
+        "username": "bluffking",
+        "email": "bluff@test.com",
+        "password": "Bluffking4!",
+        "age": 24,
+        "eloRating": 1075,
+        "role": "user"
+    },
+    {
+        "username": "highrolla",
+        "email": "high@test.com",
+        "password": "Highrolla5!",
+        "age": 32,
+        "eloRating": 1225,
+        "role": "user"
+    },
+    {
+        "username": "dicewizard",
+        "email": "wizard@test.com",
+        "password": "Dicewizard6!",
+        "age": 44,
+        "eloRating": 1400,
+        "role": "user"
+    },
+    {
+        "username": "adminuser",
+        "email": "admin@test.com",
+        "password": "Adminuser7!",
+        "age": 35,
+        "eloRating": 1000,
+        "role": "admin"
+    }
+]

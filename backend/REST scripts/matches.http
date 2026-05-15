@@ -1,0 +1,82 @@
+### Get all matches
+GET http://localhost:3000/matches
+
+### Get one match
+GET http://localhost:3000/matches/4814210365659105
+
+### Create match
+POST http://localhost:3000/matches
+Content-Type: application/json
+X-User-Role: user
+
+{
+    "gameCategoryId": "69cd7f06a5fd0a6f13e52fde",
+    "players": ["69cd90f2d4a99d06b1adcc48", "69cd90f2d4a99d06b1adcc46"]
+}
+
+### Record match result
+PUT http://localhost:3000/matches/8463065626839732/record
+Content-Type: application/json
+X-User-Role: user
+
+{
+    "winner": "69cd90f2d4a99d06b1adcc46",
+    "outcome": "3-1"
+}
+
+### Get matches filtered by status
+GET http://localhost:3000/matches?status=finished
+
+### Get matches filtered by gameCategoryId
+GET http://localhost:3000/matches?gameCategoryId=69cd7f06a5fd0a6f13e52fde
+
+### Get matches filtered by userId
+GET http://localhost:3000/matches?userId=69cd7f06a5fd0a6f13e52fc7
+
+### Create match with 1 player (lobby game) - no restrictions
+POST http://localhost:3000/matches
+Content-Type: application/json
+X-User-Role: user
+
+{
+    "gameCategoryId": "69cd7f06a5fd0a6f13e52fde",
+    "players": ["69cd90f2d4a99d06b1adcc48"],
+    "allowAnonymous": true,
+    "desiredOpponentElo": null
+}
+
+### Create match with 1 player (lobby game) - only registered users, Elo restricted
+POST http://localhost:3000/matches
+Content-Type: application/json
+X-User-Role: user
+
+{
+    "gameCategoryId": "69cd7f06a5fd0a6f13e52fde",
+    "players": ["69cd90f2d4a99d06b1adcc48"],
+    "allowAnonymous": false,
+    "desiredOpponentElo": 1200
+}
+
+### Create match with 1 player (lobby game) - only registered users, no Elo restriction
+POST http://localhost:3000/matches
+Content-Type: application/json
+X-User-Role: user
+
+{
+    "gameCategoryId": "69cd7f06a5fd0a6f13e52fde",
+    "players": ["69cd90f2d4a99d06b1adcc48"],
+    "allowAnonymous": false,
+    "desiredOpponentElo": null
+}
+
+### Join a waiting match
+POST http://localhost:3000/matches/1569464163667261/join
+Content-Type: application/json
+X-User-Role: user
+
+{
+    "userId": "69cd90f2d4a99d06b1adcc46"
+}
+
+### Get waiting matches (lobby)
+GET http://localhost:3000/matches?status=waiting

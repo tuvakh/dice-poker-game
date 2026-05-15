@@ -1,0 +1,59 @@
+.game {
+    display: grid;
+    flex: 1;
+    grid-template-columns: 1fr 0.25fr;
+    grid-template-areas:
+        "left right";
+
+    @media (max-width: 768px) {
+        grid-template-columns: 1fr;
+        grid-template-areas: 
+            "left" 
+            "right";
+    }
+
+    &__main {
+        grid-area: left;
+        display: flex;
+        align-items: center;
+        flex-direction: column;
+        margin-block: var(--big-space);
+    }
+    &__players {
+        display: flex;
+        gap: var(--big-space);
+    }
+    &__game-board {
+        display: flex;
+        text-align: center;
+        align-items: center;
+        justify-content: center;
+        height: 45vh;
+        width: clamp(300px, 50%, 800px);
+        margin-block-start: var(--normal-space);
+        border: 5px solid var(--secondary-color);
+        border-radius: var(--border-radius);
+    }
+    &__comments {
+        grid-area: right;
+        padding: var(--normal-space);
+        background-color: var(--box-color);
+        button {
+            display: block;
+            font-size: 0.9rem;
+            margin-inline-start: auto;
+            margin-block-start: var(--mini-space);
+        }
+        input {
+            padding: var(--mini-space);
+        }
+    }
+    &__waiting-overlay {
+        font-size: 1.8rem;
+        color: var(--secondary-color);
+        font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+    }
+    &__variant {
+        margin-block-start: var(--small-space);
+    }
+}

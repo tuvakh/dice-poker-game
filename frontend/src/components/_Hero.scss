@@ -1,0 +1,28 @@
+.hero {
+    background-color: var(--secondary-color);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    height: 70vh;
+    position: relative;
+    background-size: cover;
+    background-position: 50%;
+
+    h1, p, button, a {
+        z-index: 1;
+        color: #fff;
+    }
+    button {
+        margin-block: var(--normal-space);
+    }
+    p {
+        width: clamp(35ch, 50%, 55ch);
+    }
+    a {
+        color: var(--elo-color);
+        font-weight: bold;
+        text-decoration: underline;
+    }
+}

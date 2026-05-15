@@ -1,0 +1,5 @@
+### Get all game categories
+GET http://localhost:3000/gamecategories
+
+### Get one game category
+GET http://localhost:3000/gamecategories/3746515007573426

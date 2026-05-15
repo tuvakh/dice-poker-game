@@ -1,0 +1,2 @@
+### Get platform activity
+GET http://localhost:3000/activities

@@ -1,0 +1,20 @@
+@use "reset";
+@use "global";
+@use "variables";
+
+@use "../components/Footer";
+@use "../components/Header";
+@use "../components/Navbar";
+@use "../components/Hero";
+@use "../components/Button";
+@use "../components/FormField";
+@use "../components/GameCard";
+@use "../components/PlayerInfo";
+@use "../components/Appearance";
+@use "../components/Greeting";
+@use "../components/CommentItem";
+@use "../components/CommentList";
+
+@use "../pages/Login";
+@use "../pages/Game";
+@use "../pages/User";

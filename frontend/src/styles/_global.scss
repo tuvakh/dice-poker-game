@@ -1,0 +1,175 @@
+.body {
+    background-color: var(--primary-color);
+    color: var(--text-color);
+    font-family:Verdana, Geneva, Tahoma, sans-serif;
+    
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+img {
+    max-width: 100%;
+}
+
+h1 {
+    font-size: clamp(2rem, 50%, 3rem);
+    text-transform: uppercase;
+}
+h2 {
+    font-size: 2rem;
+}
+h1, h2 {
+    font-family:Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif
+}
+
+h3 {
+    font-size: 1.2rem;
+}
+
+ul, ol {
+    padding-inline: var(--medium-space);
+}
+
+figcaption {
+    color: var(--elo-color);
+    padding-block-end: var(--normal-space);
+}
+
+.copyright {
+    color: var(--copyright-color);
+}
+
+.information-page {
+    h2 {
+        padding-block-start: var(--normal-space);
+    }
+    h3 {
+        text-transform: uppercase;
+        font-size: 1.1rem;
+        padding-block-start: var(--small-space);
+    }
+    p, li {
+        max-width: clamp(35ch, 100%, 60ch);
+        padding-block-end: var(--small-space);
+    }
+    p, li:last-child {
+        padding-block-end: var(--small-space);
+    }
+    &__name, &__updated{
+        font-weight: bold;
+        color: var(--fake-link-color);
+    }
+    img {
+        width: clamp(300px, 50%, 500px);
+    }
+}
+
+section:not(.hero) {
+    width: 80%;
+    margin: auto;
+    padding: var(--big-space);
+
+    @media (max-width: 600px) {
+        width: 100%;
+    }
+}
+.form {
+    display: flex;
+    flex-direction: column;
+    padding: var(--big-space);
+    border-radius: var(--border-radius);
+    gap: 1rem;
+    background-color: var(--box-color);
+    width: clamp(100px, 100%, 600px);
+    margin: auto;
+
+    &__inputs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    label {
+        width: 100%;
+    }
+    input, select {
+        padding: var(--mini-space);
+        width: 100%;
+    }
+    button {
+        align-self: start;
+    }
+}
+input[type="range"] {
+    accent-color: var(--button-color);
+}
+
+
+.status {    
+    &--error {
+        color: var(--error-color);
+    }
+
+    &--success {
+        color: var(--secondary-color);
+    }
+}
+
+.spinner-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: var(--big-space);
+}
+
+.img-overlay {
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #203b33cf;
+  }
+}
+
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    padding-block-start: 1rem;
+
+    @media (max-width: 600px) {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    }
+}
+
+.create-game, .myGames {
+    position: relative;
+}
+.back-link {
+    position: absolute;
+    top: 10%;
+    left: 0;
+    text-transform: uppercase;
+    font-weight: bold;
+
+    &--allGames {
+        top: 7%;
+        left: -5%;
+    }
+    @media (max-width: 600px) {
+        display: none;
+    }
+}
+

@@ -1,0 +1,14 @@
+.footer {
+    background-color: var(--tertiary-color);
+    text-align: center;
+    padding: var(--big-space);
+
+    &__logo {
+        width: clamp(100px, 50%, 250px);
+        margin: auto;
+    }
+    &__nav li {
+        display: inline-block;
+        padding: var(--normal-space);
+    }
+}

@@ -1,0 +1,35 @@
+.appearance {
+    position: relative;
+
+    &__toggle {
+        background: none;
+        border: none;
+        font-size: 2rem;
+        cursor: pointer;
+        color: var(--text-color);
+    }
+
+    &__panel {
+        background-color: var(--button-border-color);
+        padding: var(--normal-space);
+        margin-block-start: var(--small-space);
+        border-radius: var(--border-radius);
+        position: absolute;
+        top: 100%;
+        right: 0;
+        z-index: 2;
+        .color-btn {
+            margin-block: var(--normal-space);
+            margin-inline-end: 0.4rem;
+            width: 1.2rem;
+            height: 1.2rem;
+            border-radius: 50%;
+            border: 2px solid transparent;
+        }
+        label {
+            font-size: 0.9rem;
+            padding-block-start: var(--mini-space);
+        }
+    }
+}
+

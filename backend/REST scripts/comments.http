@@ -1,0 +1,24 @@
+### Get all comments
+GET http://localhost:3000/comments
+
+### Get all comments from a match
+GET http://localhost:3000/comments?targetType=match&targetId=69cd90f2d4a99d06b1adccbd
+
+### Get all comments from a tournament
+GET http://localhost:3000/comments?targetType=tournament&targetId=69cd90f2d4a99d06b1adcc98
+
+### Create comment
+POST http://localhost:3000/comments
+Content-Type: application/json
+X-User-Role: user
+
+{
+    "targetId": "69cd90f2d4a99d06b1adccbd",
+    "targetType": "match",
+    "comment": "Great game!",
+    "userId": "69cd7f06a5fd0a6f13e52fb5"
+}
+
+### Delete comment
+DELETE http://localhost:3000/comments/7234250737242271
+X-User-Role: admin

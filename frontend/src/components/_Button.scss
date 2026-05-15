@@ -1,0 +1,9 @@
+.button, .greeting__button, .all-games-btn {
+    background-color: var(--button-color);
+    border: 0.1rem solid var(--button-border-color);
+    border-radius: 50px;
+    padding: var(--mini-space) var(--normal-space);
+    color: var(--text-color);
+    min-width: 130px;
+    cursor: pointer;
+}

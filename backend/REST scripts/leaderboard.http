@@ -1,0 +1,26 @@
+### Get leaderboard 
+GET http://localhost:3000/leaderboards
+
+### Get leaderboard sorted by wins
+GET http://localhost:3000/leaderboards?sortBy=wins
+
+### Get leaderboard sorted by win percentage
+GET http://localhost:3000/leaderboards?sortBy=winPercentage
+
+### Get leaderboard sorted by number of matches
+GET http://localhost:3000/leaderboards?sortBy=matches
+
+### Get leaderboard filtered by game category
+GET http://localhost:3000/leaderboards?category=69ca49f083da17f703cebcc8
+
+### Get leaderboard filtered by number of rounds
+GET http://localhost:3000/leaderboards?numberOfRounds=3
+
+### Get leaderboard filtered by game rules
+GET http://localhost:3000/leaderboards?gameRules=straights_allowed
+
+### Get leaderboard filtered by time controller
+GET http://localhost:3000/leaderboards?timeController=5
+
+### Get leaderboard filtered by specific variant (rounds + rules + time)
+GET http://localhost:3000/leaderboards?numberOfRounds=3&gameRules=straights_allowed&timeController=5

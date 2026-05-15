@@ -1,0 +1,33 @@
+{
+  "name": "dice-poker-api",
+  "version": "1.0.0",
+  "description": "This is oblig 3 in IDG2100",
+  "keywords": [
+    "api",
+    "backend",
+    "dice-poker"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/IDG2100-2026/idg2100-2026-oblig2-tuvakh.git"
+  },
+  "license": "ISC",
+  "author": "Tuva",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node --env-file=.env server.js",
+    "seed": "node --env-file=.env seed/db.seed.js",
+    "dev": "node --watch --env-file=.env server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.3.1",
+    "express-validator": "^7.3.1",
+    "mongoose": "^9.3.2",
+    "multer": "^2.1.1"
+  }
+}

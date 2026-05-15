@@ -1,0 +1,20 @@
+.header {
+    padding: var(--medium-space);
+    background-color: var(--tertiary-color);
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    &__logo {
+        width: clamp(120px, 100%, 200px);
+    }
+    &__user {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+    }
+
+    @media (max-width: 600px) {
+        display: flex;
+        flex-direction: column;
+    }
+}

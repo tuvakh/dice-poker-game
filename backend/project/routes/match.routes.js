@@ -1,0 +1,32 @@
+// This route handles match creation, result recording, and the matchmaking queue.
+
+import express from "express";
+import matchController from "../controllers/match.controller.js";
+import matchValidator from "../validators/match.validator.js";
+import { validate } from "../validators/validate.js";
+import queueController from "../controllers/queue.controller.js";
+import queueValidator from "../validators/queue.validator.js";
+
+
+const matchApiRouter = express.Router();
+
+// This creates a new match between two players
+matchApiRouter.post('/matches', matchValidator.validateCreateMatch(), validate, matchController.createMatch);
+
+// This records the result of a finished match, and updates the ELO ratings
+matchApiRouter.put('/matches/:matchId/record', matchValidator.validateRecordMatch(), validate, matchController.recordMatch);
+
+// This returns a paginated list of matches, filterable by status, category or player
+matchApiRouter.get('/matches', matchValidator.validateGetAllMatches(), validate, matchController.getAllMatches);
+// This returns a single match with players and category
+matchApiRouter.get('/matches/:matchId', matchValidator.validateGetMatch(), validate, matchController.getMatch);
+
+// This validates if a user can join the matchmaking queue, and returns a match immediately if an opponent is found
+matchApiRouter.post('/matches/queue', queueValidator.validateJoinQueue(), validate, queueController.joinQueue);
+// This adds a user to an existing waiting match by matchId
+matchApiRouter.post('/matches/:matchId/join', matchValidator.validateJoinMatch(), validate, matchController.joinMatch);
+
+// This removes the player from the matchmaking queue
+matchApiRouter.delete('/matches/queue', queueValidator.validateLeaveQueue(), validate, queueController.leaveQueue);
+
+export default matchApiRouter;

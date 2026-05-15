@@ -1,0 +1,72 @@
+### Get all users
+### To see newly added users, add ?page=3 at the end of the URL
+GET http://localhost:3000/users
+X-User-Role: admin
+
+### Get one user
+GET http://localhost:3000/users/3104210946749690
+
+### Create user
+POST http://localhost:3000/users
+Content-Type: application/json
+
+{
+    "username": "user",
+    "email": "test@test.com",
+    "password": "Password123!",
+    "age": 25
+}
+
+### Login
+POST http://localhost:3000/users/login
+Content-Type: application/json
+
+{
+    "username": "user",
+    "password": "Password123!"
+}
+
+### Update a user
+PUT http://localhost:3000/users/3047063180661717
+Content-Type: application/json
+X-User-Role: user
+
+{
+    "email": "test2@test.com",
+    "age": "30"
+}
+
+### Ban a user
+PUT http://localhost:3000/users/3047063180661717/ban
+Content-Type: application/json
+X-User-Role: admin
+
+### Update user with profileImage and aboutMe (multipart file upload)
+PUT http://localhost:3000/users/2547485276629785
+Content-Type: multipart/form-data; boundary=boundary
+X-User-Role: user
+
+--boundary
+Content-Disposition: form-data; name="aboutMe"
+
+I love Spanish Poker Dice!
+--boundary
+Content-Disposition: form-data; name="profileImage"; filename="profile.jpg"
+Content-Type: image/jpeg
+
+< ./profile.jpg
+--boundary--
+
+### Update user preferences
+PUT http://localhost:3000/users/2547485276629785
+Content-Type: application/json
+X-User-Role: user
+
+{
+    "preferences": {
+        "theme": "dark",
+        "boardColor": "#ff0000",
+        "soundEnabled": false,
+        "lobbyCount": 10
+    }
+}

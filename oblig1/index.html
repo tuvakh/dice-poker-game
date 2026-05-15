@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Spanish Dice Poker | Web Components</title>
+    <link rel="stylesheet" href="./assets/layout.css" />
+    <link rel="stylesheet" href="./assets/style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Spanish Dice Poker</h1>
+      <p>A strategic two-player dice game built with Web Components</p>
+    </header>
+
+    <main>
+      <!-- Introduction Section -->
+      <section class="intro">
+        <h2>How to Play</h2>
+
+        <h3>The Game</h3>
+        <p>
+          Spanish Dice Poker is a two-player dice game where each player rolls five "poker dice" (marked with A, K, Q, J, 8, 7) to form the
+          best poker hand. Players take turns rolling up to three times, holding any dice between rolls to achieve their best hand. The
+          player with the highest-ranked hand wins the round. The first player to win the required number of rounds wins the match.
+        </p>
+
+        <h3>Hand Rankings (High to Low)</h3>
+        <ol>
+          <li><strong>Repóker (Five of a Kind)</strong> — All five dice show the same face</li>
+          <li><strong>Póker (Four of a Kind)</strong> — Four dice match; one different</li>
+          <li><strong>Full (Full House)</strong> — Three of one face + two of another</li>
+          <li><strong>Escalera (Straight)</strong> — All five dice different: 7-8-J-Q-K or 8-J-Q-K-A</li>
+          <li><strong>Trío (Three of a Kind)</strong> — Three dice match; two different</li>
+          <li><strong>Doble Pareja (Two Pairs)</strong> — Two pairs + one different die</li>
+          <li><strong>Pareja (One Pair)</strong> — One pair + three different dice</li>
+          <li><strong>Carta Alta (High Card)</strong> — All different faces, no combinations</li>
+        </ol>
+
+        <h3>Game Rules</h3>
+        <ul>
+          <li><strong>Face Order:</strong> A > K > Q > J > 8 > 7 (Ace is highest)</li>
+          <li><strong>Rolling:</strong> Each player gets one automatic roll, then may re-roll up to 2 more times</li>
+          <li><strong>Holding:</strong> After each roll, hold any dice you want to keep for the next roll</li>
+          <li><strong>Match Length:</strong> Best-of-3, 5, or 7 (first to 2, 3, or 4 wins)</li>
+          <li><strong>Straights:</strong> Optional rule (can be disabled). Only two sequences allowed: 7-8-J-Q-K or 8-J-Q-K-A</li>
+        </ul>
+
+        <h3>Getting Started</h3>
+        <ol>
+          <li>Set player names and match length (best-of-3, 5, or 7)</li>
+          <li>Player 1 starts the round and rolls their dice</li>
+          <li>Choose which dice to hold and re-roll the rest (up to 2 more rolls)</li>
+          <li>Player 2 takes their turn with the same flow</li>
+          <li>The board compares both hands and announces the round winner</li>
+          <li>Click "Start Next Round" to continue or see match results when someone wins</li>
+        </ol>
+      </section>
+
+      <hr/>
+
+      <!-- Game Monitor (Status Bar) -->
+      <dice-poker-monitor></dice-poker-monitor>
+
+      <!-- Main Game Board -->
+      <dice-poker-board 
+            player1="Aliaksei" 
+            player2="Carlos" 
+            bestof="3" 
+            include-straight="true"> 
+        </dice-poker-board>
+    </main>
+
+    <footer>
+      <p>IDG2100 | Spring 2026 | Oblig 1 | This website has been implemented by Tuva K. Hansen</p>
+    </footer>
+
+    <!-- Web Components Scripts -->
+    <script type="module" src="./components/dice-poker-die.js"></script>
+    <script type="module" src="./components/dice-poker-monitor.js"></script>
+    <script type="module" src="./components/dice-poker-board.js"></script>
+  </body>
+</html>

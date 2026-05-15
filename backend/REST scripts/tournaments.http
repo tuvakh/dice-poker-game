@@ -1,0 +1,49 @@
+### Get all tournaments
+GET http://localhost:3000/tournaments
+
+### Get one tournament
+GET http://localhost:3000/tournaments/4247976163262170
+
+### Create tournament
+POST http://localhost:3000/tournaments
+Content-Type: application/json
+X-User-Role: admin
+
+{
+    "title": "Test Tournament",
+    "description": "A test tournament",
+    "date": "2026-05-01T10:00:00.000Z",
+    "breaks": 10,
+    "numberOfRounds": 3,
+    "gameCategory": "69cd7f06a5fd0a6f13e52fde"
+}
+
+### Join tournament
+POST http://localhost:3000/tournaments/4247976163262170/join
+Content-Type: application/json
+X-User-Role: user
+
+{
+    "userId": "69cd7f06a5fd0a6f13e52fc0"
+}
+
+### TOURNAMENT FLOW - Follow steps 1-4 to test the full tournament lifecycle
+### Step 1 - Knockout rounds
+PUT http://localhost:3000/tournaments/4247976163262170/advancedRounds
+X-User-Role: admin
+
+### Step 2 - Check tournament to get the match IDs from rounds
+GET http://localhost:3000/tournaments/4247976163262170
+
+### Step 3 - Record result for a match (use matchId from step 2)
+PUT http://localhost:3000/matches/5281799122745019/record
+Content-Type: application/json
+X-User-Role: user
+
+{
+    "winner": "69cd7f06a5fd0a6f13e52fb6",
+    "outcome": "3-1"
+}
+
+### Step 4 - If only 1 match in last round, check if trophy was awarded to winner
+GET http://localhost:3000/users/4888902451701504

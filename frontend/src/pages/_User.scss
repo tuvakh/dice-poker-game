@@ -1,0 +1,134 @@
+.userPage {
+    h2:not(.trophies){
+        margin-block-start: var(--big-space);
+    }
+    &__form {
+        margin: var(--medium-space) 0;
+        
+        button {
+            margin-inline-end: var(--small-space);
+        }
+    }
+    &__form-buttons {
+        display: flex;
+    }
+}
+.container {
+    display: flex;
+    flex-wrap: wrap;
+  
+        @media (min-width: 600px) {
+            gap: 5rem;
+        }
+    }
+
+.profile {
+    display: flex;
+    align-items: start;
+    gap: 3rem;
+    @media (max-width: 600px) {
+        gap: 1rem;
+        flex-direction: column;
+    }
+    
+    &__edit {
+        display: flex;
+        flex-shrink: 0;
+        flex-direction: column;
+        align-items: center;
+
+        @media (max-width: 600px) {
+            flex-direction: row;
+            gap: 1rem;
+        }
+    }
+    &__edit-button {
+        display: block;
+        margin-block: var(--normal-space);
+    }
+    &__email {
+        color: var(--elo-color);
+    }
+    &__about {
+        padding-block-start: var(--mini-space);
+        width: clamp(35ch, 50%, 40ch);
+        &--empty {
+            color: var(--secondary-color);
+        }
+    }
+}
+
+.stats {  
+    @media (max-width: 600px) {
+        width: 100%;
+    }
+    &__elo-list{
+        list-style: none;
+        padding: 0;
+        li {
+            display: inline-block;
+        }
+
+        @media (max-width: 600px) {
+            display: flex;
+            flex-direction: column;
+        }
+    }
+    &__separator {
+        padding-inline: var(--small-space);
+        color: var(--secondary-color)
+    }
+    &__cards {
+        display: flex;
+        gap: var(--normal-space);
+        margin-block-start: 1rem;
+        @media (max-width: 600px) {
+            flex-direction: column;
+        }
+    }
+    &__cards-item {
+        display: flex;
+        flex: 1;
+        text-align: center;
+        justify-content: center;
+        flex-direction: column;
+        border-radius: 15px;
+        padding: var(--normal-space);
+        background-color: var(--box-color);
+    }
+
+    &__cards-number {
+        color: var(--number-color);
+        font-size: 2.5rem;
+        font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+    }
+}
+.trophies {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+}
+.trophy-img {
+    width: 80%;
+}
+.lastGames, .allGames {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    @media (max-width: 600px) {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    }
+}
+
+.allGames {
+    grid-template-columns: 1fr 1fr 1fr;
+    margin-block-start: var(--small-space);
+}
+
+.all-games-btn {
+    margin-block-start: var(--medium-space);
+    display: inline-block;
+}
+
+

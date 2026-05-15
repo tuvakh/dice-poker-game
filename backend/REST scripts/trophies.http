@@ -1,0 +1,19 @@
+### Create trophy
+POST http://localhost:3000/trophies
+X-User-Role: admin
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="title"
+
+Spring Championship Trophy
+--boundary
+Content-Disposition: form-data; name="tournamentId"
+
+69cd7f06a5fd0a6f13e53008
+--boundary
+Content-Disposition: form-data; name="image"; filename="trophy.png"
+Content-Type: image/png
+
+< ./1774608814796-trophy.png
+--boundary--

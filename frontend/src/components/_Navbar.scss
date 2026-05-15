@@ -1,0 +1,18 @@
+.navbar {
+    text-align: center;
+    &__item {
+        display: inline-block;
+        padding-inline: var(--small-space);
+        &--active {
+            font-weight: bold;
+            text-decoration: underline;
+        }
+    }
+
+    @media (max-width: 600px) {
+        padding-block: var(--small-space);
+        &__item {
+            padding-block-start: var(--mini-space);
+        }
+    }
+}
