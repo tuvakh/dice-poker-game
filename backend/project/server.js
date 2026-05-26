@@ -2,8 +2,10 @@
 // It sets up Express, middleware, routes, and starts the server.
 
 import express from "express";
+import http from "http";
 import cors from "cors";
 import { fileURLToPath } from "url";
+import { attachWebSocket } from "./webSockets/gameSocket.js";
 
 import { connectDB } from "./config/db.config.js";
 import { setUserRole } from "./middleware/role.js";
@@ -22,11 +24,12 @@ import { grantMonthlyCoinsBatch } from "./services/scheduler.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const server = http.createServer(app);  // Express handles HTTP requests
 
 // This limits each IP to 100 requests per 15 minutes to prevent abuse
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 100, 
+    max: 100,
     message: { error: "TOO_MANY_REQUESTS", message: "Too many requests, please try again later" }
 });
 
@@ -59,9 +62,10 @@ app.use(errorHandler);
 // The server only start listening for requests after the database connection is established
 connectDB()
     .then(() => {
-        app.listen(PORT, () => {
+        server.listen(PORT, () => {
             console.log(`Server running on port ${PORT}`);
         });
+        attachWebSocket(server);
         grantMonthlyCoinsBatch();
         console.log('scheduler ran once');
     })
