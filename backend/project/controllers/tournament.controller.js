@@ -56,6 +56,17 @@ export async function joinTournament(req, res, next){
     }
 }
 
+// This function allows a user to leave an upcoming tournament
+export async function leaveTournament(req, res, next){
+    try {
+        const { tournamentId, userId } = matchedData(req);
+        const result = await tournamentServices.leaveTournament(tournamentId, userId);
+        res.status(200).json(result);
+    } catch (error) {
+        next(error);
+    }
+}
+
 // This function advances the tournament, by randomly pairing remaining participants into matches for the next knockout round.
 // I made this restricted to admins as part of tournament management.
 export async function knockoutRounds(req, res, next){
@@ -75,5 +86,6 @@ export default {
     getTournament,
     createTournament,
     joinTournament,
+    leaveTournament,
     knockoutRounds
 };

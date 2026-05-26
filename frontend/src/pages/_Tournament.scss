@@ -67,6 +67,12 @@
 
 // ─── Detail page ─────────────────────────────────────────────────────────────
 .tournament-detail {
+    .back-link {
+        position: static;
+        display: inline-block;
+        margin-block-end: var(--medium-space);
+    }
+
     &__join-area {
         margin-block: var(--medium-space);
     }

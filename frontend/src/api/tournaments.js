@@ -24,3 +24,13 @@ export async function joinTournament(id, userId) {
     });
     return handleResponse(res);
 }
+
+// Removes a user from an upcoming tournament
+export async function leaveTournament(id, userId) {
+    const res = await fetch(`${BASE_URL}/tournaments/${id}/leave`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+        body: JSON.stringify({ userId })
+    });
+    return handleResponse(res);
+}

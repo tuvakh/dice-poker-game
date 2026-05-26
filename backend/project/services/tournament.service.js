@@ -27,7 +27,7 @@ export async function getAllTournaments({ page = 1, limit = 10, status }){
 }
 
 export async function getTournament(tournamentId){
-     const tournament = await Tournament.findOne({ tournamentId });
+     const tournament = await Tournament.findOne({ tournamentId }).populate('participants', 'username');
      if(!tournament){
         throw new CustomError(`A tournament with the id ${tournamentId} doesn't exist.. Maybe it was cancelled? :(`, 404, "NOT_FOUND");
     }
@@ -53,6 +53,23 @@ export async function getTournament(tournamentId){
 
     // This spread tournament into a plain object and replace the rounds array with the populated version
     return { ...tournament.toObject(), rounds: populatedRounds, standings };
+}
+
+export async function leaveTournament(tournamentId, userId){
+    const tournament = await Tournament.findOne({ tournamentId });
+    if(!tournament){
+        throw new CustomError(`A tournament with the id ${tournamentId} doesn't exist.`, 404, "NOT_FOUND");
+    }
+    if(tournament.status !== "upcoming"){
+        throw new CustomError("You can only leave upcoming tournaments.", 400, "BAD_REQUEST");
+    }
+    const before = tournament.participants.length;
+    tournament.participants = tournament.participants.filter(p => !p.equals(userId));
+    if(tournament.participants.length === before){
+        throw new CustomError("You are not a participant in this tournament.", 404, "NOT_FOUND");
+    }
+    await tournament.save();
+    return tournament;
 }
 
 export async function createTournament(tournamentData){
@@ -155,5 +172,6 @@ export default {
     getTournament,
     createTournament,
     joinTournament,
+    leaveTournament,
     knockoutRounds
 };

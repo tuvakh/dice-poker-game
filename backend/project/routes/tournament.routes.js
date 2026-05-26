@@ -13,6 +13,9 @@ tournamentApiRouter.post('/tournaments', requireAdmin, tournamentValidator.valid
 // Only registered users can be added to the participant list
 tournamentApiRouter.post('/tournaments/:tournamentId/join', requireUser, tournamentValidator.validateJoinTournament(), validate, tournamentController.joinTournament);
 
+// Only registered users can leave an upcoming tournament
+tournamentApiRouter.delete('/tournaments/:tournamentId/leave', requireUser, tournamentValidator.validateLeaveTournament(), validate, tournamentController.leaveTournament);
+
 // Remaining participants gets paired together in knockout round, and new matches are created
 tournamentApiRouter.put('/tournaments/:tournamentId/knockoutRounds', requireAdmin, tournamentValidator.validateKnockoutRounds(), validate, tournamentController.knockoutRounds);
 

@@ -1,60 +1,14 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router";
-import { getAllTournaments, getTournament, joinTournament } from "../api/tournaments.js";
+import { getAllTournaments, getTournament, joinTournament, leaveTournament } from "../api/tournaments.js";
 import { useAuth } from "../contexts/AuthContext.jsx";
-import { useAppearance } from "../contexts/AppearanceContext.jsx";
+import { useSoundEffects } from "../hooks/useSoundEffects.js";
 import Hero from "../components/Hero.jsx";
 import Spinner from "../components/Spinner.jsx";
 import Button from "../components/Button.jsx";
 
 // TODO: replace with a dedicated tournament hero image
 import tournamentHero from "../assets/lobby-hero.png";
-
-// ── Sound effects via Web Audio API ──────────────────────────────────────────
-function useSoundEffects() {
-    const { preferences } = useAppearance();
-    const ctxRef = useRef(null);
-
-    function getCtx() {
-        if (!ctxRef.current) {
-            ctxRef.current = new (window.AudioContext || window.webkitAudioContext)();
-        }
-        return ctxRef.current;
-    }
-
-    function playClick() {
-        if (!preferences.soundEnabled) return;
-        const ac = getCtx();
-        const osc = ac.createOscillator();
-        const gain = ac.createGain();
-        osc.connect(gain);
-        gain.connect(ac.destination);
-        osc.frequency.setValueAtTime(440, ac.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(220, ac.currentTime + 0.08);
-        gain.gain.setValueAtTime(0.25, ac.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.08);
-        osc.start(ac.currentTime);
-        osc.stop(ac.currentTime + 0.08);
-    }
-
-    function playJoin() {
-        if (!preferences.soundEnabled) return;
-        const ac = getCtx();
-        [523.25, 659.25, 783.99].forEach((freq, i) => {
-            const osc = ac.createOscillator();
-            const gain = ac.createGain();
-            osc.connect(gain);
-            gain.connect(ac.destination);
-            osc.frequency.value = freq;
-            gain.gain.setValueAtTime(0.18, ac.currentTime + i * 0.1);
-            gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + i * 0.1 + 0.25);
-            osc.start(ac.currentTime + i * 0.1);
-            osc.stop(ac.currentTime + i * 0.1 + 0.25);
-        });
-    }
-
-    return { playClick, playJoin };
-}
 
 const STATUS_TABS = [
     { value: "",         label: "All" },
@@ -160,6 +114,8 @@ function TournamentDetail({ id }) {
     const [joining, setJoining] = useState(false);
     const [joinError, setJoinError] = useState(null);
     const [joined, setJoined] = useState(false);
+    const [leaving, setLeaving] = useState(false);
+    const [leaveError, setLeaveError] = useState(null);
 
     useEffect(() => {
         setLoading(true);
@@ -175,17 +131,35 @@ function TournamentDetail({ id }) {
         setJoining(true);
         setJoinError(null);
         try {
-            await joinTournament(id, user.userId);
+            await joinTournament(id, user._id);
             setJoined(true);
             playJoin();
             setTournament(prev => prev
-                ? { ...prev, participants: [...(prev.participants ?? []), { _id: user.userId, username: user.username }] }
+                ? { ...prev, participants: [...(prev.participants ?? []), { _id: user._id, username: user.username }] }
                 : prev
             );
         } catch (err) {
             setJoinError(err.message ?? "Could not join tournament.");
         } finally {
             setJoining(false);
+        }
+    }
+
+    async function handleLeave() {
+        if (!user) return;
+        setLeaving(true);
+        setLeaveError(null);
+        try {
+            await leaveTournament(id, user._id);
+            setJoined(false);
+            setTournament(prev => prev
+                ? { ...prev, participants: prev.participants.filter(p => (p._id ?? p)?.toString() !== user._id?.toString()) }
+                : prev
+            );
+        } catch (err) {
+            setLeaveError(err.message ?? "Could not leave tournament.");
+        } finally {
+            setLeaving(false);
         }
     }
 
@@ -202,7 +176,7 @@ function TournamentDetail({ id }) {
 
     const participantCount = tournament.participants?.length ?? 0;
     const alreadyIn = user && tournament.participants?.some(
-        p => (p._id ?? p)?.toString() === user.userId?.toString()
+        p => (p._id ?? p)?.toString() === user._id?.toString()
     );
 
     return (
@@ -231,8 +205,16 @@ function TournamentDetail({ id }) {
                         )}
                     </div>
                 )}
-                {(joined || alreadyIn) && <p className="status status--success">You&apos;re registered!</p>}
+                {(joined || alreadyIn) && tournament.status === "upcoming" && (
+                    <div className="tournament-detail__join-area">
+                        <p className="status status--success">You&apos;re registered!</p>
+                        <Button onClick={handleLeave} disabled={leaving} variant="danger">
+                            {leaving ? "Leaving…" : "Leave Tournament"}
+                        </Button>
+                    </div>
+                )}
                 {joinError && <p className="status status--error">{joinError}</p>}
+                {leaveError && <p className="status status--error">{leaveError}</p>}
 
                 {/* Info */}
                 <div className="tournament-detail__info-grid">

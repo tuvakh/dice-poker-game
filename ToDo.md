@@ -3,14 +3,11 @@
 1. GAME BOARD & MECHANICS --> Tuva
 2. REAL-TIME GAMEPLAY(websockets)
 3. LEADERBOARDS PAGE 
-4. TOURNAMENTS PAGE --> Chanya
 5. MATCHMAKING QUEUE
 6. Stats on homepage
 7. forgot password
 8. More games on user page
 9. Work needed on ELO system
-10. Sound --> Chanya
-11. Upcomming tournaments on homepage(sortable and searchable) --> Chanya
 12. Idevidual tournament Page
 13. Filtering on lobby page
 14. Leaving game before it starts
@@ -29,3 +26,5 @@
 23. Focus on match making switches focus from queue to "rooms" where player can join and wait for other players to join.
 24. Seeding script.
 
+
+- exstra: maybe a back button when entering game? to go back to home page/leave?  
