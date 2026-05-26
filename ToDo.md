@@ -17,7 +17,7 @@
 15. ✅ In game money(gambelinggggggg), needs to be shown on player page. --> Marie 
 16. More game varients.
 17. Implement actuall authorization and authentication.
-18. implement a 404 page --> Marie
+18. ✅ implement a 404 page --> Marie
 19. Implement comments using websockets
 20. Show platform activity on homepage
 21. implement 4 admin pages. 
