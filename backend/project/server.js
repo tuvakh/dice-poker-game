@@ -62,9 +62,8 @@ connectDB()
         app.listen(PORT, () => {
             console.log(`Server running on port ${PORT}`);
         });
-        const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
-        setInterval(grantMonthlyCoinsBatch, thirtyDaysMs);
-        console.log('scheduler started');
+        grantMonthlyCoinsBatch();
+        console.log('scheduler ran once');
     })
     // if the DB connection fails, log the error and exit
     // The server should not start without a database
