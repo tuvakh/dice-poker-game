@@ -72,7 +72,7 @@ export default function Home (){
     // Same filtering logic as the Lobby page: only show games the user can actually join
     // This filter first, then slice to lobbyCount, so the count applies to eligible games only
     // lobbyCount is the slider setting from Appearance and controls how many lobby games to show
-    const filteredGames = (user === null
+    const availableGames = (user === null
         ? lobbyGames.filter(match => match.allowAnonymous === true)
         : lobbyGames.filter(match => {
             const alreadyIn = match.players.some(player => player._id === user._id);
@@ -80,7 +80,9 @@ export default function Home (){
                 Math.abs(match.desiredOpponentElo - user.eloRating) <= ELO_RANGE;
             return !alreadyIn && eloOk;
         })
-    ).slice(0, preferences.lobbyCount);
+    );
+
+    const filteredGames = availableGames.slice(0, preferences.lobbyCount);
 
     if (loading) return <Spinner />;
     if (error) return <p className="status status--error">{error}</p>;
@@ -98,7 +100,7 @@ export default function Home (){
         {/* Lobby preview: shows waiting games the user can join */}
         <section>
             <h2>Games available for joining</h2>
-            <p>Pick a game and jump straight in!</p>
+            <p>Pick a game and jump straight in, there are currently {filteredGames.length} available!</p>
             
             <div className="cards-grid">
                 {filteredGames.map((match) => <GameCard key={match.matchId} match={match} />)}

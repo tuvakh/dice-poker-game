@@ -63,14 +63,12 @@ const userSchema = new mongoose.Schema({
         default: 100,
         required: true
     },
-    // Tracks when monthly reward was last granted
+  
     lastMonthlyCoinGrantAt: {
         type: Date,
         default: Date.now,
         required: true
     },
-    // role determines what the user is allowed to do
-    // It defaults to 'user', and can be set to 'admin'
     role: {
         type: String,
         enum: USER_ROLE,

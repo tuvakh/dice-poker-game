@@ -11,6 +11,7 @@ import AboutUs from './pages/AboutUs';
 import AboutGame from "./pages/AboutGame.jsx";
 import Privacy from "./pages/Privacy.jsx";
 import Terms from "./pages/Terms.jsx";
+import NotFound from "./pages/404.jsx";
 
 import Layout from "./components/Layout.jsx";
 
@@ -37,6 +38,7 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
+          <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>
     </BrowserRouter>
