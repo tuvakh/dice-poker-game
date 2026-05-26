@@ -5,7 +5,7 @@
 3. LEADERBOARDS PAGE 
 4. TOURNAMENTS PAGE --> Chanya
 5. MATCHMAKING QUEUE
-6. Stats on homepage
+6. Stats on homepage --> Marie
 7. forgot password
 8. More games on user page
 9. Work needed on ELO system
@@ -14,7 +14,7 @@
 12. Idevidual tournament Page
 13. Filtering on lobby page
 14. Leaving game before it starts
-15. In game money(gambelinggggggg), needs to be shown on player page. --> Marie
+15. ✅ In game money(gambelinggggggg), needs to be shown on player page. --> Marie 
 16. More game varients.
 17. Implement actuall authorization and authentication.
 18. implement a 404 page
