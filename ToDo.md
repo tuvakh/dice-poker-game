@@ -20,7 +20,7 @@
 18. ✅ implement a 404 page --> Marie
 19. Implement comments using websockets
 20. Show platform activity on homepage
-21. implement 4 admin pages. 
+21. implement 4 admin pages. --> Marie
     1. dashboard
     2. User administation
     3. comment administration
