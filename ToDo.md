@@ -6,7 +6,7 @@
 4. TOURNAMENTS PAGE --> Chanya
 5. MATCHMAKING QUEUE
 6. ✅ Stats on homepage --> Marie
-7. forgot password
+7. forgot password --> Marie
 8. More games on user page
 9. Work needed on ELO system
 10. Sound --> Chanya

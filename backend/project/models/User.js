@@ -40,6 +40,22 @@ const userSchema = new mongoose.Schema({
         trim: true,
         required: true
     },
+
+     emailVerified: {
+        type: Boolean,
+        default: false,
+        required: true
+    },
+
+    emailVerificationToken: {
+        type: String,
+        default: null
+    },
+
+    emailVerificationTokenExpires: {
+        type: Date,
+        default: null
+    },
     // age has a minimum value of MIN_AGE (18)
     age: {
         type: Number,
@@ -111,7 +127,6 @@ const userSchema = new mongoose.Schema({
     }
 
 });
-
 // The pre("validate") hook runs before each save.
 // It generates a userId if one doesn't exist yet
 // and it hashes the password if it has been modified, to avoid storing plaintext passwords

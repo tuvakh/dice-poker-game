@@ -5,6 +5,7 @@ import { Match } from '../models/Match.js';
 import { checkPassword } from "../utils/hash.js";
 import { CustomError } from '../utils/customError.js';
 import { applyMonthlyCoinGrant } from '../utils/coins.js';
+import crypto from 'crypto';
 
 export async function getAllUsers({ page = 1, limit = 10, search = ""}){
 	// Only search by username if a search term was provided
@@ -65,25 +66,40 @@ export async function getUser(userId){
     return { ...user.toObject(), recentGames, totalGames, ratingChange: weeklyEloChange };
 }
 
+function generateEmailVerificationToken() {
+    const token = crypto.randomBytes(32).toString('hex');
+    const expires = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7); // Token expires in 7 days
+    return { token, expires };
+}
+
 export async function createUser(userObj){
     const { username, email, password, age, role } = userObj;
 
-    // check for duplicate username and email before creating
     const existingUsername = await User.findOne({ username });
-	if(existingUsername){
+    if (existingUsername) {
         throw new CustomError(`Sorry, ${username} is already taken.. Time to get creative!`, 409, "CONFLICT");
     }
-    
+
     const existingEmail = await User.findOne({ email });
-	if(existingEmail){
+    if (existingEmail) {
         throw new CustomError(`A user with the email ${email} is already registered — did you forget your password?`, 409, "CONFLICT");
     }
-    
-    const newUser = await User.create({ username, password, email, age, role })
 
-    return newUser;
+    const { token, expires } = generateEmailVerificationToken();
+
+    const newUser = await User.create({
+        username,
+        password,
+        email,
+        age,
+        role,
+        emailVerified: false,
+        emailVerificationToken: token,
+        emailVerificationExpires: expires
+    });
+
+    return { newUser, token };
 }
-
 export async function loginUser(username, password){
     // Case-insensitive search so "TUVA", "tuva", and "Tuva" all find the same account
     const user = await User.findOne({ username: { $regex: `^${username}$`, $options: "i" } });
