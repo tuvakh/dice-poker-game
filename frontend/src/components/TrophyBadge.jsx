@@ -8,7 +8,7 @@ export default function TrophyBadge({ trophy }) {
 
     return (
         <div className="trophy-badge">
-            <img className="trophy-img" src={`${BASE_URL}/uploads/${trophy.image}`} alt={trophy.title} />
+            <img className="trophy-img" src={`/trophies/${trophy.image}`} alt={trophy.title} />
         </div>
     );
 }
