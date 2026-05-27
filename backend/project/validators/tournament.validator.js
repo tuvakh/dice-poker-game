@@ -82,6 +82,20 @@ export function validateJoinTournament(){
     ];
 }
 
+export function validateLeaveTournament(){
+    return [
+        param("tournamentId")
+            .isInt({ min: 1 })
+            .withMessage("Tournament IDs are supposed to be integers larger than 0")
+            .toInt(),
+        body("userId")
+            .notEmpty()
+            .withMessage("UserId is required")
+            .isMongoId()
+            .withMessage("userId must be a valid MongoDB ID")
+    ];
+}
+
 export function validateKnockoutRounds(){
     return [
         param("tournamentId")
@@ -98,5 +112,6 @@ export default {
     validateGetAllTournaments,
     validateCreateTournament,
     validateJoinTournament,
+    validateLeaveTournament,
     validateKnockoutRounds
 };

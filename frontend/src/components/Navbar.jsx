@@ -1,4 +1,5 @@
 import { NavLink } from "react-router";
+import { useSoundEffects } from "../hooks/useSoundEffects";
 
 // All nav links are defined here in one place so it's easy to add or remove pages
 const navItems = [
@@ -10,6 +11,8 @@ const navItems = [
 
 // Renders the main navigation menu
 export default function Navbar() {
+  const { playClick } = useSoundEffects();
+
   return (
       <nav className="navbar">
         <ul className="navbar__list">
@@ -17,7 +20,7 @@ export default function Navbar() {
           {navItems.map((item) => (
             <li key={item.path} className="navbar__item">
               {/* isActive gets true when the current URL matches this link's path */}
-              <NavLink to={item.path} className={({ isActive }) => isActive ? "navbar__item--active" : "" }>
+              <NavLink to={item.path} className={({ isActive }) => isActive ? "navbar__item--active" : "" } onClick={playClick}>
                 {item.label}
               </NavLink>
             </li>

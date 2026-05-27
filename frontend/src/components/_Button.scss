@@ -6,4 +6,17 @@
     color: var(--text-color);
     min-width: 130px;
     cursor: pointer;
+
+    &--danger {
+        background-color: #5a1a1a;
+        border-color: #c0392b;
+        color: #ff6b6b;
+
+        &:hover { background-color: #7a2020; }
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
 }
