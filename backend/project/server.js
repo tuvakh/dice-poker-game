@@ -5,7 +5,7 @@ import express from "express";
 import http from "http";
 import cors from "cors";
 import { fileURLToPath } from "url";
-import { attachWebSocket } from "./webSockets/gameSocket.js";
+import attachWebSocket from "./webSockets/gameSocket.js";
 
 import { connectDB } from "./config/db.config.js";
 import { setUserRole } from "./middleware/role.js";
