@@ -3,14 +3,14 @@
 2. REAL-TIME GAMEPLAY(websockets)
 3. LEADERBOARDS PAGE 
 4. ✅ TOURNAMENTS PAGE --> Chanya
-5. MATCHMAKING QUEUE
+5. MATCHMAKING QUEUE --> Chanya 
 6. ✅ Stats on homepage --> Marie
 7. ✅ forgot password --> Marie
 8. More games on user page
 9. Work needed on ELO system
 10. ✅ Sound --> Chanya
 11. ✅ Upcomming tournaments on homepage(sortable and searchable) --> Chanya
-12. Idevidual tournament Page
+12. Idevidual tournament Page --> Chanya 
 13. Filtering on lobby page
 14. Leaving game before it starts
 15. ✅ In game money(gambelinggggggg), needs to be shown on player page. --> Marie 
@@ -24,7 +24,7 @@
     2. User administation
     3. comment administration
     4. tournament creation
-22. anonymous can no longer play just spectate
+22. anonymous can no longer play just spectate --> Chanya 
 23. Focus on match making switches focus from queue to "rooms" where player can join and wait for other players to join.
 24. Seeding script.
 25. ✅ verify email when signing up --> Marie
