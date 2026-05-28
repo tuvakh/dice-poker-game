@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import ProfileImage from "./ProfileImage.jsx";
 

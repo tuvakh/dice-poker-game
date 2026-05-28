@@ -1,4 +1,4 @@
-import { useNavigate, Link } from "react-router";
+import { useNavigate, Link } from "react-router-dom";
 import PlayerInfo from "./PlayerInfo";
 import GameVariantBadge from "./GameVariantBadge";
 import Button from "./Button";

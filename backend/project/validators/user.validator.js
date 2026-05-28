@@ -76,6 +76,28 @@ export function validateLogin(){
     ];
 }
 
+export function validateForgotPassword() {
+    return [
+        body('email')
+            .trim()
+            .escape()
+            .isEmail().withMessage('Not a valid email.')
+            .bail()
+    ];
+}
+
+export function validateResetPassword() {
+    return [
+        body('code')
+            .trim()
+            .notEmpty().withMessage('Reset code is required'),
+        body('password')
+            .trim()
+            .isLength({ min: MIN_PASSWORD_LENGTH, max: MAX_PASSWORD_LENGTH })
+            .withMessage(`Password must be between ${MIN_PASSWORD_LENGTH} and ${MAX_PASSWORD_LENGTH} characters`)
+    ];
+}
+
 // All fields are optional since users can update one field at a time
 // Username is not included since it cannot be changed after registration
 export function validateUpdateUser(){
@@ -123,10 +145,22 @@ export function validateUpdateUser(){
     ];
 }
 
+// Validates the verification token sent by the frontend
+export function validateVerifyEmail(){
+    return [
+        body('token')
+            .trim()
+            .notEmpty().withMessage('Verification token is required')
+    ];
+}
+
 export default {
     validateUserId,
     validateGetAllUsers,
     validateCreateUser,
     validateLogin,
-    validateUpdateUser
+    validateUpdateUser,
+    validateVerifyEmail,
+    validateForgotPassword,
+    validateResetPassword
 };

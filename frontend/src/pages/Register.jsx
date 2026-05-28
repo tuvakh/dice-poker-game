@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useRef, useState } from "react";
 import { useAuth } from "../contexts/AuthContext.jsx";
 
 import Button from "../components/Button.jsx";
@@ -7,7 +6,6 @@ import FormField from "../components/FormField.jsx";
 
 // The registration page collects user details and creates a new account
 export default function Register (){
-    const navigate = useNavigate();
     const { register } = useAuth();
     
     // Form field states
@@ -22,12 +20,17 @@ export default function Register (){
     // fieldErrors shows a message under a specific input 
     const [error, setError] = useState(null); 
     const [fieldErrors, setFieldErrors] = useState({});
+    const [successMessage, setSuccessMessage] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const submittingRef = useRef(false);
 
     async function handleSubmit(event) {
         event.preventDefault();
+        if (submittingRef.current) return;
         // Clear previous errors
         setError(null);
         setFieldErrors({});
+        setSuccessMessage("");
 
         // Validate that both password fields match before submitting
         if (password !== passwordRepeat) {
@@ -41,16 +44,22 @@ export default function Register (){
             return;
         }
 
+        submittingRef.current = true;
+        setIsSubmitting(true);
+
         try {
             // Calculate age from date of birth since the backend stores age as a number
             const age = new Date().getFullYear() - new Date(dateOfBirth).getFullYear();
             await register({email, username, password, age});
-            navigate("/");
+            setSuccessMessage("Check your inbox and click the verification link before logging in.");
         } catch (err) {
             // Handle field-specific errors from backend validation
             if (err.fieldErrors) setFieldErrors(err.fieldErrors);
             // Handle general error messages
             else setError(err.message);
+        } finally {
+            submittingRef.current = false;
+            setIsSubmitting(false);
         }
     }
 
@@ -100,12 +109,18 @@ export default function Register (){
                 </FormField>
                 
                 <FormField label="I agree to terms and conditions" inline>
-                    <input type="checkbox" checked={agreeToTerms} onChange={event => setAgreeToTerms(event.target.checked)} />
+                    <input
+                        aria-label="I agree to terms and conditions"
+                        type="checkbox"
+                        checked={agreeToTerms}
+                        onChange={event => setAgreeToTerms(event.target.checked)}
+                    />
                 </FormField>
                 
                 {error && <p className="status status--error">{error}</p>}
+                {successMessage && <p className="status status--success">{successMessage}</p>}
                 
-                <Button type="submit">Register</Button>
+                <Button type="submit" disabled={isSubmitting}>{isSubmitting ? "Registering..." : "Register"}</Button>
             </form>
         </section>
     );

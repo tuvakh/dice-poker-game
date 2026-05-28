@@ -56,6 +56,23 @@ const userSchema = new mongoose.Schema({
         type: Date,
         default: null
     },
+    emailVerificationTokens: [{
+        token: { type: String, required: true },
+        expires: { type: Date, required: true }
+    }],
+    passwordResetToken: {
+        type: String,
+        default: null
+    },
+
+    passwordResetTokenExpires: {
+        type: Date,
+        default: null
+    },
+    passwordResetTokens: [{
+        token: { type: String, required: true },
+        expires: { type: Date, required: true }
+    }],
     // age has a minimum value of MIN_AGE (18)
     age: {
         type: Number,

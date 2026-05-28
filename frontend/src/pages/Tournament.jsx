@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router";
+import { useParams, Link } from "react-router-dom";
 import { getAllTournaments, getTournament, joinTournament, leaveTournament } from "../api/tournaments.js";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import { useSoundEffects } from "../hooks/useSoundEffects.js";

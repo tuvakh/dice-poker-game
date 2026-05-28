@@ -23,9 +23,22 @@ export function AuthProvider({ children }) {
 
     // Creates a new account and immediately logs the user in
     async function register(data) {
-        const newUser = await createUser(data);
-        setUser(newUser);
-        localStorage.setItem("user", JSON.stringify(newUser));
+        // The backend returns either the created user directly or
+        // an object { newUser, token } when email verification is required.
+        const resp = await createUser(data);
+        const payload = resp && resp.newUser ? resp : { newUser: resp };
+        const created = payload.newUser;
+
+        // If the account is already verified, log them in.
+        if (created?.emailVerified) {
+            setUser(created);
+            localStorage.setItem("user", JSON.stringify(created));
+            return { user: created };
+        }
+
+        // Otherwise return the token so the caller (Register page) can redirect
+        // the user to the verification UI instead of auto-logging in.
+        return { user: created, token: payload.token };
     }
 
     // Merges new data into the existing user object without logging out and back in

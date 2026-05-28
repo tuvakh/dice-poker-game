@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router";
+import { useNavigate, Link } from "react-router-dom";
 
 import Hero from "../components/Hero.jsx";
 import Button from "../components/Button.jsx";
