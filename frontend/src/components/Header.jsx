@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 import Navbar from "./Navbar";
 import Greeting from "./Greeting.jsx";
 import Appearance from "./Appearance";

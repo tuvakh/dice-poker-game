@@ -1,4 +1,4 @@
-import { NavLink } from "react-router";
+import { NavLink } from "react-router-dom";
 import { useSoundEffects } from "../hooks/useSoundEffects";
 
 // All nav links are defined here in one place so it's easy to add or remove pages

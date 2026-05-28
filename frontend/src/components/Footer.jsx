@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 import Copyright from "./Copyright.jsx";
 import logo from "../assets/logo.png";
 

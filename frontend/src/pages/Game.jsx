@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useParams, Link } from "react-router";
+import { useParams, Link } from "react-router-dom";
 
 import { getMatch, joinMatch } from "../api/matches.js";
 import { getAllComments } from "../api/comments.js";

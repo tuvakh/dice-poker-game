@@ -5,7 +5,7 @@
 3. LEADERBOARDS PAGE 
 5. MATCHMAKING QUEUE
 6. ✅ Stats on homepage --> Marie
-7. forgot password
+7. ✅ forgot password --> Marie
 8. More games on user page
 9. Work needed on ELO system
 12. Idevidual tournament Page
@@ -25,6 +25,7 @@
 22. anonymous can no longer play just spectate
 23. Focus on match making switches focus from queue to "rooms" where player can join and wait for other players to join.
 24. Seeding script.
+25. ✅ verify email when signing up --> Marie
 
 
 - exstra: maybe a back button when entering game? to go back to home page/leave?  

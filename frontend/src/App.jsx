@@ -12,10 +12,13 @@ import AboutGame from "./pages/AboutGame.jsx";
 import Privacy from "./pages/Privacy.jsx";
 import Terms from "./pages/Terms.jsx";
 import NotFound from "./pages/404.jsx";
+import VerifyEmail from "./pages/VerifyEmail.jsx";
+import ForgotPassword from "./pages/ForgotPassword.jsx";
+import ResetPassword from "./pages/ResetPassword.jsx";
 
 import Layout from "./components/Layout.jsx";
 
-import { BrowserRouter, Routes, Route } from "react-router";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 // Main application component with routing configuration
 function App() {
@@ -36,6 +39,9 @@ function App() {
           <Route path="/aboutGame" element={<AboutGame />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="*" element={<NotFound />} />
@@ -44,6 +50,5 @@ function App() {
     </BrowserRouter>
   );
 }
-
 export default App;
 

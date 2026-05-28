@@ -45,3 +45,40 @@ export async function updateUser(id, data) {
     });
     return handleResponse(res);
 }
+
+// Verifies an email using the token sent to the user's inbox
+export async function verifyEmail(token) {
+    const res = await fetch(`${BASE_URL}/users/verify-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token })
+    });
+    return handleResponse(res);
+}
+
+// Requests a password reset email
+export async function forgotPassword(email) {
+    const res = await fetch(`${BASE_URL}/users/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+    });
+    return handleResponse(res);
+}
+
+// Resets the password using the code from the email link
+export async function resetPassword(code, password) {
+    console.log("[API] Resetting password");
+    console.log("[API] Code length:", code?.length);
+    console.log("[API] Password length:", password?.length);
+    console.log("[API] Password chars:", password?.split('').map(c => `${c}(${c.charCodeAt(0)})`).join(', '));
+    
+    const res = await fetch(`${BASE_URL}/users/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, password })
+    });
+    const result = await handleResponse(res);
+    console.log("[API] Reset password response:", result);
+    return result;
+}

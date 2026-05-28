@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router";
+import { useParams } from "react-router-dom";
 import { getUser, updateUser } from "../api/users.js";
 import { useAuth } from "../contexts/AuthContext.jsx";
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 
 import Spinner from "../components/Spinner.jsx";
 import FormField from "../components/FormField.jsx";

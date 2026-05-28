@@ -1,4 +1,4 @@
-import { useParams, Link } from "react-router";
+import { useParams, Link } from "react-router-dom";
 import { getAllMatches } from "../api/matches.js";
 import { useFetch } from "../hooks/useFetch.js";
 
