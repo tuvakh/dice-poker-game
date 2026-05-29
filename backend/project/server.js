@@ -29,7 +29,7 @@ const server = http.createServer(app);  // Express handles HTTP requests
 // This limits each IP to 100 requests per 15 minutes to prevent abuse
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 100,
+    max: 500,
     message: { error: "TOO_MANY_REQUESTS", message: "Too many requests, please try again later" }
 });
 
