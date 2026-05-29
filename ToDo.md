@@ -6,7 +6,7 @@
 5. MATCHMAKING QUEUE --> Chanya 
 6. ✅ Stats on homepage --> Marie
 7. ✅ forgot password --> Marie
-8. More games on user page
+8. ✅ More games on user page --> Marie
 9. Work needed on ELO system
 10. ✅ Sound --> Chanya
 11. ✅ Upcomming tournaments on homepage(sortable and searchable) --> Chanya
@@ -15,7 +15,7 @@
 14. Leaving game before it starts
 15. ✅ In game money(gambelinggggggg), needs to be shown on player page. --> Marie 
 16. More game varients.
-17. Implement actuall authorization and authentication.
+17. Implement actuall authorization and authentication. --> Marie
 18. ✅ implement a 404 page --> Marie
 19. Implement comments using websockets
 20. Show platform activity on homepage
