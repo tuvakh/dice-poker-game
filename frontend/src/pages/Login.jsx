@@ -11,7 +11,7 @@ import FormField from "../components/FormField.jsx";
 export default function Login (){
     const navigate = useNavigate();
     const location = useLocation();
-    const { login } = useAuth();
+    const { login, handleBan } = useAuth();
 
     // These hold what the user is currently typing in each input
     const [username, setUsername] = useState("");
@@ -33,8 +33,13 @@ export default function Login (){
             await login(username, password);
             navigate("/");
         } catch (err) {
-            if (err.fieldErrors) setFieldErrors(err.fieldErrors);
-            else setError(err.message);
+            // Check if the error is due to banned account
+            if (err.message.includes("banned") || err.code === "FORBIDDEN") {
+                handleBan(err.message);
+            } else {
+                if (err.fieldErrors) setFieldErrors(err.fieldErrors);
+                else setError(err.message);
+            }
         }
     }
 

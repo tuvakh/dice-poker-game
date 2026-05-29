@@ -1,5 +1,6 @@
 import { NavLink } from "react-router-dom";
 import { useSoundEffects } from "../hooks/useSoundEffects";
+import { useAuth } from "../contexts/AuthContext.jsx";
 
 // All nav links are defined here in one place so it's easy to add or remove pages
 const navItems = [
@@ -13,6 +14,7 @@ const navItems = [
 // Renders the main navigation menu
 export default function Navbar() {
   const { playClick } = useSoundEffects();
+  const { user } = useAuth();
 
   return (
       <nav className="navbar">
@@ -26,6 +28,14 @@ export default function Navbar() {
               </NavLink>
             </li>
           ))}
+          {/* Show admin link only for admin users */}
+          {user && user.role === 'admin' && (
+            <li className="navbar__item">
+              <NavLink to="/admin" className={({ isActive }) => isActive ? "navbar__item--active" : "" } onClick={playClick}>
+                Admin
+              </NavLink>
+            </li>
+          )}
         </ul>
       </nav>
   );

@@ -336,6 +336,28 @@ export async function banUser(userId) {
     return user;
 }
 
+// Unban a user (admin only)
+export async function unbanUser(userId) {
+    const user = await User.findOneAndUpdate({ userId }, { banned: false }, { new: true });
+    if (!user) {
+        throw new CustomError(`A user with the id ${userId}? Never heard of them!`, 404, "NOT_FOUND");
+    }
+    user.password = undefined;
+    return user;
+}
+
+// Change a user's role (admin only)
+export async function changeUserRole(userId, role) {
+    if (!['user', 'admin'].includes(role)) {
+        throw new CustomError('Invalid role', 400, 'BAD_REQUEST');
+    }
+    const user = await User.findOneAndUpdate({ userId }, { role }, { new: true }).select('-password');
+    if (!user) {
+        throw new CustomError(`A user with the id ${userId}? Never heard of them!`, 404, "NOT_FOUND");
+    }
+    return user;
+}
+
 // DEBUG: Check reset token status for troubleshooting
 export async function checkResetTokenStatus(email) {
     const user = await User.findOne({ email });
@@ -369,6 +391,8 @@ export default {
     loginUser,
     updateUser,
     banUser,
+    unbanUser,
+    changeUserRole,
     verifyEmailToken,
     requestPasswordReset,
     resetPassword,
