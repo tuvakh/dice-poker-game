@@ -52,7 +52,7 @@ export default function CreateGame() {
                 players: [user._id],
                 coinWager: user ? (formData.coinWager ? Number(formData.coinWager) : 0) : 0,
                 maxPlayers: formData.numberOfPlayers,
-                ...(formData.desiredOpponentElo !== "" ? { desiredOpponentElo: Number(formData.desiredOpponentElo) } : {})
+                ...(Number(formData.desiredOpponentElo) > 0 ? { desiredOpponentElo: Number(formData.desiredOpponentElo) } : {})
             });
 
             // Send the user straight to their new game
