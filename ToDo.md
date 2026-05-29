@@ -11,7 +11,7 @@
 10. ✅ Sound --> Chanya
 11. ✅ Upcomming tournaments on homepage(sortable and searchable) --> Chanya
 12. ✅ Idevidual tournament Page --> Chanya
-13. Filtering on lobby page
+13. ✅ Filtering on lobby page
 14. Leaving game before it starts
 15. ✅ In game money(gambelinggggggg), needs to be shown on player page. --> Marie 
 16. More game varients.
