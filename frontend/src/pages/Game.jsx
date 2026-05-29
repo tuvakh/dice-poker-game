@@ -14,11 +14,12 @@ import PlayerInfo from "../components/PlayerInfo";
 import '../components/dice-poker-board.js';
 import '../components/dice-poker-die.js';
 
+import { getUser } from '../api/users.js';
 
 // The individual game page shows players, game board, and comments sidebar
 export default function Game() {
     const { id } = useParams();
-    const { user } = useAuth();
+    const { user, updateUserData } = useAuth();
     const navigate = useNavigate();
     const { preferences } = useAppearance();
     const [match, setMatch] = useState(null);
@@ -207,6 +208,12 @@ export default function Game() {
         if (message.type === 'game-end') {
             setGamePhase('ended');
             setStandings(message.standings);
+            if (user) {
+                getUser(user.userId).then(freshUser => updateUserData({
+                    coins: freshUser.coins,
+                    eloRating: freshUser.eloRating
+                }));
+            }
         }
     }
 

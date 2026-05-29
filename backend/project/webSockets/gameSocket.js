@@ -505,8 +505,6 @@ export default function attachWebSocket(server) {
             .map(([userId, player]) => ({ userId, stack: player.stack }))
             .sort((playerA, playerB) => playerB.stack - playerA.stack);
 
-        broadcast(matchId, { type: 'game-end', standings });
-
         try {
             // Fetch all players from DB so we have their current ELO
             const userIds = standings.map((entry) => entry.userId);
@@ -580,6 +578,9 @@ export default function attachWebSocket(server) {
         }
 
         gameStates.delete(matchId);
+
+        // Broadcast only after DB writes are done
+        broadcast(matchId, { type: 'game-end', standings });
     }
 
     // Generates 5 random Spanish Poker Dice faces
