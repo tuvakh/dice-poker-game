@@ -1,6 +1,6 @@
 # TODO
-1. GAME BOARD & MECHANICS --> Tuva
-2. REAL-TIME GAMEPLAY(websockets)
+1. ✅ GAME BOARD & MECHANICS --> Tuva
+2. ✅ REAL-TIME GAMEPLAY(websockets) --> Tuva
 3. ✅ LEADERBOARDS PAGE --> Marie
 4. ✅ TOURNAMENTS PAGE --> Chanya
 5. MATCHMAKING QUEUE --> Chanya 
@@ -12,7 +12,7 @@
 11. ✅ Upcomming tournaments on homepage(sortable and searchable) --> Chanya
 12. Idevidual tournament Page --> Chanya 
 13. Filtering on lobby page --> Marie
-14. Leaving game before it starts
+14. Leaving game before it starts --> Tuva
 15. ✅ In game money(gambelinggggggg), needs to be shown on player page. --> Marie 
 16. More game varients.
 17. ✅ Implement actuall authorization and authentication. --> Marie

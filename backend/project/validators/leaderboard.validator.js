@@ -48,7 +48,7 @@ export function validateGetRankings(){
             .optional()
             .toInt()
             .isIn(TIME_CONTROLLERS)
-            .withMessage("timeController must be 5, 10, or 15"),
+            .withMessage("timeController must be 10, 30, or 90"),
     ];
 }
 

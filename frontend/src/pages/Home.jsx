@@ -14,10 +14,10 @@ import Spinner from "../components/Spinner.jsx";
 
 import homeHero from "../assets/home-hero.png";
 
-const ELO_RANGE = 200;
+import { filterLobbyMatches } from "../hooks/useLobbyGames.js";
 
 // The homepage introduces the platform and shows the lobby preview, top 5 games, and tournaments
-export default function Home (){
+export default function Home() {
     const navigate = useNavigate();
     const { preferences } = useAppearance();
     const { user } = useAuth();
@@ -69,18 +69,8 @@ export default function Home (){
         load();
     }, []);
 
-    // Same filtering logic as the Lobby page: only show games the user can actually join
-    // This filter first, then slice to lobbyCount, so the count applies to eligible games only
-    // lobbyCount is the slider setting from Appearance and controls how many lobby games to show
-    const availableGames = (user === null
-        ? lobbyGames.filter(match => match.allowAnonymous === true)
-        : lobbyGames.filter(match => {
-            const alreadyIn = match.players.some(player => player._id === user._id);
-            const eloOk = !match.desiredOpponentElo ||
-                Math.abs(match.desiredOpponentElo - user.eloRating) <= ELO_RANGE;
-            return !alreadyIn && eloOk;
-        })
-    );
+    // Decide which games to show based on who is viewing
+    const availableGames = filterLobbyMatches(lobbyGames, user);
 
     const filteredGames = availableGames.slice(0, preferences.lobbyCount);
 
@@ -89,33 +79,35 @@ export default function Home (){
 
     return (
         <>
-        <Hero title="Spanish Dice Poker" heroImg={homeHero}>
-            <p>Challenge players from around the world in the classic dice game. Roll your hand, hold your best dice, and outplay your opponent.</p>
-            <Button onClick={() => navigate("/createGame")}>
-                Create game
-            </Button>
-            <Link to="/aboutGame">Learn how to play</Link>
-        </Hero>
+            <Hero title="Spanish Dice Poker" heroImg={homeHero}>
+                <p>Challenge players from around the world in the classic dice game. Roll your hand, hold your best dice, and outplay your opponent.</p>
+                {user && (
+                    <Button onClick={() => navigate("/createGame")}>
+                        Create game
+                    </Button>
+                )}
+                <Link to="/aboutGame">Learn how to play</Link>
+            </Hero>
 
-        {/* Lobby preview: shows waiting games the user can join */}
-        <section>
-            <h2>Games available for joining</h2>
-            <p>Pick a game and jump straight in, there are currently {filteredGames.length} available!</p>
-            
-            <div className="cards-grid">
-                {filteredGames.map((match) => <GameCard key={match.matchId} match={match} />)}
-            </div>
-        </section>
+            {/* Lobby preview: shows waiting games the user can join */}
+            <section>
+                <h2>Games available for joining</h2>
+                <p>Pick a game and jump straight in, there are currently {filteredGames.length} available!</p>
 
-        {/* Top 5 ongoing games with the highest average Elo */}
-        <section>
-            <h2>Top 5 ongoing games</h2>
-            <p>Watch the highest-rated players in action!</p>
-            <div className="cards-grid">
-                {topGames.map((match, i) => <GameCard key={match.matchId} match={match} index={i} variant="topGames" />)}
-            </div>
-        </section>
-        {/* Tournament preview: shows the 5 upcoming tournaments
+                <div className="cards-grid">
+                    {filteredGames.map((match) => <GameCard key={match.matchId} match={match} />)}
+                </div>
+            </section>
+
+            {/* Top 5 ongoing games with the highest average Elo */}
+            <section>
+                <h2>Top 5 ongoing games</h2>
+                <p>Watch the highest-rated players in action!</p>
+                <div className="cards-grid">
+                    {topGames.map((match, i) => <GameCard key={match.matchId} match={match} index={i} variant="topGames" />)}
+                </div>
+            </section>
+            {/* Tournament preview: shows the 5 upcoming tournaments
         <section className="tournaments-preview">
             <h2>Upcoming tournaments</h2>
             <p>Sign up before they fill up!</p>

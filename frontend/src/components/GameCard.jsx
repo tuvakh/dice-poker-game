@@ -11,10 +11,8 @@ export default function GameCard({ match, index, variant }) {
 
     if (!match) return null;
 
-    // Merge registered players with anonymous placeholders into one list for display
     const allPlayers = [
-        ...match.players,
-        ...(match.anonymousCount ? [{ username: "Anonymous", _id: "anon-0" }] : [])
+        ...match.players
     ];
 
     const isTopGames = variant === "topGames";

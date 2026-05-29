@@ -149,7 +149,6 @@ export async function knockoutRounds(tournamentId){
             const match = await Match.create({
                 players: [participants[i], participants[i + 1]],
                 gameCategory: tournament.gameCategory,
-                isAnonymous: false,
                 tournamentId: tournament._id
             });
             roundMatches.push({ matchId: match._id });

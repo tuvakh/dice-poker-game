@@ -10,8 +10,8 @@ import Button from "../components/Button.jsx";
 
 import lobbyHero from "../assets/lobby-hero.png"
 
-// How far a user's Elo can be from the game's desired Elo and still be allowed to join
-const ELO_RANGE = 200;
+import { filterLobbyMatches } from "../hooks/useLobbyGames.js";
+import { usePolling } from "../hooks/usePolling.js";
 
 // The lobby page shows all the waiting games this user is allowed to join
 export default function Lobby() {
@@ -28,12 +28,14 @@ export default function Lobby() {
     // Category formatting removed (category dropdown no longer used)
 
     // This fetch 100 games at once so it have enough to filter down from
-    useEffect(() => {
+    function fetchGames() {
         getAllMatches({ status: "waiting", limit: 100 })
             .then(data => setLobbyGames(data.matchList))
             .catch(() => setError("Failed to load games. Please try again."))
             .finally(() => setLoading(false));
-    }, []);
+    }
+
+    usePolling(fetchGames, 10000);
 
     // Load game categories for filter dropdown
     useEffect(() => {

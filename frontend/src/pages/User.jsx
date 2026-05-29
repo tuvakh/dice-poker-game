@@ -194,9 +194,9 @@ export default function User() {
                         <h2>Your stats</h2>
                         {/* Each time control has its own Elo rating */}
                         <ul className="stats__elo-list">
-                            <li>Elo (3s): {profile.eloRating3s} <span className="stats__separator">|</span></li>
                             <li>Elo (10s): {profile.eloRating10s} <span className="stats__separator">|</span></li>
-                            <li>Elo (30s): {profile.eloRating30s}</li>
+                            <li>Elo (30s): {profile.eloRating30s} <span className="stats__separator">|</span></li>
+                            <li>Elo (90s): {profile.eloRating90s}</li>
                         </ul>
 
                         <div className="stats__cards">
