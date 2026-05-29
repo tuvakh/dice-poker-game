@@ -1,4 +1,4 @@
-import { BASE_URL, handleResponse } from "./config.js";
+import { BASE_URL, handleResponse, getAuthHeaders } from "./config.js";
 
 // Fetches a list of matches with optional filters
 export async function getAllMatches({ status, page, limit, userId, gameCategoryId } = {}) {
@@ -33,11 +33,31 @@ export async function createMatch(data) {
 }
 
 // Adds a player to an existing waiting match
-// userId can be null for anonymous users
 export async function joinMatch(id, userId) {
     const res = await fetch(`${BASE_URL}/matches/${id}/join`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+        body: JSON.stringify({ userId })
+    });
+    return handleResponse(res);
+}
+
+// Joins the matchmaking queue for a given game category
+// Returns { status: "matched", match } immediately if an opponent is found, otherwise { status: "waiting" }
+export async function joinQueue(userId, gameCategoryId) {
+    const res = await fetch(`${BASE_URL}/matches/queue`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+        body: JSON.stringify({ userId, gameCategoryId })
+    });
+    return handleResponse(res);
+}
+
+// Removes the user from the matchmaking queue
+export async function leaveQueue(userId) {
+    const res = await fetch(`${BASE_URL}/matches/queue`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
         body: JSON.stringify({ userId })
     });
     return handleResponse(res);

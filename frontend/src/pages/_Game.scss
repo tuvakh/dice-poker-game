@@ -1,3 +1,16 @@
+.spectator-banner {
+    background-color: var(--box-color);
+    text-align: center;
+    padding: var(--small-space) var(--normal-space);
+    font-size: 0.9rem;
+
+    a {
+        color: var(--fake-link-color);
+        font-weight: bold;
+        text-decoration: underline;
+    }
+}
+
 .game {
     display: grid;
     flex: 1;

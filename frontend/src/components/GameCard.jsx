@@ -6,7 +6,7 @@ import Button from "./Button";
 // Displays a single match card used in the lobby, top games list, and user profile
 // variant controls the visual style and link label
 // index shows on top games to show the range 1-5
-export default function GameCard({ match, index, variant }) {
+export default function GameCard({ match, index, variant, spectate }) {
     const navigate = useNavigate();
 
     if (!match) return null;
@@ -37,7 +37,7 @@ export default function GameCard({ match, index, variant }) {
                 ))}
             </h3>
             {/* The call-to-action label changes depending on the context */}
-            <p className="game-card__fake-link">{isTopGames ? "Watch game" : isRecentGames ? "View game" : "Join game"}</p>
+            <p className="game-card__fake-link">{isTopGames ? "Watch game" : isRecentGames ? "View game" : spectate ? "Spectate" : "Join game"}</p>
         </div>
     )
 }

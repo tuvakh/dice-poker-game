@@ -51,19 +51,16 @@ export default function Game (){
         fetchComments();
     }, [match]);
 
-    // Auto-join the match once if the user isn't already a player
+    // Auto-join the match once if the logged-in user isn't already a player
+    // Anonymous users are spectators only — they never join as players
     useEffect(() => {
-        if (!match || hasJoined.current) return;
+        if (!match || hasJoined.current || !user) return;
 
-        const isPlayer = user && match.players.some(player => player._id === user._id);
+        const isPlayer = match.players.some(player => player._id === user._id);
 
         if (!isPlayer && match.status === "waiting") {
-            // Anonymous users can join if the game allows it, registered users can always join
-            const canJoin = user ? true : match.allowAnonymous;
-            if (canJoin) {
-                hasJoined.current = true;
-                joinMatch(match.matchId, user?._id).then(fetchMatch);
-            }
+            hasJoined.current = true;
+            joinMatch(match.matchId, user._id).then(fetchMatch);
         }
     }, [match]);
 
@@ -71,7 +68,12 @@ export default function Game (){
     if (!match) return <Spinner />;
 
     return (
-        <> 
+        <>
+        {!user && (
+            <div className="spectator-banner">
+                <p>You&apos;re spectating. <Link to="/login">Log in</Link> or <Link to="/register">register</Link> to play.</p>
+            </div>
+        )}
         <div className="game">
         <div className="game__main">
             <div className="game__players">

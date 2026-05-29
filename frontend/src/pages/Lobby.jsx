@@ -27,10 +27,10 @@ export default function Lobby() {
     }, []);
 
     // Decide which games to show based on who is viewing
-    // Not logged in: only show games that allow anonymous players
+    // Not logged in: show all waiting games for spectating
     // Logged in: hide games the user already joined, and hide games where their Elo is out of range
     const filteredGames = user === null
-        ? lobbyGames.filter(match => match.allowAnonymous === true)
+        ? lobbyGames
         : lobbyGames.filter(match => {
             const alreadyIn = match.players.some(player => player._id === user._id);
             // If the game has no Elo requirement, anyone can join, so eloOk defaults to true
@@ -50,11 +50,14 @@ export default function Lobby() {
         </Hero>
         <section>
             <h2>Available games</h2>
-            <p>Click a game to join and get started.</p>
+            {user
+                ? <p>Click a game to join and get started.</p>
+                : <p>You&apos;re browsing as a guest — you can spectate any game. <a href="/login">Log in</a> to play.</p>
+            }
             <div className="cards-grid">
                 {filteredGames.length === 0
                     ? <p>No games available right now. Why not create one?</p>
-                    : filteredGames.map((match, i) => <GameCard key={match.matchId} match={match} />)
+                    : filteredGames.map((match) => <GameCard key={match.matchId} match={match} spectate={!user} />)
                 }
             </div>
         </section>

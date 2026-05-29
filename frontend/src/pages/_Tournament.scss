@@ -1,4 +1,3 @@
-// ─── Status filter tabs ───────────────────────────────────────────────────────
 .tournament-tabs {
     display: flex;
     gap: var(--small-space);
@@ -24,7 +23,6 @@
     }
 }
 
-// ─── Tournament card ──────────────────────────────────────────────────────────
 .tournament-card {
     background-color: var(--secondary-color);
     display: flex;
@@ -65,7 +63,6 @@
     }
 }
 
-// ─── Detail page ─────────────────────────────────────────────────────────────
 .tournament-detail {
     .back-link {
         position: static;
@@ -131,7 +128,6 @@
     }
 }
 
-// ─── Bracket ─────────────────────────────────────────────────────────────────
 .bracket {
     overflow-x: auto;
     padding-block: var(--normal-space);
@@ -163,6 +159,29 @@
         border-radius: var(--border-radius);
         width: 160px;
         overflow: hidden;
+
+        &--clickable {
+            cursor: pointer;
+            transition: filter 0.15s ease;
+
+            &:hover {
+                filter: brightness(1.1);
+            }
+        }
+    }
+
+    &__match-status {
+        display: block;
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        padding: 2px var(--small-space);
+        background-color: var(--primary-color);
+        opacity: 0.8;
+
+        &--waiting  { color: #ff9800; }
+        &--ongoing  { color: #4caf50; }
+        &--finished { color: var(--info-color); }
     }
 
     &__match-player {

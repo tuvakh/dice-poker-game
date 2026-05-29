@@ -1,0 +1,50 @@
+.queue-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--normal-space);
+    width: 80%;
+    margin: auto;
+    padding: var(--big-space);
+
+    &__back {
+        position: static;
+        align-self: flex-start;
+        text-transform: uppercase;
+        font-weight: bold;
+    }
+
+    h1 {
+        align-self: flex-start;
+    }
+
+    p {
+        align-self: flex-start;
+    }
+
+    .form {
+        width: 100%;
+    }
+}
+
+.queue-searching {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--medium-space);
+    padding-block: var(--big-space);
+    text-align: center;
+
+    &__label {
+        font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+        font-size: 1.6rem;
+        color: var(--fake-link-color);
+        letter-spacing: 0.05em;
+    }
+
+    &__hint {
+        font-size: 0.85rem;
+        opacity: 0.7;
+        max-width: 40ch;
+    }
+}

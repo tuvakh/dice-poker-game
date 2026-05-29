@@ -291,8 +291,14 @@ function TournamentDetail({ id }) {
                                             const match = entry?.matchId ?? entry;
                                             const players = match?.players ?? [];
                                             const winner = match?.winner;
-                                            return (
-                                                <div key={mIdx} className="bracket__match">
+                                            const matchId = match?.matchId;
+                                            const card = (
+                                                <div key={mIdx} className={`bracket__match${matchId ? " bracket__match--clickable" : ""}`}>
+                                                    {match?.status && (
+                                                        <span className={`bracket__match-status bracket__match-status--${match.status}`}>
+                                                            {match.status}
+                                                        </span>
+                                                    )}
                                                     {players.length === 0 ? (
                                                         <p className="bracket__match-player bracket__match-player--tbd">TBD</p>
                                                     ) : (
@@ -311,6 +317,9 @@ function TournamentDetail({ id }) {
                                                     )}
                                                 </div>
                                             );
+                                            return matchId
+                                                ? <Link key={mIdx} to={`/game/${matchId}`} onClick={playClick} style={{ textDecoration: "none" }}>{card}</Link>
+                                                : card;
                                         })}
                                     </div>
                                 ))}

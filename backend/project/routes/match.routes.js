@@ -6,12 +6,13 @@ import matchValidator from "../validators/match.validator.js";
 import { validate } from "../validators/validate.js";
 import queueController from "../controllers/queue.controller.js";
 import queueValidator from "../validators/queue.validator.js";
+import { requireUser } from "../middleware/role.js";
 
 
 const matchApiRouter = express.Router();
 
-// This creates a new match between two players
-matchApiRouter.post('/matches', matchValidator.validateCreateMatch(), validate, matchController.createMatch);
+// This creates a new match — only registered users can create matches
+matchApiRouter.post('/matches', requireUser, matchValidator.validateCreateMatch(), validate, matchController.createMatch);
 
 // This records the result of a finished match, and updates the ELO ratings
 matchApiRouter.put('/matches/:matchId/record', matchValidator.validateRecordMatch(), validate, matchController.recordMatch);
@@ -21,10 +22,10 @@ matchApiRouter.get('/matches', matchValidator.validateGetAllMatches(), validate,
 // This returns a single match with players and category
 matchApiRouter.get('/matches/:matchId', matchValidator.validateGetMatch(), validate, matchController.getMatch);
 
-// This validates if a user can join the matchmaking queue, and returns a match immediately if an opponent is found
-matchApiRouter.post('/matches/queue', queueValidator.validateJoinQueue(), validate, queueController.joinQueue);
-// This adds a user to an existing waiting match by matchId
-matchApiRouter.post('/matches/:matchId/join', matchValidator.validateJoinMatch(), validate, matchController.joinMatch);
+// This validates if a user can join the matchmaking queue — only registered users can queue
+matchApiRouter.post('/matches/queue', requireUser, queueValidator.validateJoinQueue(), validate, queueController.joinQueue);
+// This adds a user to an existing waiting match — only registered users can join as players
+matchApiRouter.post('/matches/:matchId/join', requireUser, matchValidator.validateJoinMatch(), validate, matchController.joinMatch);
 
 // This removes the player from the matchmaking queue
 matchApiRouter.delete('/matches/queue', queueValidator.validateLeaveQueue(), validate, queueController.leaveQueue);

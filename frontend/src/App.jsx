@@ -11,6 +11,7 @@ import AboutUs from './pages/AboutUs';
 import AboutGame from "./pages/AboutGame.jsx";
 import Privacy from "./pages/Privacy.jsx";
 import Terms from "./pages/Terms.jsx";
+import Queue from "./pages/Queue.jsx";
 import NotFound from "./pages/404.jsx";
 import VerifyEmail from "./pages/VerifyEmail.jsx";
 import ForgotPassword from "./pages/ForgotPassword.jsx";
@@ -31,6 +32,7 @@ function App() {
           <Route path="/game/:id" element={<Game />} />
           <Route path="/createGame" element={<CreateGame />} />
           <Route path="/lobby" element={<Lobby />} />
+          <Route path="/queue" element={<Queue />} />
           <Route path="/tournament" element={<Tournament />} />
           <Route path="/tournament/:id" element={<Tournament />} />
           <Route path="/user/:id" element={<User />} />

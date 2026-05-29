@@ -50,12 +50,10 @@ export default function CreateGame (){
             // while anonymous users create an isAnonymous match with no player ID
             const match = await createMatch({
                 gameCategoryId: category._id,
-                players: user ? [user._id] : [],
-                isAnonymous: !user,
-                // Anonymous users can't restrict who joins, so allowAnonymous is always true for them
-                allowAnonymous: user ? formData.allowAnonymous : true,
+                players: [user._id],
+                allowAnonymous: formData.allowAnonymous,
                 desiredOpponentElo: formData.desiredOpponentElo || null,
-                coinWager: user ? (formData.coinWager ? Number(formData.coinWager) : 0) : 0
+                coinWager: formData.coinWager ? Number(formData.coinWager) : 0
             });
 
             // Send the user straight to their new game
@@ -63,6 +61,19 @@ export default function CreateGame (){
         } catch (err) {
             setError(err.message);
         }
+    }
+
+    if (!user) {
+        return (
+            <section className="create-game">
+                <h1>Create game</h1>
+                <p>You need to be logged in to create a game.</p>
+                <div className="greeting">
+                    <Link className="greeting__button" to="/login">Login</Link>
+                    <Link className="greeting__button" to="/register">Register</Link>
+                </div>
+            </section>
+        );
     }
 
     return (
@@ -99,9 +110,9 @@ export default function CreateGame (){
                             />
                         </FormField>
                     )}
-                    {/* Only show allow-anonymous checkbox for logged-in users */}
+                    {/* Controls whether anonymous users can spectate this game */}
                     {user && (
-                        <FormField label="Allow anonymous players" inline>
+                        <FormField label="Allow spectators" inline>
                             <input
                                 type="checkbox"
                                 checked={formData.allowAnonymous}
