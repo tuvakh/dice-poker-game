@@ -56,7 +56,7 @@ export default function Lobby() {
         if (!user) return true;
         const alreadyIn = match.players.some(player => player._id === user._id);
         // If the game has no Elo requirement, anyone can join, so eloOk defaults to true
-        const eloOk = !match.desiredOpponentElo || Math.abs(match.desiredOpponentElo - user.eloRating) <= ELO_RANGE;
+        const eloOk = !match.desiredOpponentElo || Math.abs(match.desiredOpponentElo - user.eloRating) <= 200;
         return !alreadyIn && eloOk;
     });
 
