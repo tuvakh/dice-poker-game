@@ -52,10 +52,10 @@ const userSchema = new mongoose.Schema({
         default: 1000,
         required: true
     },
-    // Per-time-control Elo ratings (3s, 10s, 30s)
-    eloRating3s: { type: Number, default: 1000 },
+    // Per-time-control Elo ratings (10s, 30s, 90s)
     eloRating10s: { type: Number, default: 1000 },
     eloRating30s: { type: Number, default: 1000 },
+    eloRating90s: { type: Number, default: 1000 },
     // coins are used for wagers and monthly rewards
     coins: {
         type: Number,

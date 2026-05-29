@@ -18,7 +18,7 @@ export const MAX_COMMENT_LENGTH = 1000; // characters
 
 export const GAME_RULES = ["straights_allowed", "straights_not_allowed"];
 export const NUMBER_OF_ROUNDS = [3, 5, 7];
-export const TIME_CONTROLLERS = [3, 10, 30];
+export const TIME_CONTROLLERS = [10, 30, 90];
 
 export const TOURNAMENT_STATUS = ["upcoming", "ongoing", "finished"];
 export const MATCH_STATUS = ["waiting", "ongoing", "finished"];
@@ -28,3 +28,6 @@ export const COMMENT_TARGET = ["match", "tournament"];
 export const LEADERBOARD_SORT_OPTIONS = ["wins", "winPercentage", "matches", "elo"];
 
 export const MONTHLY_COIN_GRANT = 100;
+
+export const REVEAL_DELAY_MS = 3000;
+
