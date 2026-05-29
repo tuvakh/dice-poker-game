@@ -50,9 +50,9 @@ export default function CreateGame() {
             const match = await createMatch({
                 gameCategoryId: category._id,
                 players: [user._id],
-                desiredOpponentElo: formData.desiredOpponentElo || null,
                 coinWager: user ? (formData.coinWager ? Number(formData.coinWager) : 0) : 0,
-                maxPlayers: formData.numberOfPlayers
+                maxPlayers: formData.numberOfPlayers,
+                ...(Number(formData.desiredOpponentElo) > 0 ? { desiredOpponentElo: Number(formData.desiredOpponentElo) } : {})
             });
 
             // Send the user straight to their new game
@@ -71,7 +71,7 @@ export default function CreateGame() {
             </section>
         );
     }
-    
+
     return (
         <section className="create-game">
             <Link to="/" className="back-link">← Back</Link>
@@ -87,7 +87,7 @@ export default function CreateGame() {
                 <FormField label="Number of players">
                     <select
                         value={formData.numberOfPlayers}
-                        onChange={event => handleChange("numberOfPlayers", Number(event.target.value))}
+                        onChange={event => handleChange("desiredOpponentElo", event.target.value)}
                     >
                         <option value={2}>2 players</option>
                         <option value={3}>3 players</option>
