@@ -11,15 +11,15 @@
 10. ✅ Sound --> Chanya
 11. ✅ Upcomming tournaments on homepage(sortable and searchable) --> Chanya
 12. Idevidual tournament Page --> Chanya 
-13. Filtering on lobby page
+13. Filtering on lobby page --> Marie
 14. Leaving game before it starts
 15. ✅ In game money(gambelinggggggg), needs to be shown on player page. --> Marie 
 16. More game varients.
-17. Implement actuall authorization and authentication. --> Marie
+17. ✅ Implement actuall authorization and authentication. --> Marie
 18. ✅ implement a 404 page --> Marie
 19. Implement comments using websockets
 20. Show platform activity on homepage
-21. implement 4 admin pages. --> Marie
+21. ✅ implement 4 admin pages. --> Marie
     1. dashboard
     2. User administation
     3. comment administration
