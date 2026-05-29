@@ -4,6 +4,7 @@ import Home from "./pages/Home.jsx";
 import Game from "./pages/Game.jsx";
 import Lobby from "./pages/Lobby.jsx";
 import Tournament from "./pages/Tournament.jsx";
+import LeaderBoard from "./pages/LeaderBoard.jsx";
 import User from "./pages/User.jsx";
 import UserGames from "./pages/UserGames.jsx";
 import CreateGame from "./pages/CreateGame.jsx";
@@ -31,6 +32,7 @@ function App() {
           <Route path="/game/:id" element={<Game />} />
           <Route path="/createGame" element={<CreateGame />} />
           <Route path="/lobby" element={<Lobby />} />
+          <Route path="/leaderboard" element={<LeaderBoard />} />
           <Route path="/tournament" element={<Tournament />} />
           <Route path="/tournament/:id" element={<Tournament />} />
           <Route path="/user/:id" element={<User />} />

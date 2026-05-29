@@ -1,7 +1,7 @@
 # TODO
 1. GAME BOARD & MECHANICS --> Tuva
 2. REAL-TIME GAMEPLAY(websockets)
-3. LEADERBOARDS PAGE 
+3. ✅ LEADERBOARDS PAGE --> Marie
 4. ✅ TOURNAMENTS PAGE --> Chanya
 5. MATCHMAKING QUEUE --> Chanya 
 6. ✅ Stats on homepage --> Marie
