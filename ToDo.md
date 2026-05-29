@@ -1,7 +1,7 @@
 
 # TODO
-1. GAME BOARD & MECHANICS --> Tuva
-2. REAL-TIME GAMEPLAY(websockets) --> Tuva
+1. ✅ GAME BOARD & MECHANICS --> Tuva
+2. ✅ REAL-TIME GAMEPLAY(websockets) --> Tuva
 3. LEADERBOARDS PAGE 
 5. MATCHMAKING QUEUE
 6. ✅ Stats on homepage --> Marie
@@ -10,7 +10,7 @@
 9. Work needed on ELO system
 12. Idevidual tournament Page
 13. Filtering on lobby page
-14. Leaving game before it starts
+14. Leaving game before it starts --> Tuva
 15. ✅ In game money(gambelinggggggg), needs to be shown on player page. --> Marie 
 16. More game varients.
 17. Implement actuall authorization and authentication.
