@@ -1,7 +1,7 @@
 // This model represents one of the 18 possible game variants based on:
 // numberOfRounds (3/5/7)
 // gameRules (is straights allowed or not)
-// and timeController (3/10/30 seconds).
+// and timeController (10/30/90 seconds).
 
 import mongoose from "mongoose";
 
@@ -29,7 +29,7 @@ const gameCategorySchema = new mongoose.Schema({
         enum: GAME_RULES,
         required: true
     },
-    // timeController defines how many seconds each player has per round
+    // timeController defines total seconds each player has across all rounds
     timeController: {
         type: Number,
         enum: TIME_CONTROLLERS,

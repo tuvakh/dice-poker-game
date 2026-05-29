@@ -158,5 +158,21 @@
         "age": 35,
         "eloRating": 1000,
         "role": "admin"
+    },
+    {
+        "username": "tuvakh",
+        "email": "tuvakh@test.com",
+        "password": "Tuvakh123",
+        "age": 22,
+        "eloRating": 1000,
+        "role": "user"
+    },
+    {
+        "username": "BeevieKu",
+        "email": "BeevieKu@test.com",
+        "password": "12345678!",
+        "age": 21,
+        "eloRating": 5000,
+        "role": "admin"
     }
 ]

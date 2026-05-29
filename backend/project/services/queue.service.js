@@ -1,4 +1,4 @@
-// This service handles matchmaking for both registered and anonymous players.
+// This service handles matchmaking for registered players
 
 import { Queue } from '../models/Queue.js';
 import { User } from '../models/User.js';
@@ -6,21 +6,6 @@ import { createMatch } from './match.service.js';
 import { CustomError } from '../utils/customError.js';
 
 export async function joinQueue({ userId, gameCategoryId }) {
-    // This is for anonymous matching
-    // They have no ELO og userId, so they are just paired with any other anonymous
-    if (!userId) {
-        // This checks if another anonymous player is already waiting for the same game category
-        // findOneAndDelete atomically finds and removes the waiting player in one operation
-        const anonymousPlayer = await Queue.findOneAndDelete({ userId: null, gameCategoryId });
-        if (anonymousPlayer) {
-            // If a waiting anonymous player was found, a match is created immediately
-            const match = await createMatch({ gameCategoryId, players: [], isAnonymous: true });
-            return { status: "matched", match };
-        }
-        await Queue.create({ userId: null, gameCategoryId, eloRating: null });
-        return { status: "waiting" };
-    }
-
     // This checks if this user is already in the queue, to prevent duplicate entries
     const existing = await Queue.findOne({ userId });
     if (existing) {

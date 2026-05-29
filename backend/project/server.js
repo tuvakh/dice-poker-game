@@ -14,6 +14,7 @@ import gameCategoryApiRouter from "./routes/gameCategory.routes.js";
 import matchApiRouter from "./routes/match.routes.js";
 import tournamentApiRouter from "./routes/tournament.routes.js";
 import commentApiRouter from "./routes/comment.routes.js";
+import adminApiRouter from "./routes/admin.routes.js";
 import leaderboardApiRouter from "./routes/leaderboard.routes.js";
 import activityApiRouter from "./routes/activity.routes.js";
 import rateLimit from "express-rate-limit";
@@ -29,7 +30,7 @@ const server = http.createServer(app);  // Express handles HTTP requests
 // This limits each IP to 100 requests per 15 minutes to prevent abuse
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 100,
+    max: 500,
     message: { error: "TOO_MANY_REQUESTS", message: "Too many requests, please try again later" }
 });
 
@@ -51,6 +52,7 @@ app.use(commentApiRouter);
 app.use(leaderboardApiRouter);
 app.use(activityApiRouter);
 app.use(trophyApiRouter);
+app.use(adminApiRouter);
 
 // This serves uploaded trophy images as static files from the uploads/ folder
 // import.meta.url is used to get the absolute path since this is an ES module

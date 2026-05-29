@@ -53,14 +53,15 @@ export function validateCreateMatch(){
             .withMessage(`gameCategoryId is required`)
             .isMongoId()
             .withMessage("gameCategoryId must be a valid MongoDB ObjectId"),
-        // players is optional for anonymous creators (empty array allowed)
+        // players can start empty if the creator joins first
         body("players")
-            .isArray({ min: 0, max: 2 })
-            .withMessage("Match requires 0 to 2 players"),
-        // allowAnonymous lets the creator decide if anonymous users can join the game
-        body("allowAnonymous")
+            .isArray({ min: 0, max: 5 })
+            .withMessage("Match requires 0 to 5 players"),
+        body("maxPlayers")
             .optional()
-            .isBoolean().withMessage("allowAnonymous must be a boolean"),
+            .isInt({ min: 2, max: 5 })
+            .withMessage("maxPlayers must be between 2 and 5")
+            .toInt(),
         // desiredOpponentElo lets the creator set a preferred opponent Elo rating
         body("desiredOpponentElo")
             .optional()

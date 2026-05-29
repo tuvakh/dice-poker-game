@@ -11,20 +11,20 @@ import Button from "../components/Button.jsx";
 import FormField from "../components/FormField.jsx";
 
 // The create Game page lets the user picks their game settings and submits to create a new match
-export default function CreateGame (){
+export default function CreateGame() {
     const navigate = useNavigate();
     const { user } = useAuth();
     const [error, setError] = useState(null);
 
     // All the form values starts with sensible defaults
-    // When a selector changes, only that field gets updated 
+    // When a selector changes, only that field gets updated
     const [formData, setFormData] = useState({
         numberOfRounds: 3,
         gameRules: "straights_allowed",
-        timeController: 3,
-        allowAnonymous: false,
+        timeController: 10,
         desiredOpponentElo: "",
-        coinWager: ""
+        coinWager: "",
+        numberOfPlayers: 2
     });
 
     // This gets called by each selector component when the user picks something
@@ -46,14 +46,13 @@ export default function CreateGame (){
                 category.timeController === formData.timeController
             );
 
-            // When creating a match, logged-in users join as a named player,
-            // while anonymous users create an isAnonymous match with no player ID
+            // When creating a match, logged-in users join as a named player
             const match = await createMatch({
                 gameCategoryId: category._id,
                 players: [user._id],
-                allowAnonymous: formData.allowAnonymous,
-                desiredOpponentElo: formData.desiredOpponentElo || null,
-                coinWager: formData.coinWager ? Number(formData.coinWager) : 0
+                coinWager: user ? (formData.coinWager ? Number(formData.coinWager) : 0) : 0,
+                maxPlayers: formData.numberOfPlayers,
+                ...(Number(formData.desiredOpponentElo) > 0 ? { desiredOpponentElo: Number(formData.desiredOpponentElo) } : {})
             });
 
             // Send the user straight to their new game
@@ -66,12 +65,9 @@ export default function CreateGame (){
     if (!user) {
         return (
             <section className="create-game">
-                <h1>Create game</h1>
+                <Link to="/" className="back-link">← Back</Link>
                 <p>You need to be logged in to create a game.</p>
-                <div className="greeting">
-                    <Link className="greeting__button" to="/login">Login</Link>
-                    <Link className="greeting__button" to="/register">Register</Link>
-                </div>
+                <Link to="/login">Login</Link>
             </section>
         );
     }
@@ -87,6 +83,18 @@ export default function CreateGame (){
                     <GameRulesSelector onChange={handleChange} />
                     <TimeControlSelector onChange={handleChange} />
                 </div>
+
+                <FormField label="Number of players">
+                    <select
+                        value={formData.numberOfPlayers}
+                        onChange={event => handleChange("desiredOpponentElo", event.target.value)}
+                    >
+                        <option value={2}>2 players</option>
+                        <option value={3}>3 players</option>
+                        <option value={4}>4 players</option>
+                        <option value={5}>5 players</option>
+                    </select>
+                </FormField>
 
                 {/* Two fields side by side */}
                 <div className="form__inputs">
@@ -104,19 +112,10 @@ export default function CreateGame (){
                             <input
                                 type="number"
                                 min="0"
+                                max={user.coins}
                                 value={formData.coinWager}
                                 onChange={event => handleChange("coinWager", event.target.value)}
                                 placeholder="0"
-                            />
-                        </FormField>
-                    )}
-                    {/* Controls whether anonymous users can spectate this game */}
-                    {user && (
-                        <FormField label="Allow spectators" inline>
-                            <input
-                                type="checkbox"
-                                checked={formData.allowAnonymous}
-                                onChange={event => handleChange("allowAnonymous", event.target.checked)}
                             />
                         </FormField>
                     )}

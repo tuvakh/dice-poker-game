@@ -21,7 +21,7 @@ export async function getMatch(id) {
 }
 
 // Creates a new match and returns it 
-// data contains gameCategoryId, players, allowAnonymous, etc.
+// data contains gameCategoryId, players, etc.
 export async function createMatch(data) {
     const res = await fetch(`${BASE_URL}/matches`, {
         method: "POST",
@@ -33,6 +33,7 @@ export async function createMatch(data) {
 }
 
 // Adds a player to an existing waiting match
+// userId is required. Anonymous users cannot join matches
 export async function joinMatch(id, userId) {
     const res = await fetch(`${BASE_URL}/matches/${id}/join`, {
         method: "POST",
@@ -62,3 +63,13 @@ export async function leaveQueue(userId) {
     });
     return handleResponse(res);
 }
+
+export async function leaveMatch(id, userId) {
+    const res = await fetch(`${BASE_URL}/matches/${id}/leave`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId })
+    });
+    return handleResponse(res);
+}
+

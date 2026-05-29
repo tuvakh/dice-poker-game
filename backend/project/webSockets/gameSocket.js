@@ -1,47 +1,46 @@
+// Manages real-time game communication over WebSocket.
+// Game state is stored in-memory per match and cleaned up on game end.
+
 import { WebSocketServer } from 'ws';
 import { evaluateHand, compareHands } from '../utils/handEvaluator.js';
-// This function is called once from server.js after the HTTP server starts.
-// It attaches WebSocket handling to the same port as Express.
+import { User } from '../models/User.js';
+import { Match } from '../models/Match.js';
+import { REVEAL_DELAY_MS } from '../config/constants.js';
+
+// Called once from server.js — attaches WebSocket to the same port as Express
 export default function attachWebSocket(server) {
     // Creates the WebSocket server, sharing the existing HTTP server.
-    // This means ws:// connections on port 3000 are handled here,
-    // while http:// requests on the same port still go to Express.
     const wss = new WebSocketServer({ server });
 
-    // rooms is a Map where each key is a matchId and each value is a Set of
-    // WebSocket connections currently in that game.
-    // Example: rooms.get("12345") → Set { ws1, ws2, ws3 }
+    // rooms is a Map where each key is a matchId and each value is a Set of WebSocket connections currently in that game.
     const rooms = new Map();
     const gameStates = new Map();
     const clients = new Map();
+    const rollingTimers = new Map();
 
     // This fires every time a new browser connects via WebSocket.
-    // ws is the individual connection for that one client.
     wss.on('connection', (ws) => {
         // This fires every time that client sends a message.
-        // data arrives as a raw string, so we parse it into an object.
         ws.on('message', (data) => {
             const message = JSON.parse(data);
 
             // The client tells us what kind of event this is via message.type.
-            // For now the only type we handle is "join".
             if (message.type === 'join') {
                 const { matchId, userId } = message;
 
-                // If no room exists for this game yet, create one with an empty Set.
-                if (!rooms.has(matchId)) {
-                    rooms.set(matchId, new Set());
-                }
-
-                // Add this client's connection to the room for that game.
+                if (!rooms.has(matchId)) rooms.set(matchId, new Set());
                 rooms.get(matchId).add(ws);
                 clients.set(ws, { matchId, userId });
 
+                // Create game state on first join
                 if (!gameStates.has(matchId)) {
                     gameStates.set(matchId, {
-                        phase: 'rolling',
+                        phase: 'waiting',
                         round: 1,
                         totalRounds: message.totalRounds,
+                        timeController: message.timeController,
+                        coinWager: message.coinWager ?? 0,
+                        requiredPlayers: message.requiredPlayers,
                         pot: 0,
                         highestBet: 0,
                         players: {}
@@ -49,22 +48,40 @@ export default function attachWebSocket(server) {
                 }
 
                 const state = gameStates.get(matchId);
+                const isRejoin = !!state.players[userId];
 
-                state.players[userId] = {
-                    dice: [null, null, null, null, null],
-                    held: [false, false, false, false, false],
-                    rollsLeft: 3,
-                    doneRolling: false,
-                    stack: 0,
-                    bet: 0,
-                    folded: false
-                };
+                if (!isRejoin) {
+                    state.players[userId] = {
+                        dice: [null, null, null, null, null],
+                        held: [false, false, false, false, false],
+                        rollsLeft: 3,
+                        doneRolling: false,
+                        ready: false,
+                        stack: state.coinWager,
+                        bet: 0,
+                        folded: false,
+                        disconnected: false,
+                        timeRemaining: state.timeController * 1000,
+                        rollStartTime: null
+                    };
 
-                const requiredPlayers = message.requiredPlayers;
-                const joinedCount = Object.keys(state.players).length;
+                    const joinedCount = Object.keys(state.players).length;
+                    if (joinedCount === message.requiredPlayers) {
+                        broadcast(matchId, { type: 'all-joined' });
+                    }
+                } else {
+                    state.players[userId].disconnected = false;
 
-                if (joinedCount === requiredPlayers) {
-                    startGame(matchId, state);
+                    // Rejoin — send back their current state
+                    restorePlayerState(ws, userId, state);
+
+                    // Restart their timer if they're still rolling
+                    if (state.phase === 'rolling' && !state.players[userId].doneRolling) {
+                        clearRollingTimer(matchId, userId);
+                        state.players[userId].rollStartTime = Date.now();
+                        const timer = setTimeout(() => autoCompleteRoll(matchId, userId), state.players[userId].timeRemaining);
+                        rollingTimers.set(`${matchId}-${userId}`, timer);
+                    }
                 }
             }
 
@@ -79,13 +96,23 @@ export default function attachWebSocket(server) {
                 const player = state.players[userId];
                 if (!player || player.doneRolling || player.rollsLeft <= 0) return;
 
+                if (!Array.isArray(message.held) || message.held.length !== 5) return;
+
                 // Update held dice from the client's message
                 player.held = message.held;
 
+                const elapsed = player.rollStartTime ? Date.now() - player.rollStartTime : 0;
+                player.timeRemaining = Math.max(0, player.timeRemaining - elapsed);
+                player.rollStartTime = Date.now();
+
                 // Re-roll only the dice that aren't held
                 player.dice = player.dice.map((face, i) => (player.held[i] ? face : rollDice()[i]));
-
                 player.rollsLeft -= 1;
+
+                // Reset timer — player is still rolling
+                clearRollingTimer(matchId, userId);
+                const timer = setTimeout(() => autoCompleteRoll(matchId, userId), player.timeRemaining);
+                rollingTimers.set(`${matchId}-${userId}`, timer);
 
                 // Send the updated dice back to this player only
                 ws.send(
@@ -100,7 +127,8 @@ export default function attachWebSocket(server) {
                 broadcast(matchId, {
                     type: 'player-rolled',
                     userId,
-                    rollsLeft: player.rollsLeft
+                    rollsLeft: player.rollsLeft,
+                    held: player.held
                 });
             }
 
@@ -117,6 +145,11 @@ export default function attachWebSocket(server) {
 
                 player.doneRolling = true;
 
+                const elapsed = player.rollStartTime ? Date.now() - player.rollStartTime : 0;
+                player.timeRemaining = Math.max(0, player.timeRemaining - elapsed);
+
+                clearRollingTimer(matchId, userId);
+
                 // Tell everyone this player is done
                 broadcast(matchId, {
                     type: 'player-done-rolling',
@@ -124,10 +157,29 @@ export default function attachWebSocket(server) {
                 });
 
                 // Check if ALL players are done rolling
-                const allDone = Object.values(state.players).every((p) => p.doneRolling);
+                const allDone = Object.values(state.players).every((gamePlayer) => gamePlayer.doneRolling);
 
                 if (allDone) {
                     startBetting(matchId, state);
+                }
+            }
+
+            if (message.type === 'ready') {
+                const client = clients.get(ws);
+                if (!client) return;
+
+                const { matchId, userId } = client;
+                const state = gameStates.get(matchId);
+                if (!state || state.phase !== 'waiting') return;
+
+                const player = state.players[userId];
+                if (!player) return;
+
+                player.ready = true;
+
+                const allReady = Object.values(state.players).every((gamePlayer) => gamePlayer.ready);
+                if (allReady) {
+                    startGame(matchId, state);
                 }
             }
 
@@ -149,6 +201,7 @@ export default function attachWebSocket(server) {
                 }
 
                 if (action === 'bet' || action === 'raise') {
+                    if (amount <= 0 || amount > player.stack) return;
                     player.bet = amount;
                     player.stack -= amount;
                     state.pot += amount;
@@ -165,26 +218,50 @@ export default function attachWebSocket(server) {
                 }
 
                 // Move to the next bettor
+                state.bettorsActed.add(userId);
                 advanceBetting(matchId, state);
             }
         });
 
+        // Clean up when a client disconnects
         ws.on('close', () => {
             const client = clients.get(ws);
             if (client) {
-                const { matchId } = client;
+                const { matchId, userId } = client;
                 const room = rooms.get(matchId);
                 if (room) {
                     room.delete(ws);
                     if (room.size === 0) rooms.delete(matchId);
                 }
                 clients.delete(ws);
+
+                const state = gameStates.get(matchId);
+                if (!state) return;
+
+                // Rolling phase: timer handles auto-completion — allows rejoin before it fires
+
+                // Betting phase: auto-match if it was their turn
+                if (state.phase === 'betting' && state.currentBettor === userId) {
+                    const player = state.players[userId];
+                    if (player) {
+                        const toMatch = state.highestBet - player.bet;
+                        player.bet = state.highestBet;
+                        player.stack -= toMatch;
+                        state.pot += toMatch;
+                        broadcast(matchId, { type: 'player-matched', userId, pot: state.pot });
+                        advanceBetting(matchId, state);
+                    }
+                }
+
+                if (state.phase === 'betting' && state.currentBettor !== userId) {
+                    const player = state.players[userId];
+                    if (player) player.disconnected = true;
+                }
             }
         });
     });
 
-    // Sends a message to every client currently in a given game room.
-    // data is a plain object — it gets converted to a JSON string before sending.
+    // Sends a message to all clients in a room
     function broadcast(matchId, data) {
         const room = rooms.get(matchId);
         // If the room doesn't exist yet, do nothing.
@@ -195,20 +272,64 @@ export default function attachWebSocket(server) {
         }
     }
 
+    function clearRollingTimer(matchId, userId) {
+        const key = `${matchId}-${userId}`;
+        clearTimeout(rollingTimers.get(key));
+        rollingTimers.delete(key);
+    }
+
+    function autoCompleteRoll(matchId, userId) {
+        const state = gameStates.get(matchId);
+        if (!state || state.phase !== 'rolling') return;
+
+        const player = state.players[userId];
+        if (!player || player.doneRolling) return;
+
+        // Force-roll all dice with no holds
+        player.dice = rollDice();
+        player.held = [false, false, false, false, false];
+        player.timeRemaining = 0;
+        player.rollStartTime = null;
+        player.doneRolling = true;
+
+        // Send the forced roll to the timed-out player if still connected
+        for (const [ws, client] of clients) {
+            if (client.matchId === matchId && client.userId === userId) {
+                ws.send(JSON.stringify({ type: 'roll-result', yourDice: player.dice, rollsLeft: 0 }));
+            }
+        }
+
+        broadcast(matchId, { type: 'player-done-rolling', userId });
+
+        const allDone = Object.values(state.players).every((gamePlayer) => gamePlayer.doneRolling);
+        if (allDone) startBetting(matchId, state);
+    }
+
+    // Rolls dice for all players and sends each player only their own dice
     function startGame(matchId, state) {
         state.phase = 'rolling';
 
         // Roll dice for every player
         for (const [userId, player] of Object.entries(state.players)) {
-            player.dice = rollDice();
+            player.dice = ['?', '?', '?', '?', '?'];
+            player.held = [false, false, false, false, false];
             player.rollsLeft = 3;
             player.doneRolling = false;
+            player.rollStartTime = Date.now();
         }
 
         // Send each player only their own dice
         broadcastToEach(matchId, state);
+
+        // Start a countdown for each player
+        for (const userId of Object.keys(state.players)) {
+            clearRollingTimer(matchId, userId);
+            const timer = setTimeout(() => autoCompleteRoll(matchId, userId), state.players[userId].timeRemaining);
+            rollingTimers.set(`${matchId}-${userId}`, timer);
+        }
     }
 
+    // Resets bets and starts the betting phase
     function startBetting(matchId, state) {
         state.phase = 'betting';
         state.pot = 0;
@@ -224,13 +345,19 @@ export default function attachWebSocket(server) {
         const bettingOrder = Object.keys(state.players);
         state.bettingOrder = bettingOrder;
         state.currentBettor = bettingOrder[0];
+        state.bettorsActed = new Set();
+
+        const stacks = Object.fromEntries(Object.entries(state.players).map(([uid, player]) => [uid, player.stack]));
 
         broadcast(matchId, {
             type: 'betting-start',
             currentBettor: state.currentBettor,
-            pot: state.pot
+            pot: state.pot,
+            stacks
         });
     }
+
+    // Moves to the next bettor, or triggers reveal if all active players have matched
     function advanceBetting(matchId, state) {
         const order = state.bettingOrder;
         const currentIndex = order.indexOf(state.currentBettor);
@@ -243,16 +370,33 @@ export default function attachWebSocket(server) {
 
             if (!nextPlayer.folded) {
                 // Check if everyone who hasn't folded has matched the highest bet
-                const activePlayers = Object.values(state.players).filter((p) => !p.folded);
-                const allMatched = activePlayers.every((p) => p.bet === state.highestBet);
+                const activePlayers = Object.values(state.players).filter((gamePlayer) => !gamePlayer.folded);
+                const allMatched = activePlayers.every((gamePlayer) => gamePlayer.bet === state.highestBet);
 
-                if (allMatched) {
+                const activePlayerIds = Object.keys(state.players).filter((id) => !state.players[id].folded);
+                const allActivePlayed = activePlayerIds.every((id) => state.bettorsActed.has(id));
+                if (allMatched && allActivePlayed) {
                     revealAndScore(matchId, state);
                     return;
                 }
 
                 state.currentBettor = nextId;
-                broadcast(matchId, { type: 'next-bettor', currentBettor: nextId });
+
+                if (state.players[nextId].disconnected) {
+                    const disconnectedPlayer = state.players[nextId];
+                    const toMatch = state.highestBet - disconnectedPlayer.bet;
+                    disconnectedPlayer.bet = state.highestBet;
+                    disconnectedPlayer.stack -= toMatch;
+                    state.pot += toMatch;
+                    broadcast(matchId, { type: 'player-matched', userId: nextId, pot: state.pot });
+                    advanceBetting(matchId, state);
+                    return;
+                }
+
+                const stacks = Object.fromEntries(Object.entries(state.players).map(([uid, player]) => [uid, player.stack]));
+
+                broadcast(matchId, { type: 'next-bettor', currentBettor: nextId, stacks });
+
                 return;
             }
         }
@@ -261,9 +405,10 @@ export default function attachWebSocket(server) {
         revealAndScore(matchId, state);
     }
 
+    // Evaluates hands, finds winner(s), splits pot, and moves to next round or ends game
     function revealAndScore(matchId, state) {
-        // Evaluate each player's hand
         const results = {};
+
         for (const [userId, player] of Object.entries(state.players)) {
             if (!player.folded) {
                 results[userId] = evaluateHand(player.dice);
@@ -286,13 +431,13 @@ export default function attachWebSocket(server) {
             }
         }
 
-        // Split the pot equally among winners
+        // Split pot equally among winners
         const share = Math.floor(state.pot / winners.length);
         for (const userId of winners) {
             state.players[userId].stack += share;
         }
 
-        // Reveal everyone's dice to all players
+        // Reveal all dice to all players
         const reveal = {};
         for (const [userId, player] of Object.entries(state.players)) {
             reveal[userId] = player.dice;
@@ -307,30 +452,135 @@ export default function attachWebSocket(server) {
         });
 
         state.pot = 0;
-
         state.round += 1;
 
-        if (state.round > state.totalRounds) {
-            endGame(matchId, state);
-        } else {
-            // Start next round — re-roll for everyone
-            startGame(matchId, state);
+        setTimeout(() => {
+            if (state.round > state.totalRounds) {
+                endGame(matchId, state);
+            } else {
+                startGame(matchId, state);
+            }
+        }, REVEAL_DELAY_MS);
+    }
+
+    function restorePlayerState(ws, userId, state) {
+        if (state.phase === 'waiting') {
+            const joinedCount = Object.keys(state.players).length;
+            if (joinedCount >= state.requiredPlayers) {
+                ws.send(JSON.stringify({ type: 'all-joined' }));
+            }
+            return;
+        }
+
+        const player = state.players[userId];
+
+        // Game hasn't started yet — broadcastToEach will send proper dice when it does
+        if (!player.dice || player.dice.includes(null)) return;
+
+        // Re-send game-started so the board re-initialises with their current dice
+        ws.send(
+            JSON.stringify({
+                type: 'game-started',
+                yourDice: player.dice ?? [],
+                rollsLeft: player.rollsLeft,
+                players: Object.keys(state.players)
+            })
+        );
+
+        // If betting is in progress, send the current betting state too
+        if (state.phase === 'betting') {
+            ws.send(
+                JSON.stringify({
+                    type: 'betting-start',
+                    currentBettor: state.currentBettor,
+                    pot: state.pot
+                })
+            );
         }
     }
 
-    function endGame(matchId, state) {
-        // Calculate final standings by stack size
+    // Broadcasts final standings and cleans up game state
+    async function endGame(matchId, state) {
         const standings = Object.entries(state.players)
             .map(([userId, player]) => ({ userId, stack: player.stack }))
-            .sort((a, b) => b.stack - a.stack);
+            .sort((playerA, playerB) => playerB.stack - playerA.stack);
 
-        broadcast(matchId, {
-            type: 'game-end',
-            standings
-        });
+        try {
+            // Fetch all players from DB so we have their current ELO
+            const userIds = standings.map((entry) => entry.userId);
+            const users = await User.find({ _id: { $in: userIds } });
 
-        // Clean up the game state
+            // Pair-based ELO: for every pair, higher stack = win
+            const eloK = 32;
+            const eloDeltas = {};
+            userIds.forEach((id) => {
+                eloDeltas[id] = 0;
+            });
+
+            for (let i = 0; i < standings.length; i++) {
+                for (let j = i + 1; j < standings.length; j++) {
+                    const entryA = standings[i];
+                    const entryB = standings[j];
+                    const userA = users.find((dbUser) => String(dbUser._id) === entryA.userId);
+                    const userB = users.find((dbUser) => String(dbUser._id) === entryB.userId);
+                    if (!userA || !userB) continue;
+
+                    const expectedScoreA = 1 / (1 + Math.pow(10, (userB.eloRating - userA.eloRating) / 400));
+                    const actualScoreA = entryA.stack === entryB.stack ? 0.5 : 1; // A is higher in standings
+
+                    eloDeltas[entryA.userId] += eloK * (actualScoreA - expectedScoreA);
+                    eloDeltas[entryB.userId] += eloK * (1 - actualScoreA - (1 - expectedScoreA));
+                }
+            }
+
+            // Pick the right per-time-control ELO field
+            const eloField =
+                state.timeController === 10
+                    ? 'eloRating10s'
+                    : state.timeController === 30
+                      ? 'eloRating30s'
+                      : state.timeController === 90
+                        ? 'eloRating90s'
+                        : null;
+
+            // Update each player's coins and ELO
+            for (const { userId, stack } of standings) {
+                const delta = Math.round(eloDeltas[userId]);
+                await User.findByIdAndUpdate(userId, {
+                    $inc: {
+                        coins: stack,
+                        eloRating: delta,
+                        ...(eloField ? { [eloField]: delta } : {})
+                    }
+                });
+            }
+
+            // Mark the match as finished in MongoDB
+            await Match.findOneAndUpdate(
+                { matchId: Number(matchId) },
+                {
+                    status: 'finished',
+                    endedAt: new Date(),
+                    winner: standings[0].userId,
+                    outcome: standings.map((entry) => entry.stack).join('-'),
+                    eloChanges: standings.map((entry) => ({
+                        userId: entry.userId,
+                        delta: Math.round(eloDeltas[entry.userId])
+                    }))
+                }
+            );
+        } catch (err) {
+            console.error('Error updating database at game end:', err);
+        }
+
+        for (const userId of Object.keys(state.players)) {
+            clearRollingTimer(matchId, userId);
+        }
+
         gameStates.delete(matchId);
+
+        // Broadcast only after DB writes are done
+        broadcast(matchId, { type: 'game-end', standings });
     }
 
     // Generates 5 random Spanish Poker Dice faces
@@ -339,7 +589,7 @@ export default function attachWebSocket(server) {
         return Array.from({ length: 5 }, () => faces[Math.floor(Math.random() * faces.length)]);
     }
 
-    // Sends each player their own dice, and tells them others exist but hides their dice
+    // Sends each player only their own dice — other players' dice stay hidden
     function broadcastToEach(matchId, state) {
         for (const [ws, client] of clients) {
             if (client.matchId !== matchId) continue;
@@ -351,7 +601,8 @@ export default function attachWebSocket(server) {
                     type: 'game-started',
                     yourDice: player.dice,
                     rollsLeft: player.rollsLeft,
-                    players: Object.keys(state.players)
+                    players: Object.keys(state.players),
+                    timeRemaining: Math.ceil(player.timeRemaining / 1000)
                 })
             );
         }

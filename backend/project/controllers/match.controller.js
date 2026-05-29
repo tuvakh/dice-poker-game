@@ -68,6 +68,15 @@ export async function joinMatch(req, res, next) {
     }
 }
 
+export async function leaveMatch(req, res, next) {
+    try {
+        const { matchId, userId } = matchedData(req);
+        const result = await matchServices.leaveMatch(matchId, userId);
+        res.status(200).json(result);
+    } catch (error) {
+        next(error);
+    }
+}
 
 // This exports the functions as a default objects, so routes can import them in one line
 export default {
@@ -75,5 +84,6 @@ export default {
     getMatch,
     createMatch,
     recordMatch,
-    joinMatch
+    joinMatch,
+    leaveMatch
 };

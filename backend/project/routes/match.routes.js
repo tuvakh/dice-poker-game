@@ -29,5 +29,6 @@ matchApiRouter.post('/matches/:matchId/join', requireUser, matchValidator.valida
 
 // This removes the player from the matchmaking queue
 matchApiRouter.delete('/matches/queue', queueValidator.validateLeaveQueue(), validate, queueController.leaveQueue);
+matchApiRouter.delete('/matches/:matchId/leave', matchValidator.validateJoinMatch(), validate, matchController.leaveMatch);
 
 export default matchApiRouter;

@@ -29,6 +29,12 @@ const matchSchema = new mongoose.Schema({
         ref: 'User',
         required: true
     }],
+    maxPlayers: { 
+        type: Number, 
+        min: 2, 
+        max: 5, 
+        default: 2 
+    },
     // rolls and holds store the dice actions during the game as arrays
     rolls: {
         type: Array
@@ -46,13 +52,6 @@ const matchSchema = new mongoose.Schema({
         type: String,
         enum: MATCH_STATUS,
         default: 'ongoing',
-        required: true
-    },
-    // isAnonymous separates anonymous matches from registered-user matches.
-    // Anonymous matches are excluded from platform activity and ELO updates.
-    isAnonymous: {
-        type: Boolean,
-        default: false,
         required: true
     },
     // gameCategory links this match to one of the 18 game variants
@@ -76,11 +75,6 @@ const matchSchema = new mongoose.Schema({
         userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
         delta: { type: Number }
     }],
-    // allowAnonymous lets the creator decide if anonymous users can join this match
-    allowAnonymous: {
-        type: Boolean,
-        default: false
-    },
     // desiredOpponentElo is the creator's preferred opponent Elo rating, used for lobby filtering
     desiredOpponentElo: {
         type: Number,
@@ -101,10 +95,6 @@ const matchSchema = new mongoose.Schema({
     wagerPaidOut: {
         type: Boolean,
         default: false
-    },
-    anonymousCount: { 
-        type: Number,
-        default: 0
     }
 });
 

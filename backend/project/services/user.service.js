@@ -80,6 +80,30 @@ function generatePasswordResetToken() {
     return { token, expires };
 }
 
+async function resendVerificationEmail(user) {
+    const hasValidVerificationToken = user.emailVerificationToken && user.emailVerificationTokenExpires && user.emailVerificationTokenExpires > new Date();
+    const tokenData = hasValidVerificationToken
+        ? { token: user.emailVerificationToken, expires: user.emailVerificationTokenExpires }
+        : generateEmailVerificationToken();
+
+    user.emailVerificationToken = tokenData.token;
+    user.emailVerificationTokenExpires = tokenData.expires;
+
+    if (!Array.isArray(user.emailVerificationTokens)) {
+        user.emailVerificationTokens = [];
+    }
+
+    const tokenAlreadyStored = user.emailVerificationTokens.some(entry => entry.token === tokenData.token);
+    if (!tokenAlreadyStored) {
+        user.emailVerificationTokens.push({ token: tokenData.token, expires: tokenData.expires });
+    }
+
+    await user.save();
+    await sendVerificationEmail(user.email, tokenData.token);
+
+    return tokenData;
+}
+
 
 
 export async function createUser(userObj) {
@@ -255,6 +279,12 @@ export async function loginUser(username, password) {
 
     // Prevent unverified users from logging in
     if (!user.emailVerified) {
+        try {
+            await resendVerificationEmail(user);
+            console.log('Verification email resent to:', user.email);
+        } catch (err) {
+            console.error('Failed to resend verification email:', err);
+        }
         throw new CustomError("Please verify your email before logging in. Check your inbox for the verification link.", 403, "FORBIDDEN");
     }
 
@@ -306,6 +336,28 @@ export async function banUser(userId) {
     return user;
 }
 
+// Unban a user (admin only)
+export async function unbanUser(userId) {
+    const user = await User.findOneAndUpdate({ userId }, { banned: false }, { new: true });
+    if (!user) {
+        throw new CustomError(`A user with the id ${userId}? Never heard of them!`, 404, "NOT_FOUND");
+    }
+    user.password = undefined;
+    return user;
+}
+
+// Change a user's role (admin only)
+export async function changeUserRole(userId, role) {
+    if (!['user', 'admin'].includes(role)) {
+        throw new CustomError('Invalid role', 400, 'BAD_REQUEST');
+    }
+    const user = await User.findOneAndUpdate({ userId }, { role }, { new: true }).select('-password');
+    if (!user) {
+        throw new CustomError(`A user with the id ${userId}? Never heard of them!`, 404, "NOT_FOUND");
+    }
+    return user;
+}
+
 // DEBUG: Check reset token status for troubleshooting
 export async function checkResetTokenStatus(email) {
     const user = await User.findOne({ email });
@@ -339,6 +391,8 @@ export default {
     loginUser,
     updateUser,
     banUser,
+    unbanUser,
+    changeUserRole,
     verifyEmailToken,
     requestPasswordReset,
     resetPassword,

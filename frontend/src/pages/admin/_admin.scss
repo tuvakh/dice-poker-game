@@ -1,0 +1,148 @@
+/* Admin layout and dashboard styles */
+
+.admin {
+  display: flex;
+  gap: 24px;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.admin__nav {
+  width: 220px;
+  background: var(--box-color, #f6f7fb);
+  border-radius: 8px;
+  padding: 16px;
+  height: calc(100vh - 48px);
+  position: sticky;
+  top: 24px;
+}
+
+.admin__nav h2 {
+  margin: 0 0 12px 0;
+  font-size: 18px;
+}
+
+.admin__nav nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.admin__nav nav li {
+  margin: 8px 0;
+}
+
+.admin__nav a {
+  color: var(--text-color, #222);
+  text-decoration: none;
+  padding: 8px 10px;
+  display: block;
+  border-radius: 6px;
+}
+
+.admin__nav a:hover,
+.admin__nav a.active {
+  background: var(--secondary-color, #e9eefb);
+}
+
+.admin__users {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin__users th, .admin__users td {
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  text-align: left;
+}
+
+.btn--danger {
+  background: #ff4d4f;
+  color: white;
+  border: none;
+  padding: 6px 8px;
+  border-radius: 6px;
+}
+
+.admin__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin__header h1 {
+  margin: 0 0 6px 0;
+}
+
+.admin__subtitle {
+  margin: 0 0 18px 0;
+  color: var(--muted-color, #666);
+}
+
+.admin__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  background: var(--secondary-color);
+  border: 1px solid var(--primary-color);
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px var(--primary-color);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  color: var(--die-face-color-black);
+}
+
+.stat-card__value {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: var(--text-color);
+}
+
+.stat-card__label {
+  color: var(--die-face-color-black);
+}
+
+.admin__actions {
+  margin-top: 8px;
+}
+
+.actions-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.btn--primary {
+  background: var(--primary-color, #1e60ff);
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn {
+  background: transparent;
+  border: 1px solid rgba(0,0,0,0.08);
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+@media (max-width: 800px) {
+  .admin {
+    flex-direction: column;
+  }
+
+  .admin__nav {
+    width: 100%;
+    height: auto;
+    position: relative;
+  }
+}
