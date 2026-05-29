@@ -1,8 +1,7 @@
 .queue-page {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: var(--normal-space);
+    gap: var(--big-space);
     width: 80%;
     margin: auto;
     padding: var(--big-space);
@@ -14,37 +13,73 @@
         font-weight: bold;
     }
 
-    h1 {
-        align-self: flex-start;
+    &__find {
+        display: flex;
+        flex-direction: column;
+        gap: var(--medium-space);
+        background-color: var(--secondary-color);
+        border-radius: var(--border-radius);
+        padding: var(--big-space);
     }
 
-    p {
-        align-self: flex-start;
+    &__find-text {
+        display: flex;
+        flex-direction: column;
+        gap: var(--mini-space);
     }
 
-    .form {
-        width: 100%;
-    }
-}
-
-.queue-searching {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--medium-space);
-    padding-block: var(--big-space);
-    text-align: center;
-
-    &__label {
-        font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
-        font-size: 1.6rem;
-        color: var(--fake-link-color);
-        letter-spacing: 0.05em;
+    &__filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--medium-space);
     }
 
-    &__hint {
+    &__filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: var(--mini-space);
+    }
+
+    &__filter-label {
+        font-weight: bold;
         font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        opacity: 0.8;
+    }
+
+    &__chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--mini-space);
+    }
+
+    &__rooms {
+        display: flex;
+        flex-direction: column;
+        gap: var(--medium-space);
+    }
+
+    &__rooms-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--normal-space);
+    }
+
+    &__create-link {
+        color: var(--fake-link-color);
+        font-weight: bold;
+        text-decoration: underline;
+        white-space: nowrap;
+
+        &:hover {
+            opacity: 0.8;
+        }
+    }
+
+    &__empty {
         opacity: 0.7;
-        max-width: 40ch;
+        font-style: italic;
     }
 }

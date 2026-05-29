@@ -1,150 +1,114 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext.jsx";
-import { useSoundEffects } from "../hooks/useSoundEffects.js";
 import { getAllGameCategories } from "../api/gameCategories.js";
-import { joinQueue, leaveQueue, getAllMatches } from "../api/matches.js";
-import RoundsSelector from "../components/RoundsSelector.jsx";
-import GameRulesSelector from "../components/GameRulesSelector.jsx";
-import TimeControlSelector from "../components/TimeControlSelector.jsx";
+import { getAllMatches, createMatch } from "../api/matches.js";
+import { usePolling } from "../hooks/usePolling.js";
+import GameCard from "../components/GameCard.jsx";
 import Spinner from "../components/Spinner.jsx";
 import Button from "../components/Button.jsx";
 
-// Matchmaking states
-const STATE = {
-    IDLE: "idle",
-    SEARCHING: "searching",
-    MATCHED: "matched",
-};
-
-// The queue page lets logged-in users find a match automatically based on ELO
+// The queue page lets users find a room automatically or browse and pick one manually
 export default function Queue() {
     const navigate = useNavigate();
     const { user } = useAuth();
-    const { playClick, playJoin } = useSoundEffects();
 
     const [categories, setCategories] = useState([]);
-    const [formData, setFormData] = useState({
-        numberOfRounds: 3,
-        gameRules: "straights_allowed",
-        timeController: null,
-    });
-    const [queueState, setQueueState] = useState(STATE.IDLE);
+    const [selectedRounds, setSelectedRounds] = useState(null);
+    const [selectedRules, setSelectedRules] = useState(null);
+    const [selectedTime, setSelectedTime] = useState(null);
+    const [rooms, setRooms] = useState([]);
+    const [roomsLoading, setRoomsLoading] = useState(true);
     const [joining, setJoining] = useState(false);
-    const [waitSeconds, setWaitSeconds] = useState(0);
     const [error, setError] = useState(null);
 
-    const pollRef = useRef(null);
-    const timerRef = useRef(null);
-
-    // Load categories on mount so we know which timeController values actually exist
     useEffect(() => {
         getAllGameCategories().then(data => {
             setCategories(data);
             if (data.length > 0) {
-                const first = data[0];
-                setFormData({
-                    numberOfRounds: first.numberOfRounds,
-                    gameRules: first.gameRules,
-                    timeController: first.timeController,
-                });
+                setSelectedRounds(data[0].numberOfRounds);
+                setSelectedRules(data[0].gameRules);
+                setSelectedTime(data[0].timeController);
             }
         });
     }, []);
 
-    function handleChange(field, value) {
-        setFormData(prev => ({ ...prev, [field]: value }));
+    function fetchRooms() {
+        getAllMatches({ status: "waiting", limit: 50 })
+            .then(data => setRooms(data.matchList))
+            .catch(() => {})
+            .finally(() => setRoomsLoading(false));
     }
 
-    // Clean up polling and timer on unmount or when leaving queue
-    function clearTimers() {
-        if (pollRef.current) clearInterval(pollRef.current);
-        if (timerRef.current) clearInterval(timerRef.current);
+    usePolling(fetchRooms, 8000);
+
+    // Unique filter options derived from loaded categories
+    const roundsOptions = Array.from(new Set(categories.map(c => c.numberOfRounds))).sort((a, b) => a - b);
+    const rulesOptions = Array.from(new Set(categories.map(c => c.gameRules)));
+    const timeOptions = Array.from(new Set(categories.map(c => c.timeController))).sort((a, b) => a - b);
+
+    // Find the category that matches the current filter selection
+    function getSelectedCategory() {
+        return categories.find(c =>
+            c.numberOfRounds === selectedRounds &&
+            c.gameRules === selectedRules &&
+            c.timeController === selectedTime
+        );
     }
 
-    useEffect(() => {
-        return clearTimers;
-    }, []);
+    // Filter rooms client-side to match the selected settings
+    const categoryById = categories.reduce((acc, c) => { acc[c._id || c.id] = c; return acc; }, {});
+    const filteredRooms = rooms.filter(match => {
+        const cat = match.gameCategory && (
+            typeof match.gameCategory === "object" ? match.gameCategory : categoryById[match.gameCategory]
+        );
+        if (!cat) return false;
+        if (selectedRounds !== null && cat.numberOfRounds !== selectedRounds) return false;
+        if (selectedRules !== null && cat.gameRules !== selectedRules) return false;
+        if (selectedTime !== null && cat.timeController !== selectedTime) return false;
+        return true;
+    });
 
-    async function handleFindMatch() {
+    // Finds an open room matching the filters, or creates a new one, then navigates there
+    async function handleFindRoom() {
         setError(null);
         setJoining(true);
-        playClick();
-
         try {
-            const category = categories.find(c =>
-                c.numberOfRounds === formData.numberOfRounds &&
-                c.gameRules === formData.gameRules &&
-                c.timeController === formData.timeController
-            );
+            const category = getSelectedCategory();
             if (!category) {
-                setError("Could not find a matching game variant. Please try different settings.");
-                setJoining(false);
+                setError("No game variant matches your settings. Try a different combination.");
                 return;
             }
 
-            const result = await joinQueue(user._id, category._id);
+            // Look for a waiting room the user hasn't joined yet
+            const data = await getAllMatches({ status: "waiting", gameCategoryId: category._id, limit: 10 });
+            const openRoom = data.matchList.find(m =>
+                !m.players.some(p => p._id === user._id)
+            );
 
-            if (result.status === "matched") {
-                playJoin();
-                setQueueState(STATE.MATCHED);
-                navigate(`/game/${result.match.matchId}`);
+            if (openRoom) {
+                navigate(`/game/${openRoom.matchId}`);
                 return;
             }
 
-            // Status "waiting" — snapshot existing match IDs so we only navigate to a NEW match
-            const existingData = await getAllMatches({ userId: user._id, status: "waiting" });
-            const existingIds = new Set(existingData.matchList.map(m => m.matchId));
-
-            setQueueState(STATE.SEARCHING);
-            setWaitSeconds(0);
-
-            timerRef.current = setInterval(() => {
-                setWaitSeconds(s => s + 1);
-            }, 1000);
-
-            pollRef.current = setInterval(async () => {
-                try {
-                    const data = await getAllMatches({ userId: user._id, status: "waiting" });
-                    // Only navigate to a match that didn't exist before we joined the queue
-                    const newMatch = data.matchList.find(m => !existingIds.has(m.matchId));
-                    if (newMatch) {
-                        clearTimers();
-                        playJoin();
-                        setQueueState(STATE.MATCHED);
-                        navigate(`/game/${newMatch.matchId}`);
-                    }
-                } catch {
-                    // keep polling on transient errors
-                }
-            }, 3000);
-
+            // No open room found — create a new one and wait there
+            const newMatch = await createMatch({
+                gameCategoryId: category._id,
+                players: [user._id],
+            });
+            navigate(`/game/${newMatch.matchId}`);
         } catch (err) {
-            setError(err.message ?? "Could not join queue. Please try again.");
+            setError(err.message ?? "Something went wrong. Please try again.");
         } finally {
             setJoining(false);
         }
     }
 
-    async function handleCancel() {
-        clearTimers();
-        setQueueState(STATE.IDLE);
-        setWaitSeconds(0);
-        setError(null);
-        playClick();
-        try {
-            await leaveQueue(user._id);
-        } catch {
-            // ignore — queue entry may have already been matched and removed
-        }
-    }
-
-    // Anonymous users can only spectate
     if (!user) {
         return (
             <section className="queue-page">
                 <h1>Find a Match</h1>
-                <p>You need to be logged in to use matchmaking.</p>
+                <p>You need to be logged in to join or create a room.</p>
                 <div className="greeting">
                     <Link className="greeting__button" to="/login">Login</Link>
                     <Link className="greeting__button" to="/register">Register</Link>
@@ -157,35 +121,91 @@ export default function Queue() {
         <section className="queue-page">
             <Link to="/" className="back-link queue-page__back">← Back</Link>
 
-            <h1>Find a Match</h1>
-            <p>Choose your game settings and we&apos;ll find you the best opponent.</p>
-
-            {queueState === STATE.IDLE && (
-                categories.length === 0
-                    ? <Spinner />
-                    : <form className="form" onSubmit={e => { e.preventDefault(); handleFindMatch(); }}>
-                        <div className="form__inputs">
-                            <RoundsSelector onChange={handleChange} />
-                            <GameRulesSelector onChange={handleChange} />
-                            <TimeControlSelector onChange={handleChange} />
-                        </div>
-                        {error && <p className="status status--error">{error}</p>}
-                        <Button type="submit" disabled={joining}>
-                            {joining ? "Finding…" : "Find Match"}
-                        </Button>
-                    </form>
-            )}
-
-            {queueState === STATE.SEARCHING && (
-                <div className="queue-searching">
-                    <Spinner />
-                    <p className="queue-searching__label">Searching for an opponent… {waitSeconds}s</p>
-                    <p className="queue-searching__hint">
-                        ELO range widens the longer you wait — you&apos;ll always find someone eventually.
-                    </p>
-                    <Button variant="danger" onClick={handleCancel}>Cancel</Button>
+            <div className="queue-page__find">
+                <div className="queue-page__find-text">
+                    <h1>Find a Match</h1>
+                    <p>Pick your settings and we&apos;ll drop you into an open room — or create a new one if none exist.</p>
                 </div>
-            )}
+
+                {categories.length === 0 ? <Spinner /> : (
+                    <>
+                        <div className="queue-page__filters">
+                            <div className="queue-page__filter-group">
+                                <span className="queue-page__filter-label">Rounds</span>
+                                <div className="queue-page__chips">
+                                    {roundsOptions.map(r => (
+                                        <Button
+                                            key={r}
+                                            type="button"
+                                            className={`btn--chip${selectedRounds === r ? " btn--chip--active" : ""}`}
+                                            onClick={() => setSelectedRounds(r)}
+                                        >
+                                            {r}
+                                        </Button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="queue-page__filter-group">
+                                <span className="queue-page__filter-label">Straights</span>
+                                <div className="queue-page__chips">
+                                    {rulesOptions.map(r => (
+                                        <Button
+                                            key={r}
+                                            type="button"
+                                            className={`btn--chip${selectedRules === r ? " btn--chip--active" : ""}`}
+                                            onClick={() => setSelectedRules(r)}
+                                        >
+                                            {r === "straights_allowed" ? "Allowed" : "No straights"}
+                                        </Button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="queue-page__filter-group">
+                                <span className="queue-page__filter-label">Time</span>
+                                <div className="queue-page__chips">
+                                    {timeOptions.map(t => (
+                                        <Button
+                                            key={t}
+                                            type="button"
+                                            className={`btn--chip${selectedTime === t ? " btn--chip--active" : ""}`}
+                                            onClick={() => setSelectedTime(t)}
+                                        >
+                                            {t}s
+                                        </Button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {error && <p className="status status--error">{error}</p>}
+
+                        <Button onClick={handleFindRoom} disabled={joining}>
+                            {joining ? "Finding room…" : "Find a Room"}
+                        </Button>
+                    </>
+                )}
+            </div>
+
+            <div className="queue-page__rooms">
+                <div className="queue-page__rooms-header">
+                    <h2>Open Rooms</h2>
+                    <Link to="/createGame" className="queue-page__create-link">+ Create a Room</Link>
+                </div>
+
+                {roomsLoading ? (
+                    <Spinner />
+                ) : filteredRooms.length === 0 ? (
+                    <p className="queue-page__empty">No open rooms match your settings right now.</p>
+                ) : (
+                    <div className="cards-grid">
+                        {filteredRooms.map(match => (
+                            <GameCard key={match.matchId} match={match} />
+                        ))}
+                    </div>
+                )}
+            </div>
         </section>
     );
 }

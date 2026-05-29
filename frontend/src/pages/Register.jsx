@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext.jsx";
 
 import Button from "../components/Button.jsx";
@@ -108,7 +109,7 @@ export default function Register (){
                     />
                 </FormField>
                 
-                <FormField label="I agree to terms and conditions" inline>
+                <FormField label={<>I agree to the <Link to="/terms">terms and conditions</Link></>} inline>
                     <input
                         aria-label="I agree to terms and conditions"
                         type="checkbox"

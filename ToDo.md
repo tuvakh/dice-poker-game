@@ -25,7 +25,7 @@
     3. comment administration
     4. tournament creation
 22. ✅ anonymous can no longer play just spectate --> Chanya
-23. Focus on match making switches focus from queue to "rooms" where player can join and wait for other players to join.
+23. Focus on match making switches focus from queue to "rooms" where player can join and wait for other players to join. --> Chanya 
 24. Seeding script.
 25. ✅ verify email when signing up --> Marie
 
