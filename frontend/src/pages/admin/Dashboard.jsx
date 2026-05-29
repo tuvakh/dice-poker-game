@@ -46,13 +46,6 @@ export default function AdminDashboard(){
                 </div>
             </section>
 
-            <section className="admin__actions">
-                <h2>Quick Actions</h2>
-                <div className="actions-row">
-                    <button className="btn btn--primary">Recalculate Rankings</button>
-                    <button className="btn">Run Maintenance</button>
-                </div>
-            </section>
         </div>
     );
 }
