@@ -5,6 +5,7 @@ import { useSoundEffects } from "../hooks/useSoundEffects";
 const navItems = [
   { label: "Home", path: "/"},
   { label: "Lobby", path: "/lobby" },
+  { label: "Leaderboard", path: "/leaderboard" },
   { label: "Tournaments", path: "/tournament" },
   { label: "About the game", path: "/aboutGame" },
 ];
