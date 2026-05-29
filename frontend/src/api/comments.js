@@ -22,3 +22,12 @@ export async function createComment(data) {
     });
     return handleResponse(res);
 }
+
+// Deletes a comment by commentId (admin only)
+export async function deleteComment(commentId) {
+    const res = await fetch(`${BASE_URL}/comments/${commentId}`, {
+        method: "DELETE",
+        headers: { ...getAuthHeaders() }
+    });
+    return handleResponse(res);
+}

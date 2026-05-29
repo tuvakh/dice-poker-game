@@ -91,6 +91,72 @@ export async function banUser(req, res, next){
     }
 }
 
+// Unban user (admin only)
+export async function unbanUser(req, res, next){
+    try {
+        const { userId } = matchedData(req);
+        const result = await userServices.unbanUser(userId);
+        res.status(200).json(result);
+    } catch (error) {
+        next(error);
+    }
+}
+
+// Change user's role (admin only)
+export async function changeRole(req, res, next){
+    try {
+        const { userId, role } = matchedData(req);
+        const result = await userServices.changeUserRole(userId, role);
+        res.status(200).json(result);
+    } catch (error) {
+        next(error);
+    }
+}
+
+// Verifies a user's email using a token sent in the request body
+export async function verifyEmail(req, res, next) {
+    try {
+        const { token } = matchedData(req);
+        const result = await userServices.verifyEmailToken(token);
+        res.status(200).json({ message: 'Email verified', user: result });
+    } catch (error) {
+        next(error);
+    }
+}
+
+// Sends a password reset email if the account exists
+export async function forgotPassword(req, res, next) {
+    try {
+        const { email } = matchedData(req);
+        const result = await userServices.requestPasswordReset(email);
+        res.status(200).json(result);
+    } catch (error) {
+        next(error);
+    }
+}
+
+// Resets the password using the code from the email link
+export async function resetPassword(req, res, next) {
+    try {
+        const { code, password } = matchedData(req);
+        const result = await userServices.resetPassword(code, password);
+        res.status(200).json(result);
+    } catch (error) {
+        next(error);
+    }
+}
+
+// DEBUG ENDPOINT: Check reset token status for an email (for troubleshooting)
+export async function checkResetTokenStatus(req, res, next) {
+    try {
+        const { email } = req.query;
+        const result = await userServices.checkResetTokenStatus(email);
+        res.status(200).json(result);
+    } catch (error) {
+        next(error);
+    }
+}
+
 // This exports the functions as a default objects, so routes can import them in one line
 export default {
 	getAllUsers,
@@ -98,5 +164,11 @@ export default {
 	createUser,
     loginUser,
     updateUser,
-    banUser
+    banUser,
+    unbanUser,
+    changeRole,
+    verifyEmail,
+    forgotPassword,
+    resetPassword,
+    checkResetTokenStatus
 };

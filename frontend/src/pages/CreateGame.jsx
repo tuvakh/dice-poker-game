@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import RoundsSelector from "../components/RoundsSelector.jsx";
 import GameRulesSelector from "../components/GameRulesSelector.jsx";

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext.jsx";
 
 import Button from "../components/Button.jsx";
@@ -10,7 +10,8 @@ import FormField from "../components/FormField.jsx";
 // If not, an error message shows up.
 export default function Login (){
     const navigate = useNavigate();
-    const { login } = useAuth();
+    const location = useLocation();
+    const { login, handleBan } = useAuth();
 
     // These hold what the user is currently typing in each input
     const [username, setUsername] = useState("");
@@ -20,6 +21,7 @@ export default function Login (){
     // fieldErrors shows a message under a specific input 
     const [error, setError] = useState(null);
     const [fieldErrors, setFieldErrors] = useState({});
+    const infoMessage = location.state?.message ?? "";
 
     async function handleSubmit(event) {
         // Prevent the browser from reloading the page when the form is submitted
@@ -31,8 +33,13 @@ export default function Login (){
             await login(username, password);
             navigate("/");
         } catch (err) {
-            if (err.fieldErrors) setFieldErrors(err.fieldErrors);
-            else setError(err.message);
+            // Check if the error is due to banned account
+            if (err.message.includes("banned") || err.code === "FORBIDDEN") {
+                handleBan(err.message);
+            } else {
+                if (err.fieldErrors) setFieldErrors(err.fieldErrors);
+                else setError(err.message);
+            }
         }
     }
 
@@ -54,10 +61,11 @@ export default function Login (){
                         type="password"
                     />
                 </FormField>
+                {infoMessage && <p className="status status--info">{infoMessage}</p>}
                 {error && <p className="status status--error">{error}</p>}
                 <div className="login">
                     <Button type="submit">Login</Button>
-                    <Link to="#">Forgot password?</Link> {/* not implemented yet */}
+                    <Link to="/forgot-password">Forgot password?</Link>
                 </div>
             </form>
         </section>

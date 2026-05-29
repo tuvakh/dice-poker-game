@@ -166,5 +166,13 @@
         "age": 22,
         "eloRating": 1000,
         "role": "user"
+    },
+    {
+        "username": "BeevieKu",
+        "email": "BeevieKu@test.com",
+        "password": "12345678!",
+        "age": 21,
+        "eloRating": 5000,
+        "role": "admin"
     }
 ]

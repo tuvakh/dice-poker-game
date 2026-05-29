@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router";
+import { useParams } from "react-router-dom";
 import { getUser, updateUser } from "../api/users.js";
 import { useAuth } from "../contexts/AuthContext.jsx";
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 
 import Spinner from "../components/Spinner.jsx";
 import FormField from "../components/FormField.jsx";
@@ -10,6 +10,9 @@ import Button from "../components/Button.jsx";
 import TrophyBadge from "../components/TrophyBadge.jsx";
 import ProfileImage from "../components/ProfileImage.jsx";
 import GameCard from "../components/GameCard.jsx";
+
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+const MODULE_CUTOFF = Date.now() - THIRTY_DAYS_MS;
 
 // The user profile page shows a user's avatar, bio, stats, trophies, and recent games
 // If you're viewing your own profile, you also get an edit button
@@ -33,6 +36,10 @@ export default function User() {
     const [saveSuccess, setSaveSuccess] = useState(false);
     const [fieldErrors, setFieldErrors] = useState({});
 
+    const recentMonthGames = profile?.recentGames
+        ? profile.recentGames.filter(match => match.endedAt && Date.parse(match.endedAt) >= MODULE_CUTOFF)
+        : [];
+
     // Load the profile when the page opens, or if the id in the URL changes
     useEffect(() => {
         getUser(id)
@@ -48,6 +55,8 @@ export default function User() {
             .catch(() => setError("Failed to load profile. Please try again."))
             .finally(() => setLoading(false));
             }, [id, user?.userId, updateUserData]);
+
+    // recentMonthGames is derived above; no effect needed
 
     if (loading) return <Spinner />;
     if (error) return <p className="status status--error">{error}</p>;
@@ -103,13 +112,7 @@ export default function User() {
         }
     }
 
-    // Calculate what date it was 30 days ago (in milliseconds, then converted to a Date)
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-
-    // Filter to only games finished in the last 30 days
-    const recentMonthGames = profile.recentGames?.filter(match =>
-        match.endedAt && new Date(match.endedAt) >= thirtyDaysAgo
-    ) ?? [];
+    
 
     // A win is when the winner ID matches this user's ID
     const wins = recentMonthGames.filter(match => match.winner?.toString() === profile._id?.toString()).length;
@@ -146,16 +149,16 @@ export default function User() {
                             {saveSuccess && <p className="status status--success">Profile updated successfully</p>}
 
                             <FormField label="Email" error={fieldErrors.email}>
-                                <input value={editData.email} placeholder="Your email" onChange={event => handleChange("email", event.target.value)} type="email" />
+                                <input aria-label="Email" value={editData.email} placeholder="Your email" onChange={event => handleChange("email", event.target.value)} type="email" />
                             </FormField>
 
                             {/* maxLength stops the user from typing more than 160 characters */}
                             <FormField label="About me" error={fieldErrors.aboutMe}>
-                                <input value={editData.aboutMe} placeholder="Write a description about yourself" maxLength={160} onChange={event => handleChange("aboutMe", event.target.value)} />
+                                <input aria-label="About me" value={editData.aboutMe} placeholder="Write a description about yourself" maxLength={160} onChange={event => handleChange("aboutMe", event.target.value)} />
                             </FormField>
 
                             <FormField label="New password" error={fieldErrors.password}>
-                                <input value={editData.password} placeholder="Want to change your password?" onChange={event => handleChange("password", event.target.value)} type="password" />
+                                <input aria-label="New password" value={editData.password} placeholder="Want to change your password?" onChange={event => handleChange("password", event.target.value)} type="password" />
                             </FormField>
 
                             {/* accept="image/*" restricts the file picker to image files only */}
