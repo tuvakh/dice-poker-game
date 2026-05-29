@@ -33,4 +33,10 @@ userApiRouter.put('/users/:userId', userValidator.validateUserId(), upload.singl
 // Only admins can ban users
 userApiRouter.put('/users/:userId/ban', userValidator.validateUserId(), validate, requireAdmin, userController.banUser);
 
+// Unban user
+userApiRouter.put('/users/:userId/unban', userValidator.validateUserId(), validate, requireAdmin, userController.unbanUser);
+
+// Change role (admin only)
+userApiRouter.put('/users/:userId/role', userValidator.validateUserId(), userValidator.validateChangeRole(), validate, requireAdmin, userController.changeRole);
+
 export default userApiRouter;

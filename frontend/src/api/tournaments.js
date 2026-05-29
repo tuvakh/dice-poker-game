@@ -34,3 +34,13 @@ export async function leaveTournament(id, userId) {
     });
     return handleResponse(res);
 }
+
+// Creates a tournament (admin only)
+export async function createTournament(data) {
+    const res = await fetch(`${BASE_URL}/tournaments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+        body: JSON.stringify(data)
+    });
+    return handleResponse(res);
+}

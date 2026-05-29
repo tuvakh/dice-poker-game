@@ -145,6 +145,14 @@ export function validateUpdateUser(){
     ];
 }
 
+export function validateChangeRole(){
+    return [
+        body('role')
+            .notEmpty()
+            .isIn(['user','admin']).withMessage('Role must be user or admin')
+    ];
+}
+
 // Validates the verification token sent by the frontend
 export function validateVerifyEmail(){
     return [
@@ -160,6 +168,7 @@ export default {
     validateCreateUser,
     validateLogin,
     validateUpdateUser,
+    validateChangeRole,
     validateVerifyEmail,
     validateForgotPassword,
     validateResetPassword

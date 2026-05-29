@@ -91,6 +91,28 @@ export async function banUser(req, res, next){
     }
 }
 
+// Unban user (admin only)
+export async function unbanUser(req, res, next){
+    try {
+        const { userId } = matchedData(req);
+        const result = await userServices.unbanUser(userId);
+        res.status(200).json(result);
+    } catch (error) {
+        next(error);
+    }
+}
+
+// Change user's role (admin only)
+export async function changeRole(req, res, next){
+    try {
+        const { userId, role } = matchedData(req);
+        const result = await userServices.changeUserRole(userId, role);
+        res.status(200).json(result);
+    } catch (error) {
+        next(error);
+    }
+}
+
 // Verifies a user's email using a token sent in the request body
 export async function verifyEmail(req, res, next) {
     try {
@@ -143,6 +165,8 @@ export default {
     loginUser,
     updateUser,
     banUser,
+    unbanUser,
+    changeRole,
     verifyEmail,
     forgotPassword,
     resetPassword,
