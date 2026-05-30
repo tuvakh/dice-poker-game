@@ -26,7 +26,7 @@ export async function createMatch(data) {
     const res = await fetch(`${BASE_URL}/matches`, {
         method: "POST",
         // JSON.stringify converts the JS object to a string the backend can read
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
         body: JSON.stringify(data)
     });
     return handleResponse(res);
@@ -67,7 +67,7 @@ export async function leaveQueue(userId) {
 export async function leaveMatch(id, userId) {
     const res = await fetch(`${BASE_URL}/matches/${id}/leave`, {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
         body: JSON.stringify({ userId })
     });
     return handleResponse(res);

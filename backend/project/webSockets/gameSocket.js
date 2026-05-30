@@ -201,7 +201,7 @@ export default function attachWebSocket(server) {
                 }
 
                 if (action === 'bet' || action === 'raise') {
-                    if (amount <= 0 || amount > player.stack) return;
+                    if (amount <= 0 || amount > player.stack || amount <= state.highestBet) return;
                     player.bet = amount;
                     player.stack -= amount;
                     state.pot += amount;
@@ -238,25 +238,10 @@ export default function attachWebSocket(server) {
                 const state = gameStates.get(matchId);
                 if (!state) return;
 
-                // Rolling phase: timer handles auto-completion — allows rejoin before it fires
-
-                // Betting phase: auto-match if it was their turn
-                if (state.phase === 'betting' && state.currentBettor === userId) {
-                    const player = state.players[userId];
-                    if (player) {
-                        const toMatch = state.highestBet - player.bet;
-                        player.bet = state.highestBet;
-                        player.stack -= toMatch;
-                        state.pot += toMatch;
-                        broadcast(matchId, { type: 'player-matched', userId, pot: state.pot });
-                        advanceBetting(matchId, state);
-                    }
-                }
-
-                if (state.phase === 'betting' && state.currentBettor !== userId) {
-                    const player = state.players[userId];
-                    if (player) player.disconnected = true;
-                }
+                state.forfeitBy = userId;
+                delete state.players[userId];
+                broadcast(matchId, { type: 'player-disconnected', userId });
+                endGame(matchId, state);
             }
         });
     });
@@ -580,7 +565,7 @@ export default function attachWebSocket(server) {
         gameStates.delete(matchId);
 
         // Broadcast only after DB writes are done
-        broadcast(matchId, { type: 'game-end', standings });
+        broadcast(matchId, { type: 'game-end', standings, forfeitBy: state.forfeitBy ?? null });
     }
 
     // Generates 5 random Spanish Poker Dice faces

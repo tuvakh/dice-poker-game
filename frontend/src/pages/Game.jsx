@@ -36,6 +36,7 @@ export default function Game() {
     const [timeLeft, setTimeLeft] = useState(null);
     const timerRef = useRef(null);
     const [readySent, setReadySent] = useState(false);
+    const [forfeitBy, setForfeitBy] = useState(null);
 
     // Fetches the latest match data from the backend
     async function fetchMatch() {
@@ -69,14 +70,20 @@ export default function Game() {
         wsRef.current?.send(JSON.stringify({ type: 'bet', action, amount }));
     }
 
-    async function handleLeave() {
+    const handleLeave = async () => {
+        if (!user || !match) return;
+        if (match.status === 'ongoing') {
+            wsRef.current?.close();
+            navigate('/');
+            return;
+        }
         try {
             await leaveMatch(match.matchId, user._id);
             navigate('/');
         } catch (err) {
             setError(err.message);
         }
-    }
+    };
 
 
     // Poll the match every 15 seconds to check if someone joined
@@ -92,7 +99,7 @@ export default function Game() {
     useEffect(() => {
         if (!match || hasJoined.current || !user) return;
 
-        const isPlayer = match.players.some(player => player._id === user._id);
+        const isPlayer = match.players.some(player => player?._id === user._id);
 
         if (!isPlayer && match.status === "waiting") {
             hasJoined.current = true;
@@ -106,6 +113,12 @@ export default function Game() {
 
         if (message.type === 'all-joined') {
             setGamePhase('ready');
+        }
+
+        if (message.type === 'player-disconnected') {
+            setForfeitBy(message.userId);
+            clearInterval(timerRef.current);
+            setTimeLeft(null);
         }
 
         if (message.type === 'game-started') {
@@ -126,12 +139,12 @@ export default function Game() {
                 const currentPlayers = matchRef.current?.players ?? match.players;
 
                 const allPlayerIds = new Set([
-                    ...currentPlayers.map(player => player._id),
+                    ...currentPlayers.map(player => player?._id).filter(Boolean),
                     ...message.players
                 ]);
 
                 allPlayerIds.forEach(playerId => {
-                    const playerData = currentPlayers.find(player => player._id === playerId);
+                    const playerData = currentPlayers.find(player => player?._id === playerId);
                     board.addPlayer(playerId, playerData?.username ?? playerId);
                     if (playerId !== user?._id) {
                         board.setDice(playerId, ['?', '?', '?', '?', '?'], true);
@@ -215,11 +228,19 @@ export default function Game() {
                     eloRating: freshUser.eloRating
                 }));
             }
+            if (message.forfeitBy) setForfeitBy(message.forfeitBy);
         }
     }
 
     useEffect(() => {
         if (!match || match.status !== 'ongoing') return;
+
+        if (match.coinWager > 0 && user) {
+            getUser(user.userId).then(freshUser => updateUserData({
+                coins: freshUser.coins,
+                eloRating: freshUser.eloRating
+            }));
+        }
 
         // Connect to the WebSocket server
         const ws = new WebSocket('ws://localhost:3000');
@@ -273,20 +294,26 @@ export default function Game() {
         };
     }, [gamePhase]);
 
+    useEffect(() => {
+        if (bettingState) {
+            setBetAmount(bettingState.highestBet + 1);
+        }
+    }, [bettingState?.highestBet]);
+
     if (error) return <p className="status status--error">{error}</p>;
     if (!match) return <Spinner />;
 
     return (
         <>
-        {!user && (
-            <div className="spectator-banner">
-                <p>You&apos;re spectating. <Link to="/login">Log in</Link> or <Link to="/register">register</Link> to play.</p>
-            </div>
-        )}
+            {!user && (
+                <div className="spectator-banner">
+                    <p>You&apos;re spectating. <Link to="/login">Log in</Link> or <Link to="/register">register</Link> to play.</p>
+                </div>
+            )}
             <div className="game">
                 <div className="game__main">
                     <div className="game__players">
-                        {match.players.map(player => (
+                        {match.players.filter(Boolean).map(player => (
                             <PlayerInfo key={player._id} user={player} showImage />
                         ))}
                     </div>
@@ -296,7 +323,7 @@ export default function Game() {
                                 {user ? (
                                     <>
                                         <p>Waiting for other players to join...</p>
-                                        {match.players.some(player => player._id === user._id) && (
+                                        {match.players.some(player => player?._id === user._id) && (
                                             <button onClick={handleLeave}>
                                                 {match.players.length === 1 ? 'Cancel game' : 'Leave game'}
                                             </button>
@@ -308,22 +335,35 @@ export default function Game() {
                             </div>
                         )}
 
-                        {match.status === "ongoing" && gamePhase !== 'ended' && (
+                        {match.status === "ongoing" && gamePhase !== 'ended' && !forfeitBy && (
                             <>
-                                {gamePhase === 'rolling' && timeLeft !== null && (
-                                    <p className="game__timer">⏱ {timeLeft}s</p>
-                                )}
-                                {gamePhase === 'ready' && (
-                                    <div className="game__ready-overlay">
-                                        {readySent
-                                            ? <p>Waiting for opponent...</p>
-                                            : <button onClick={handleReady}>Ready</button>
-                                        }
+                                {forfeitBy ? (
+                                    <div className="game__forfeit-notice">
+                                        <p>{match.players.find(player => player?._id === forfeitBy)?.username ?? 'Opponent'} left the game</p>
+                                        <p>Waiting for results...</p>
                                     </div>
+                                ) : (
+                                    <>
+                                        {gamePhase === 'rolling' && timeLeft !== null && (
+                                            <p className="game__timer">⏱ {timeLeft}s</p>
+                                        )}
+                                        {gamePhase === 'ready' && (
+                                            <div className="game__ready-overlay">
+                                                {readySent
+                                                    ? <p>Waiting for opponent...</p>
+                                                    : <button onClick={handleReady}>Ready</button>
+                                                }
+                                            </div>
+                                        )}
+                                        <dice-poker-board ref={boardRef}></dice-poker-board>
+                                        {user && match.players.some(player => player?._id === user._id) && (
+                                            <button onClick={handleLeave}>Leave game</button>
+                                        )}
+                                    </>
                                 )}
-                                <dice-poker-board ref={boardRef}></dice-poker-board>
                             </>
                         )}
+
 
                         {match.status === "finished" && !gamePhase && (
                             <div className="game__ended">
@@ -332,55 +372,58 @@ export default function Game() {
                             </div>
                         )}
 
-                        {gamePhase === 'ended' && standings && (
+                        {(gamePhase === 'ended' || forfeitBy) && (
                             <div className="game__ended">
                                 <h2>Game over</h2>
-                                <ol className="game__standings">
-                                    {standings.map((entry, i) => {
-                                        const player = match.players.find(matchPlayer => matchPlayer._id === entry.userId);
-                                        const name = player?.username;
-                                        return (
-                                            <li key={entry.userId}>
-                                                {i === 0 && '🏆 '}{name} — {entry.stack} coins
-                                            </li>
-                                        );
-                                    })}
-                                </ol>
+                                {forfeitBy && (
+                                    <p>{match.players.find(player => player?._id === forfeitBy)?.username ?? 'Opponent'} left the game</p>
+                                )}
+                                {standings && (
+                                    <ol className="game__standings">
+                                        {standings.map((entry, i) => {
+                                            const player = match.players.find(matchPlayer => matchPlayer?._id === entry.userId);
+                                            const name = player?.username;
+                                            return (
+                                                <li key={entry.userId}>
+                                                    {i === 0 && '🏆 '}{name} — {entry.stack} coins
+                                                </li>
+                                            );
+                                        })}
+                                    </ol>
+                                )}
+                                <button onClick={() => navigate('/')}>Back to home</button>
                             </div>
                         )}
+
                     </div>
 
-                    {gamePhase === 'betting' && bettingState && (
-                        <div className="game__betting">
-                            <p className="game__pot">Pot: {bettingState.pot} coins</p>
-                            {bettingState.currentBettor === user?._id ? (
-                                <div className="game__bet-actions">
-                                    <p>Your turn</p>
-                                    <button onClick={() => sendBet('fold')}>Fold</button>
-                                    <button onClick={() => sendBet('match')}>
-                                        {bettingState.highestBet === 0 ? 'Check' : `Match (${bettingState.highestBet})`}
-                                    </button>
-                                    {match.coinWager > 0 && bettingState.yourStack > 0 && (
-                                        <div className="game__bet-input">
-                                            <input
-                                                type="number"
-                                                min={bettingState.highestBet + 1}
-                                                max={bettingState.yourStack}
-                                                value={betAmount}
-                                                onChange={event => setBetAmount(Number(event.target.value))}
-                                            />
-                                            <button onClick={() => sendBet('bet', betAmount)}>Bet</button>
-                                        </div>
-                                    )}
-                                </div>
-                            ) : (
-                                <p>Waiting for opponent to bet...</p>
-                            )}
-                        </div>
+                    {gamePhase === 'betting' && bettingState && !forfeitBy && (<div className="game__betting">
+                        <p className="game__pot">Pot: {bettingState.pot} coins</p>
+                        {bettingState.currentBettor === user?._id ? (
+                            <div className="game__bet-actions">
+                                <p>Your turn</p>
+                                <button onClick={() => sendBet('fold')}>Fold</button>
+                                <button onClick={() => sendBet('match')}>
+                                    {bettingState.highestBet === 0 ? 'Check' : `Match (${bettingState.highestBet})`}
+                                </button>
+                                {match.coinWager > 0 && bettingState.yourStack > bettingState.highestBet && (
+                                    <div className="game__bet-input">
+                                        <input
+                                            type="number"
+                                            min={bettingState.highestBet + 1}
+                                            max={bettingState.yourStack}
+                                            value={betAmount}
+                                            onChange={event => setBetAmount(Number(event.target.value))}
+                                        />
+                                        <button onClick={() => sendBet('bet', betAmount)}>Bet</button>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <p>Waiting for opponent to bet...</p>
+                        )}
+                    </div>
                     )}
-
-
-
 
                     {match.gameCategory && (
                         <p className="game__variant">
