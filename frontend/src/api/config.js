@@ -4,7 +4,7 @@ export const BASE_URL = "http://localhost:3000";
 // Checks if a user is logged in and returns the right header so the backend knows who is making the request
 // If no one is logged in, we return an empty object (no header sent)
 export function getAuthHeaders() {
-    const saved = localStorage.getItem("user");
+    const saved = sessionStorage.getItem("user");
     if (!saved) return {};
     const user = JSON.parse(saved);
     return { "X-User-Role": user.role || "user" };

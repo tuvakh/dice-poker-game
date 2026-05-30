@@ -1,11 +1,9 @@
-// This route handles match creation, result recording, and the matchmaking queue.
+// This route handles match creation and result recording
 
 import express from "express";
 import matchController from "../controllers/match.controller.js";
 import matchValidator from "../validators/match.validator.js";
 import { validate } from "../validators/validate.js";
-import queueController from "../controllers/queue.controller.js";
-import queueValidator from "../validators/queue.validator.js";
 import { requireUser } from "../middleware/role.js";
 
 
@@ -22,13 +20,9 @@ matchApiRouter.get('/matches', matchValidator.validateGetAllMatches(), validate,
 // This returns a single match with players and category
 matchApiRouter.get('/matches/:matchId', matchValidator.validateGetMatch(), validate, matchController.getMatch);
 
-// This validates if a user can join the matchmaking queue — only registered users can queue
-matchApiRouter.post('/matches/queue', requireUser, queueValidator.validateJoinQueue(), validate, queueController.joinQueue);
 // This adds a user to an existing waiting match — only registered users can join as players
 matchApiRouter.post('/matches/:matchId/join', requireUser, matchValidator.validateJoinMatch(), validate, matchController.joinMatch);
 
-// This removes the player from the matchmaking queue
-matchApiRouter.delete('/matches/queue', queueValidator.validateLeaveQueue(), validate, queueController.leaveQueue);
 matchApiRouter.delete('/matches/:matchId/leave', matchValidator.validateJoinMatch(), validate, matchController.leaveMatch);
 
 export default matchApiRouter;

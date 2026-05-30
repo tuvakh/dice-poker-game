@@ -17,7 +17,7 @@
 16. ✅ More game varients. --> Tuva
 17. ✅ Implement actuall authorization and authentication. --> Marie
 18. ✅ implement a 404 page --> Marie
-19. Implement comments using websockets
+19.  ✅ Implement comments using websockets --> Tuva
 20. Show platform activity on homepage --> Chanya
 21. ✅ implement 4 admin pages. --> Marie
     1. dashboard

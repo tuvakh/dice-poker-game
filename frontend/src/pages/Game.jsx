@@ -111,6 +111,10 @@ export default function Game() {
     function handleServerMessage(message) {
         const board = boardRef.current;
 
+        if (message.type === 'ready-timeout') {
+            setGamePhase('cancelled');
+        }
+
         if (message.type === 'all-joined') {
             setGamePhase('ready');
         }
@@ -213,6 +217,10 @@ export default function Game() {
             }
         }
 
+        if (message.type === 'new-comment') {
+            setComments(prev => [...prev, message.comment]);
+        }
+
         if (message.type === 'game-end') {
             setGamePhase('ended');
             setStandings(message.standings);
@@ -247,6 +255,7 @@ export default function Game() {
             ws.send(JSON.stringify({
                 type: 'join',
                 matchId: String(match.matchId),
+                matchObjectId: match._id,
                 userId: user?._id,
                 requiredPlayers,
                 totalRounds: match.gameCategory?.numberOfRounds ?? 3,
@@ -293,6 +302,15 @@ export default function Game() {
             setBetAmount(bettingState.highestBet + 1);
         }
     }, [bettingState?.highestBet]);
+
+    useEffect(() => {
+        return () => {
+            if (matchRef.current?.status === 'waiting' && user) {
+                leaveMatch(matchRef.current.matchId, user._id).catch(() => {});
+            }
+        };
+    }, []);
+
 
     if (error) return <p className="status status--error">{error}</p>;
     if (!match) return <Spinner />;
@@ -358,9 +376,10 @@ export default function Game() {
                             </div>
                         )}
 
-                        {(gamePhase === 'ended' || forfeitBy) && (
+                        {(gamePhase === 'ended' || gamePhase === 'cancelled' || forfeitBy) && (
                             <div className="game__ended">
                                 <h2>Game over</h2>
+                                {gamePhase === 'cancelled' && <p>Not all players were ready in time.</p>}
                                 {forfeitBy && (
                                     <p>{match.players.find(player => player?._id === forfeitBy)?.username ?? 'Opponent'} left the game</p>
                                 )}
@@ -379,7 +398,6 @@ export default function Game() {
                                 <button onClick={() => navigate('/')}>Back to home</button>
                             </div>
                         )}
-
                     </div>
 
                     {gamePhase === 'betting' && bettingState && !forfeitBy && (<div className="game__betting">

@@ -45,8 +45,8 @@ export async function createComment(commentData){
         : await Tournament.findById(targetId);
     if (!target) throw new CustomError("We looked everywhere, but that match or tournament doesn't exist!", 404, "NOT_FOUND");
 
-    const newComment = await Comment.create({ targetId, targetType, comment, userId })
-
+    const newComment = await Comment.create({ targetId, targetType, comment, userId });
+    await newComment.populate('userId', 'username profileImage');
     return newComment;
 }
 

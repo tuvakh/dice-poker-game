@@ -1,11 +1,9 @@
-
-
 import { User } from '../models/User.js';
-import { applyMonthlyCoinGrant } from '../utils/coins.js';
+import { applyWeeklyCoinGrant } from '../utils/coins.js';
 
-export async function grantMonthlyCoinsBatch() {
+export async function grantWeeklyCoinsBatch() {
     try {
-        console.log('[Scheduler] Running monthly coin grant batch...');
+        console.log('[Scheduler] Running weekly coin grant batch...');
         
         const users = await User.find({});
         
@@ -19,7 +17,7 @@ export async function grantMonthlyCoinsBatch() {
 
         for (const user of users) {
             try {
-                const result = await applyMonthlyCoinGrant(user);
+                const result = await applyWeeklyCoinGrant(user);
                 
                 if (result.grantedCoins > 0) {
                     grantedCount++;
@@ -31,8 +29,8 @@ export async function grantMonthlyCoinsBatch() {
             }
         }
 
-        console.log(`[Scheduler] Monthly coin grant batch completed. Granted coins to ${grantedCount} users (${totalCoinsGranted} total coins distributed).`);
+        console.log(`[Scheduler] Weekly coin grant batch completed. Granted coins to ${grantedCount} users (${totalCoinsGranted} total coins distributed).`);
     } catch (err) {
-        console.error('[Scheduler] Error during monthly coin grant batch:', err.message);
+        console.error('[Scheduler] Error during weekly coin grant batch:', err.message);
     }
 }

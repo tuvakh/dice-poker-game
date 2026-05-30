@@ -20,7 +20,7 @@ import activityApiRouter from "./routes/activity.routes.js";
 import rateLimit from "express-rate-limit";
 import trophyApiRouter from "./routes/trophy.routes.js";
 import { errorHandler } from "./middleware/error.js";
-import { grantMonthlyCoinsBatch } from "./services/scheduler.js";
+import { grantWeeklyCoinsBatch } from "./services/scheduler.js";
 
 
 const app = express();
@@ -68,7 +68,7 @@ connectDB()
             console.log(`Server running on port ${PORT}`);
         });
         attachWebSocket(server);
-        grantMonthlyCoinsBatch();
+        grantWeeklyCoinsBatch();
         console.log('scheduler ran once');
     })
     // if the DB connection fails, log the error and exit

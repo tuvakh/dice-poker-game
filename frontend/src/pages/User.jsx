@@ -13,9 +13,6 @@ import TrophyBadge from "../components/TrophyBadge.jsx";
 import ProfileImage from "../components/ProfileImage.jsx";
 import GameCard from "../components/GameCard.jsx";
 
-const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
-const MODULE_CUTOFF = Date.now() - THIRTY_DAYS_MS;
-
 // The user profile page shows a user's avatar, bio, stats, trophies, and recent games
 // If you're viewing your own profile, you also get an edit button
 export default function User() {
@@ -42,10 +39,6 @@ export default function User() {
     const [gamesPage, setGamesPage] = useState(1);
     const [gamesTotalPages, setGamesTotalPages] = useState(1);
 
-    const recentMonthGames = profile?.recentGames
-        ? profile.recentGames.filter(match => match.endedAt && Date.parse(match.endedAt) >= MODULE_CUTOFF)
-        : [];
-
     // Load the profile when the page opens, or if the id in the URL changes
     useEffect(() => {
         getUser(id)
@@ -54,7 +47,7 @@ export default function User() {
                 if (user?.userId === data.userId) {
                     updateUserData({
                         coins: data.coins,
-                        lastMonthlyCoinGrantAt: data.lastMonthlyCoinGrantAt
+                        lastWeeklyCoinGrantAt: data.lastWeeklyCoinGrantAt
                     });
                 }
             })
@@ -70,8 +63,6 @@ export default function User() {
             })
             .catch(() => { });
     }, [id, gamesPage]);
-
-    // recentMonthGames is derived above; no effect needed
 
     if (loading) return <Spinner />;
     if (error) return <p className="status status--error">{error}</p>;
@@ -135,11 +126,6 @@ export default function User() {
         if (end < totalPages) pages.push('...');
         return pages;
     }
-
-
-    // A win is when the winner ID matches this user's ID
-    const wins = recentMonthGames.filter(match => match.winner?.toString() === profile._id?.toString()).length;
-    const losses = recentMonthGames.length - wins;
 
     return (
         <>
@@ -225,8 +211,8 @@ export default function User() {
                         <div className="stats__cards">
                             <div className="stats__cards-item">Coins: <span className="stats__cards-number">{profile.coins ?? 0}</span></div>
                             <div className="stats__cards-item">Total games: <span className="stats__cards-number">{profile.totalGames}</span></div>
-                            <div className="stats__cards-item">Wins last 30 days: <span className="stats__cards-number">{wins}</span></div>
-                            <div className="stats__cards-item">Losses last 30 days: <span className="stats__cards-number">{losses}</span></div>
+                            <div className="stats__cards-item">Wins last 30 days: <span className="stats__cards-number">{profile.monthWins ?? 0}</span></div>
+                            <div className="stats__cards-item">Losses last 30 days: <span className="stats__cards-number">{profile.monthLosses ?? 0}</span></div>
                         </div>
                     </div>
 

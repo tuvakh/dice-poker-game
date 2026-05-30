@@ -89,7 +89,7 @@ const userSchema = new mongoose.Schema({
     eloRating10s: { type: Number, default: 1000 },
     eloRating30s: { type: Number, default: 1000 },
     eloRating90s: { type: Number, default: 1000 },
-    // coins are used for wagers and monthly rewards
+    // coins are used for wagers and weekly rewards
     coins: {
         type: Number,
         min: 0,
@@ -97,7 +97,7 @@ const userSchema = new mongoose.Schema({
         required: true
     },
   
-    lastMonthlyCoinGrantAt: {
+    lastWeeklyCoinGrantAt: {
         type: Date,
         default: Date.now,
         required: true

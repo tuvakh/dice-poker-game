@@ -27,7 +27,11 @@ export async function getAllTournaments({ page = 1, limit = 10, status }){
 }
 
 export async function getTournament(tournamentId){
-     const tournament = await Tournament.findOne({ tournamentId }).populate('participants', 'username');
+    const tournament = await Tournament.findOne({ tournamentId })
+        .populate('participants', 'username')
+        .populate('trophy')
+        .populate('gameCategory');
+        
      if(!tournament){
         throw new CustomError(`A tournament with the id ${tournamentId} doesn't exist.. Maybe it was cancelled? :(`, 404, "NOT_FOUND");
     }

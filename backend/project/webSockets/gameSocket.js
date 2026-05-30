@@ -7,6 +7,26 @@ import { User } from '../models/User.js';
 import { Match } from '../models/Match.js';
 import { REVEAL_DELAY_MS } from '../config/constants.js';
 
+const objectIdToRoom = new Map();
+const tournamentRooms = new Map();
+
+function broadcastCommentToRoom(roomMap, objectId, comment) {
+    const room = roomMap.get(String(objectId));
+    if (!room) return;
+    const payload = JSON.stringify({ type: 'new-comment', comment });
+    room.forEach((client) => {
+        if (client.readyState === 1) client.send(payload);
+    });
+}
+
+export function broadcastMatchComment(matchObjectId, comment) {
+    broadcastCommentToRoom(objectIdToRoom, matchObjectId, comment);
+}
+
+export function broadcastTournamentComment(tournamentObjectId, comment) {
+    broadcastCommentToRoom(tournamentRooms, tournamentObjectId, comment);
+}
+
 // Called once from server.js — attaches WebSocket to the same port as Express
 export default function attachWebSocket(server) {
     // Creates the WebSocket server, sharing the existing HTTP server.
@@ -17,6 +37,8 @@ export default function attachWebSocket(server) {
     const gameStates = new Map();
     const clients = new Map();
     const rollingTimers = new Map();
+    const readyTimers = new Map();
+    const tournamentClients = new Map();
 
     // This fires every time a new browser connects via WebSocket.
     wss.on('connection', (ws) => {
@@ -30,6 +52,11 @@ export default function attachWebSocket(server) {
 
                 if (!rooms.has(matchId)) rooms.set(matchId, new Set());
                 rooms.get(matchId).add(ws);
+
+                if (message.matchObjectId) {
+                    objectIdToRoom.set(String(message.matchObjectId), rooms.get(matchId));
+                }
+
                 clients.set(ws, { matchId, userId });
 
                 // Create game state on first join
@@ -68,6 +95,14 @@ export default function attachWebSocket(server) {
                     const joinedCount = Object.keys(state.players).length;
                     if (joinedCount === message.requiredPlayers) {
                         broadcast(matchId, { type: 'all-joined' });
+
+                        const readyTimer = setTimeout(() => {
+                            broadcast(matchId, { type: 'ready-timeout' });
+                            Match.findOneAndDelete({ matchId: Number(matchId) }).catch(() => {});
+                            gameStates.delete(matchId);
+                            rooms.delete(matchId);
+                        }, 60000);
+                        readyTimers.set(matchId, readyTimer);
                     }
                 } else {
                     state.players[userId].disconnected = false;
@@ -179,6 +214,8 @@ export default function attachWebSocket(server) {
 
                 const allReady = Object.values(state.players).every((gamePlayer) => gamePlayer.ready);
                 if (allReady) {
+                    clearTimeout(readyTimers.get(matchId));
+                    readyTimers.delete(matchId);
                     startGame(matchId, state);
                 }
             }
@@ -221,6 +258,13 @@ export default function attachWebSocket(server) {
                 state.bettorsActed.add(userId);
                 advanceBetting(matchId, state);
             }
+
+            if (message.type === 'join-tournament') {
+                const key = String(message.tournamentObjectId);
+                if (!tournamentRooms.has(key)) tournamentRooms.set(key, new Set());
+                tournamentRooms.get(key).add(ws);
+                tournamentClients.set(ws, key);
+            }
         });
 
         // Clean up when a client disconnects
@@ -242,6 +286,16 @@ export default function attachWebSocket(server) {
                 delete state.players[userId];
                 broadcast(matchId, { type: 'player-disconnected', userId });
                 endGame(matchId, state);
+            }
+
+            const tournamentKey = tournamentClients.get(ws);
+            if (tournamentKey) {
+                const room = tournamentRooms.get(tournamentKey);
+                if (room) {
+                    room.delete(ws);
+                    if (room.size === 0) tournamentRooms.delete(tournamentKey);
+                }
+                tournamentClients.delete(ws);
             }
         });
     });
@@ -486,6 +540,8 @@ export default function attachWebSocket(server) {
 
     // Broadcasts final standings and cleans up game state
     async function endGame(matchId, state) {
+        gameStates.delete(matchId);
+
         const standings = Object.entries(state.players)
             .map(([userId, player]) => ({ userId, stack: player.stack }))
             .sort((playerA, playerB) => playerB.stack - playerA.stack);
@@ -561,8 +617,6 @@ export default function attachWebSocket(server) {
         for (const userId of Object.keys(state.players)) {
             clearRollingTimer(matchId, userId);
         }
-
-        gameStates.delete(matchId);
 
         // Broadcast only after DB writes are done
         broadcast(matchId, { type: 'game-end', standings, forfeitBy: state.forfeitBy ?? null });

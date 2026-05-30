@@ -4,7 +4,7 @@ import { useNavigate, Link } from "react-router-dom";
 import Hero from "../components/Hero.jsx";
 import Button from "../components/Button.jsx";
 import GameCard from "../components/GameCard.jsx";
-// import TournamentCard from "../components/TournamentCard.jsx";
+import TournamentCard from "../components/TournamentCard.jsx";
 
 import { getAllMatches } from "../api/matches.js";
 import { getAllTournaments } from "../api/tournaments.js";
@@ -36,7 +36,7 @@ export default function Home() {
                     getAllMatches({ status: "waiting", limit: 100 }),
                     getAllMatches({ status: "ongoing", limit: 100 }),
                     getAllMatches({ status: "finished", limit: 100 }),
-                    getAllTournaments()
+                    getAllTournaments({ status: 'upcoming', limit: 5 })
                 ]);
 
                 setLobbyGames(waitingData.matchList);
@@ -107,12 +107,12 @@ export default function Home() {
                     {topGames.map((match, i) => <GameCard key={match.matchId} match={match} index={i} variant="topGames" />)}
                 </div>
             </section>
-            {/* Tournament preview: shows the 5 upcoming tournaments
-        <section className="tournaments-preview">
-            <h2>Upcoming tournaments</h2>
-            <p>Sign up before they fill up!</p>
-            {tournaments.map(tournament => <TournamentCard key={tournament.tournamentId} tournament={tournament} />)}
-        </section>*/}
+            {/* Tournament preview: shows the 5 upcoming tournaments*/}
+            <section className="tournaments-preview">
+                <h2>Upcoming tournaments</h2>
+                <p>Sign up before they fill up!</p>
+                {tournaments.map(tournament => <TournamentCard key={tournament.tournamentId} tournament={tournament} />)}
+            </section>
         </>
     );
 }

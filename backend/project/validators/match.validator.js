@@ -82,7 +82,7 @@ export function validateRecordMatch(){
             .isInt({ min: 1 })
             .withMessage("Match IDs are supposed to be integers larger than 0")
             .toInt(),
-        // winner is optional to support anonymous matches
+        // winner is optional
         body("winner")
             .optional()
             .isMongoId()
