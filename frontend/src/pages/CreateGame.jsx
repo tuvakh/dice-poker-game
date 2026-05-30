@@ -91,7 +91,6 @@ export default function CreateGame() {
                     >
                         <option value={2}>2 players</option>
                         <option value={3}>3 players</option>
-                        <option value={4}>4 players</option>
                         <option value={5}>5 players</option>
                     </select>
                 </FormField>
