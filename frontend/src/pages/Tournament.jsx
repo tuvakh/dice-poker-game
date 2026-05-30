@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { getAllTournaments } from "../api/tournaments.js";
 import { useSoundEffects } from "../hooks/useSoundEffects.js";
 import TournamentCard from "../components/TournamentCard.jsx";

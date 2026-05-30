@@ -19,14 +19,6 @@ export default function ResetPassword() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const submittingRef = useRef(false);
 
-    // Debug: Log the URL code on page load
-    useEffect(() => {
-        console.log("ResetPassword page loaded");
-        console.log("URL search params:", searchParams.toString());
-        console.log("Extracted code:", code);
-        console.log("Code length:", code?.length || 0);
-        console.log("Code is valid:", !!code && code.length > 0);
-    }, [code, searchParams]);
 
     async function handleSubmit(event) {
         event.preventDefault();
@@ -34,15 +26,9 @@ export default function ResetPassword() {
         setError(null);
         setMessage("");
 
-        console.log("=== RESET FORM SUBMISSION ===");
-        console.log("Code from URL:", code);
-        console.log("Password:", password ? "***" : "(empty)");
-        console.log("Password repeat:", passwordRepeat ? "***" : "(empty)");
-
         // Validate inputs before locking form
         if (!code) {
             setError("Missing reset code. Please use the link from your email.");
-            console.error("Missing code in URL");
             return;
         }
 
@@ -64,15 +50,11 @@ export default function ResetPassword() {
         try {
             submittingRef.current = true;
             setIsSubmitting(true);
-            console.log("Sending reset request with code:", code);
             const result = await apiResetPassword(code, password);
-            console.log("Reset successful:", result);
             setMessage(result.message || "Password reset successfully. Redirecting to login...");
-            console.log("Password reset successful, logging out old session");
             logout(); // Clear old cached user so new password works
             setTimeout(() => navigate('/login'), 2000);
         } catch (err) {
-            console.error("Password reset error:", err.message);
             setError(err.message);
         } finally {
             submittingRef.current = false;

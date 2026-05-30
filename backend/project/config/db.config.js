@@ -15,7 +15,6 @@ export async function connectDB(){
         mongoose.connection.on("error", err=>{
             console.error("Unhandled Mongoose/MongoDB connection error:", err);
         });
-        console.log("Connecting to MongoDB now...", MONGODB_URI);
         return mongoose.connect(
             MONGODB_URI,
             {

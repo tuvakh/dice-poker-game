@@ -69,7 +69,6 @@ connectDB()
         });
         attachWebSocket(server);
         grantWeeklyCoinsBatch();
-        console.log('scheduler ran once');
     })
     // if the DB connection fails, log the error and exit
     // The server should not start without a database
