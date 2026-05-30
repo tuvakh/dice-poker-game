@@ -141,39 +141,24 @@ export default async function matchSeed(users, categories) {
                 { userId: users[4]._id, delta: -25 }
             ]
         }).save(),
-        // WebSocket test games — dragonslayer and tuvakh each host one, ready to join
-        new Match({ players: [users[0]._id],  gameCategory: categories[0]._id, status: "waiting", startedAt: "2026-04-15T08:00:00.000Z" }).save(),
-        new Match({ players: [users[20]._id], gameCategory: categories[1]._id, status: "waiting", startedAt: "2026-04-15T09:00:00.000Z" }).save(),
-        new Match({ players: [users[0]._id],  gameCategory: categories[2]._id, status: "waiting", startedAt: "2026-04-15T10:00:00.000Z" }).save(),
-        new Match({ players: [users[20]._id], gameCategory: categories[3]._id, status: "waiting", startedAt: "2026-04-15T11:00:00.000Z" }).save(),
-        new Match({ players: [users[1]._id],  gameCategory: categories[4]._id, status: "waiting", startedAt: "2026-04-15T12:00:00.000Z" }).save(),
-        // Waiting matches so the Lobby and Home page have something to show
-        new Match({ players: [users[2]._id],  gameCategory: categories[0]._id, status: "waiting",  startedAt: "2026-04-11T12:00:00.000Z" }).save(),
-        new Match({ players: [users[5]._id],  gameCategory: categories[1]._id, status: "waiting",  startedAt: "2026-04-12T09:00:00.000Z" }).save(),
-        new Match({ players: [users[7]._id],  gameCategory: categories[2]._id, status: "waiting",  startedAt: "2026-04-13T08:00:00.000Z" }).save(),
-        new Match({ players: [users[9]._id],  gameCategory: categories[3]._id, status: "waiting",  startedAt: "2026-04-13T09:00:00.000Z" }).save(),
-        new Match({ players: [users[11]._id], gameCategory: categories[4]._id, status: "waiting",  startedAt: "2026-04-13T10:00:00.000Z" }).save(),
-        new Match({ players: [users[13]._id], gameCategory: categories[5]._id, status: "waiting",  startedAt: "2026-04-13T11:00:00.000Z" }).save(),
-        new Match({ players: [users[15]._id], gameCategory: categories[0]._id, status: "waiting",  startedAt: "2026-04-13T12:00:00.000Z" }).save(),
-        new Match({ players: [users[17]._id], gameCategory: categories[1]._id, status: "waiting",  startedAt: "2026-04-13T13:00:00.000Z" }).save(),
-        new Match({ players: [users[19]._id], gameCategory: categories[2]._id, status: "waiting",  startedAt: "2026-04-13T14:00:00.000Z" }).save(),
-        new Match({ players: [users[1]._id],  gameCategory: categories[3]._id, status: "waiting",  startedAt: "2026-04-13T15:00:00.000Z" }).save(),
-        new Match({ players: [users[3]._id],  gameCategory: categories[4]._id, status: "waiting",  startedAt: "2026-04-13T16:00:00.000Z" }).save(),
-        new Match({ players: [users[6]._id],  gameCategory: categories[5]._id, status: "waiting",  startedAt: "2026-04-13T17:00:00.000Z" }).save(),
-        new Match({ players: [users[8]._id],  gameCategory: categories[0]._id, status: "waiting",  startedAt: "2026-04-13T18:00:00.000Z" }).save(),
-        new Match({ players: [users[10]._id], gameCategory: categories[1]._id, status: "waiting",  startedAt: "2026-04-13T19:00:00.000Z" }).save(),
-        new Match({ players: [users[0]._id],  gameCategory: categories[2]._id,  status: "waiting", startedAt: "2026-04-10T10:00:00.000Z" }).save(),
-        new Match({ players: [users[4]._id],  gameCategory: categories[3]._id,  status: "waiting", startedAt: "2026-04-14T08:00:00.000Z" }).save(),
-        new Match({ players: [users[12]._id], gameCategory: categories[6]._id,  status: "waiting", startedAt: "2026-04-14T09:00:00.000Z" }).save(),
-        new Match({ players: [users[14]._id], gameCategory: categories[7]._id,  status: "waiting", startedAt: "2026-04-14T10:00:00.000Z" }).save(),
-        new Match({ players: [users[16]._id], gameCategory: categories[8]._id,  status: "waiting", startedAt: "2026-04-14T11:00:00.000Z" }).save(),
-        new Match({ players: [users[18]._id], gameCategory: categories[9]._id,  status: "waiting", startedAt: "2026-04-14T12:00:00.000Z" }).save(),
-        new Match({ players: [users[2]._id],  gameCategory: categories[10]._id, status: "waiting", desiredOpponentElo: 1100, startedAt: "2026-04-14T13:00:00.000Z" }).save(),
-        new Match({ players: [users[5]._id],  gameCategory: categories[11]._id, status: "waiting", desiredOpponentElo: 1200, startedAt: "2026-04-14T14:00:00.000Z" }).save(),
-        new Match({ players: [users[7]._id],  gameCategory: categories[12]._id, status: "waiting", desiredOpponentElo: 950,  startedAt: "2026-04-14T15:00:00.000Z" }).save(),
-        new Match({ players: [users[9]._id],  gameCategory: categories[13]._id, status: "waiting", desiredOpponentElo: 1300, startedAt: "2026-04-14T16:00:00.000Z" }).save(),
-        new Match({ players: [users[11]._id], gameCategory: categories[0]._id,  status: "waiting", startedAt: "2026-04-14T17:00:00.000Z" }).save(),
-        new Match({ players: [users[13]._id], gameCategory: categories[1]._id,  status: "waiting", startedAt: "2026-04-14T18:00:00.000Z" }).save()
+                // Ongoing games — currently being played, shown on homepage
+        new Match({ players: [users[0]._id, users[1]._id],  gameCategory: categories[0]._id,  status: "ongoing", startedAt: "2026-05-29T10:00:00.000Z" }).save(),
+        new Match({ players: [users[2]._id, users[3]._id],  gameCategory: categories[5]._id,  status: "ongoing", startedAt: "2026-05-29T11:00:00.000Z" }).save(),
+        new Match({ players: [users[4]._id, users[5]._id],  gameCategory: categories[10]._id, status: "ongoing", startedAt: "2026-05-29T12:00:00.000Z" }).save(),
+        new Match({ players: [users[6]._id, users[7]._id],  gameCategory: categories[3]._id,  status: "ongoing", startedAt: "2026-05-29T13:00:00.000Z" }).save(),
+        new Match({ players: [users[8]._id, users[9]._id],  gameCategory: categories[8]._id,  status: "ongoing", startedAt: "2026-05-29T14:00:00.000Z" }).save(),
+        // Waiting games — each user appears in at most one waiting match
+        new Match({ players: [users[10]._id], gameCategory: categories[1]._id,  status: "waiting", startedAt: "2026-04-13T08:00:00.000Z" }).save(),
+        new Match({ players: [users[11]._id], gameCategory: categories[2]._id,  status: "waiting", startedAt: "2026-04-13T09:00:00.000Z" }).save(),
+        new Match({ players: [users[12]._id], gameCategory: categories[4]._id,  status: "waiting", startedAt: "2026-04-13T10:00:00.000Z" }).save(),
+        new Match({ players: [users[13]._id], gameCategory: categories[6]._id,  status: "waiting", startedAt: "2026-04-13T11:00:00.000Z" }).save(),
+        new Match({ players: [users[14]._id], gameCategory: categories[7]._id,  status: "waiting", startedAt: "2026-04-13T12:00:00.000Z" }).save(),
+        new Match({ players: [users[15]._id], gameCategory: categories[9]._id,  status: "waiting", startedAt: "2026-04-13T13:00:00.000Z" }).save(),
+        new Match({ players: [users[16]._id], gameCategory: categories[11]._id, status: "waiting", startedAt: "2026-04-13T14:00:00.000Z" }).save(),
+        new Match({ players: [users[17]._id], gameCategory: categories[12]._id, status: "waiting", startedAt: "2026-04-13T15:00:00.000Z" }).save(),
+        new Match({ players: [users[18]._id], gameCategory: categories[13]._id, status: "waiting", startedAt: "2026-04-13T16:00:00.000Z" }).save(),
+        new Match({ players: [users[20]._id], gameCategory: categories[1]._id,  status: "waiting", startedAt: "2026-04-15T09:00:00.000Z" }).save(),
+        new Match({ players: [users[21]._id], gameCategory: categories[14]._id, status: "waiting", desiredOpponentElo: 1100, startedAt: "2026-04-14T13:00:00.000Z" }).save(),
     ]);
 
     console.log("Inserted all matches");

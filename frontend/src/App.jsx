@@ -4,6 +4,7 @@ import Home from "./pages/Home.jsx";
 import Game from "./pages/Game.jsx";
 import Lobby from "./pages/Lobby.jsx";
 import Tournament from "./pages/Tournament.jsx";
+import TournamentPage from "./pages/TournamentPage.jsx";
 import LeaderBoard from "./pages/LeaderBoard.jsx";
 import User from "./pages/User.jsx";
 import CreateGame from "./pages/CreateGame.jsx";
@@ -47,7 +48,7 @@ function AppContent() {
             <Route path="/lobby" element={<Lobby />} />
             <Route path="/leaderboard" element={<LeaderBoard />} />
             <Route path="/tournament" element={<Tournament />} />
-            <Route path="/tournament/:id" element={<Tournament />} />
+            <Route path="/tournament/:id" element={<TournamentPage />} />
             <Route path="/user/:id" element={<User />} />
             <Route path="/aboutUs" element={<AboutUs />} />
             <Route path="/aboutGame" element={<AboutGame />} />

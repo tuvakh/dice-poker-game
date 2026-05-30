@@ -41,7 +41,7 @@ export default function Lobby() {
             .finally(() => setLoading(false));
     }
 
-    usePolling(fetchGames, 10000);
+    usePolling(fetchGames, 3000);
 
     // Load game categories for filter dropdown
     useEffect(() => {
@@ -56,7 +56,6 @@ export default function Lobby() {
     }, []);
 
     // Logged in: hide games the user already joined, and hide games where their Elo is out of range
-    // Not logged in: show all waiting games (anonymous play is being phased out)
     const baseFiltered = filterLobbyMatches(lobbyGames, user);
 
     const roundsOptions = Array.from(new Set(categories.map(category => category.numberOfRounds))).sort((roundA, roundB) => roundA - roundB);

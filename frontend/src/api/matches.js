@@ -43,27 +43,6 @@ export async function joinMatch(id, userId) {
     return handleResponse(res);
 }
 
-// Joins the matchmaking queue for a given game category
-// Returns { status: "matched", match } immediately if an opponent is found, otherwise { status: "waiting" }
-export async function joinQueue(userId, gameCategoryId) {
-    const res = await fetch(`${BASE_URL}/matches/queue`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
-        body: JSON.stringify({ userId, gameCategoryId })
-    });
-    return handleResponse(res);
-}
-
-// Removes the user from the matchmaking queue
-export async function leaveQueue(userId) {
-    const res = await fetch(`${BASE_URL}/matches/queue`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
-        body: JSON.stringify({ userId })
-    });
-    return handleResponse(res);
-}
-
 export async function leaveMatch(id, userId) {
     const res = await fetch(`${BASE_URL}/matches/${id}/leave`, {
         method: "DELETE",

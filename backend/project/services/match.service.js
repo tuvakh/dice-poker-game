@@ -51,6 +51,7 @@ export async function getAllMatches({ page = 1, limit = 10, status, gameCategory
     const matchList = await Match.find(filter)
         .populate('players', 'username userId eloRating')
         .populate('gameCategory')
+        .sort({ _id: -1 })
         .skip((page - 1) * limit)
         .limit(limit);
 
@@ -158,9 +159,11 @@ export async function recordMatch(matchId, matchData) {
 
     // update the time-control-specific rating
     player1[eloField] = newRating1;
+    player1.eloRating = newRating1;
     await player1.save();
 
     player2[eloField] = newRating2;
+    player2.eloRating = newRating2;
     await player2.save();
 
     if (match.tournamentId) {
