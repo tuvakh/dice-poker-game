@@ -16,12 +16,23 @@ const STATUS_TABS = [
     { value: "finished", label: "Finished" },
 ];
 
+const SORT_OPTIONS = [
+    { value: "date-desc",    label: "Date (newest first)" },
+    { value: "date-asc",     label: "Date (oldest first)" },
+    { value: "title-asc",    label: "Title (A–Z)" },
+    { value: "title-desc",   label: "Title (Z–A)" },
+    { value: "players-desc", label: "Players (most first)" },
+    { value: "players-asc",  label: "Players (fewest first)" },
+];
+
 // ── Tournament list ───────────────────────────────────────────────────────────
 export default function Tournament() {
     const [statusFilter, setStatusFilter] = useState("");
     const [tournaments, setTournaments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [sortBy, setSortBy] = useState("date-desc");
     const { playClick } = useSoundEffects();
 
     useEffect(() => {
@@ -33,6 +44,31 @@ export default function Tournament() {
             .catch(() => setError("Could not load tournaments. Please try again."))
             .finally(() => setLoading(false));
     }, [statusFilter]);
+
+    const visibleTournaments = useMemo(() => {
+        let list = [...tournaments];
+
+        if (searchQuery.length >= 3) {
+            const query = searchQuery.toLowerCase();
+            list = list.filter(tournament =>
+                tournament.title.toLowerCase().includes(query)
+            );
+        }
+
+        list.sort((tournamentA, tournamentB) => {
+            switch (sortBy) {
+                case "date-asc":    return new Date(tournamentA.date) - new Date(tournamentB.date);
+                case "date-desc":   return new Date(tournamentB.date) - new Date(tournamentA.date);
+                case "title-asc":   return tournamentA.title.localeCompare(tournamentB.title);
+                case "title-desc":  return tournamentB.title.localeCompare(tournamentA.title);
+                case "players-asc": return (tournamentA.participants?.length ?? 0) - (tournamentB.participants?.length ?? 0);
+                case "players-desc":return (tournamentB.participants?.length ?? 0) - (tournamentA.participants?.length ?? 0);
+                default:            return 0;
+            }
+        });
+
+        return list;
+    }, [tournaments, searchQuery, sortBy]);
 
     return (
         <>
@@ -53,6 +89,25 @@ export default function Tournament() {
                     ))}
                 </div>
 
+<div className="tournament-controls">
+                    <input
+                        type="text"
+                        className="tournament-controls__search"
+                        placeholder="Search by title…"
+                        value={searchQuery}
+                        onChange={event => setSearchQuery(event.target.value)}
+                    />
+                    <select
+                        className="tournament-controls__sort"
+                        value={sortBy}
+                        onChange={event => setSortBy(event.target.value)}
+                    >
+                        {SORT_OPTIONS.map(option => (
+                            <option key={option.value} value={option.value}>{option.label}</option>
+                        ))}
+                    </select>
+                </div>
+
                 <h2>
                     {statusFilter
                         ? statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)
@@ -67,7 +122,7 @@ export default function Tournament() {
 
                 {!loading && !error && tournaments.length > 0 && (
                     <div className="cards-grid">
-                        {tournaments.map(tournament => (
+                        {visibleTournaments.map(tournament => (
                             <TournamentCard key={tournament._id} tournament={tournament} onClick={playClick} />
                         ))}
                     </div>

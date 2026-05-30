@@ -1,0 +1,39 @@
+.tournament-card {
+    background-color: var(--secondary-color);
+    display: flex;
+    flex-direction: column;
+    padding: var(--big-space);
+    border-radius: var(--border-radius);
+    color: var(--text-color);
+    cursor: pointer;
+    text-decoration: none;
+
+    &__name {
+        font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+        font-size: 1.3rem;
+        padding-block: var(--small-space);
+    }
+
+    &__meta {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        font-size: 0.85rem;
+    }
+
+    &__status {
+        display: inline-block;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 2px 8px;
+        border-radius: 4px;
+        width: fit-content;
+
+        &--upcoming  { background: #1a3a1a; color: #4caf50; }
+        &--active,
+        &--ongoing   { background: #2e1a00; color: #ff9800; }
+        &--completed,
+        &--finished  { background: var(--box-color); color: var(--text-color); }
+    }
+}

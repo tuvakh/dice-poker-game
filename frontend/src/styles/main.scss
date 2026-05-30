@@ -14,9 +14,10 @@
 @use "../components/Greeting";
 @use "../components/CommentItem";
 @use "../components/CommentList";
+@use "../components/TournamentCard";
 
 @use "../pages/Login";
 @use "../pages/Game";
 @use "../pages/User";
 @use "../pages/Tournament";
-@use "../pages/Queue";
+@use "../pages/TournamentPage";
