@@ -20,9 +20,6 @@ userApiRouter.post('/users/reset-password', userValidator.validateResetPassword(
 // Verify email using token sent to user's inbox
 userApiRouter.post('/users/verify-email', userValidator.validateVerifyEmail(), validate, userController.verifyEmail);
 
-// DEBUG: Check reset token status (for troubleshooting only)
-userApiRouter.get('/users/debug/reset-token-status', userController.checkResetTokenStatus);
-
 // Only admins can get a paginated and searchable list of all users
 userApiRouter.get('/users', userValidator.validateGetAllUsers(), validate, requireAdmin, userController.getAllUsers);
 // Anyone can get a user's profile, with recent games and weekly ELO change

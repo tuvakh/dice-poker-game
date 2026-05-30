@@ -27,7 +27,7 @@ export const COMMENT_TARGET = ["match", "tournament"];
 
 export const LEADERBOARD_SORT_OPTIONS = ["wins", "winPercentage", "matches", "elo"];
 
-export const MONTHLY_COIN_GRANT = 100;
+export const WEEKLY_COIN_GRANT = 100;
 
 export const REVEAL_DELAY_MS = 3000;
 

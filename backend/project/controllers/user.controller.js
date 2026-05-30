@@ -146,17 +146,6 @@ export async function resetPassword(req, res, next) {
     }
 }
 
-// DEBUG ENDPOINT: Check reset token status for an email (for troubleshooting)
-export async function checkResetTokenStatus(req, res, next) {
-    try {
-        const { email } = req.query;
-        const result = await userServices.checkResetTokenStatus(email);
-        res.status(200).json(result);
-    } catch (error) {
-        next(error);
-    }
-}
-
 // This exports the functions as a default objects, so routes can import them in one line
 export default {
 	getAllUsers,
@@ -169,6 +158,5 @@ export default {
     changeRole,
     verifyEmail,
     forgotPassword,
-    resetPassword,
-    checkResetTokenStatus
+    resetPassword
 };

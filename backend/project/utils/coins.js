@@ -1,37 +1,27 @@
-import { MONTHLY_COIN_GRANT } from "../config/constants.js";
+import { WEEKLY_COIN_GRANT } from "../config/constants.js";
 
-function getMonthKey(date) {
-    return date.getUTCFullYear() * 12 + date.getUTCMonth();
-}
-
-function getElapsedCalendarMonths(fromDate, toDate) {
-    return Math.max(0, getMonthKey(toDate) - getMonthKey(fromDate));
-}
-
-// Grants 100 coins per missed calendar month since the last grant date.
-export async function applyMonthlyCoinGrant(user, now = new Date()) {
+// Grants 100 coins per missed calendar week since the last grant date.
+export async function applyWeeklyCoinGrant(user, now = new Date()) {
     // Backward compatibility: initialize wallet fields for users created before coins existed.
     const hasCoins = Number.isFinite(user.coins);
-    const hasLastGrant = user.lastMonthlyCoinGrantAt instanceof Date || typeof user.lastMonthlyCoinGrantAt === "string";
+    const hasLastGrant = user.lastWeeklyCoinGrantAt instanceof Date || typeof user.lastWeeklyCoinGrantAt === 'string';
 
     if (!hasCoins || !hasLastGrant) {
-        user.coins = MONTHLY_COIN_GRANT;
-        user.lastMonthlyCoinGrantAt = now;
+        user.coins = WEEKLY_COIN_GRANT;
+        user.lastWeeklyCoinGrantAt = now;
         await user.save();
-        return { grantedCoins: MONTHLY_COIN_GRANT };
+        return { grantedCoins: WEEKLY_COIN_GRANT };
     }
 
-    const lastGrantDate = user.lastMonthlyCoinGrantAt ? new Date(user.lastMonthlyCoinGrantAt) : new Date(0);
-    const elapsedMonths = getElapsedCalendarMonths(lastGrantDate, now);
+    const lastGrantDate = new Date(user.lastWeeklyCoinGrantAt);
+    const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+    const elapsedWeeks = Math.floor((now - lastGrantDate) / SEVEN_DAYS_MS);
 
-    if (elapsedMonths <= 0) {
-        return { grantedCoins: 0 };
-    }
+    if (elapsedWeeks <= 0) return { grantedCoins: 0 };
 
-    const grantedCoins = elapsedMonths * MONTHLY_COIN_GRANT;
+    const grantedCoins = elapsedWeeks * WEEKLY_COIN_GRANT;
     user.coins += grantedCoins;
-    user.lastMonthlyCoinGrantAt = now;
+    user.lastWeeklyCoinGrantAt = now;
     await user.save();
-
     return { grantedCoins };
 }
