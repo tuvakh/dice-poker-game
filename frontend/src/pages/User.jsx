@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { getUser, updateUser } from "../api/users.js";
+import { getAllMatches } from "../api/matches.js";
+
 import { useAuth } from "../contexts/AuthContext.jsx";
 import { Link } from "react-router-dom";
 
@@ -25,7 +27,7 @@ export default function User() {
     const [profileImageFile, setProfileImageFile] = useState(null);
     const [profileImagePreview, setProfileImagePreview] = useState(null);
     const { user, updateUserData } = useAuth();
-    
+
     // editData holds what's currently typed in the edit form
     const [editData, setEditData] = useState({ email: "", aboutMe: "", password: "" });
     const [isEditing, setIsEditing] = useState(false);
@@ -35,6 +37,10 @@ export default function User() {
     const [saveError, setSaveError] = useState(null);
     const [saveSuccess, setSaveSuccess] = useState(false);
     const [fieldErrors, setFieldErrors] = useState({});
+
+    const [games, setGames] = useState([]);
+    const [gamesPage, setGamesPage] = useState(1);
+    const [gamesTotalPages, setGamesTotalPages] = useState(1);
 
     const recentMonthGames = profile?.recentGames
         ? profile.recentGames.filter(match => match.endedAt && Date.parse(match.endedAt) >= MODULE_CUTOFF)
@@ -54,7 +60,16 @@ export default function User() {
             })
             .catch(() => setError("Failed to load profile. Please try again."))
             .finally(() => setLoading(false));
-            }, [id, user?.userId, updateUserData]);
+    }, [id, user?.userId, updateUserData]);
+
+    useEffect(() => {
+        getAllMatches({ userId: id, limit: 10, page: gamesPage })
+            .then(data => {
+                setGames(data.matchList);
+                setGamesTotalPages(data.totalPages);
+            })
+            .catch(() => { });
+    }, [id, gamesPage]);
 
     // recentMonthGames is derived above; no effect needed
 
@@ -112,7 +127,15 @@ export default function User() {
         }
     }
 
-    
+    function getPageNumbers(currentPage, totalPages) {
+        const start = Math.max(1, currentPage - 2);
+        const end = Math.min(totalPages, currentPage + 2);
+        const pages = Array.from({ length: end - start + 1 }, (unused, i) => start + i);
+        if (start > 1) pages.unshift('...');
+        if (end < totalPages) pages.push('...');
+        return pages;
+    }
+
 
     // A win is when the winner ID matches this user's ID
     const wins = recentMonthGames.filter(match => match.winner?.toString() === profile._id?.toString()).length;
@@ -121,73 +144,73 @@ export default function User() {
     return (
         <>
             <section className="userPage">
-                    <div className="profile">
-                        <div className="profile__edit">
-                            <ProfileImage src={profile.profileImage} username={profile.username} size="medium" />
-                            {/* Only show the edit button if you're looking at your own profile */}
-                            {user?.userId === profile.userId && !isEditing && (
-                                <Button className="profile__edit-button" onClick={openEdit}>Edit profile</Button>
-                            )}
-                        </div>
-                        <div className="profile__info">
-                            <h1>{profile.username}</h1>
-                            {/* Email is private, so it's only shown it to the profile owner */}
-                            {user?.userId === profile.userId && (
-                                <p className="profile__email">{profile.email}</p>
-                            )}
-                            {/* If the user hasn't written a bio, show a placeholder */}
-                            <p className={`profile__about${!profile.aboutMe ? " profile__about--empty" : ""}`}>
-                                {profile.aboutMe || "No description yet."}
-                            </p>
-                        </div>
+                <div className="profile">
+                    <div className="profile__edit">
+                        <ProfileImage src={profile.profileImage} username={profile.username} size="medium" />
+                        {/* Only show the edit button if you're looking at your own profile */}
+                        {user?.userId === profile.userId && !isEditing && (
+                            <Button className="profile__edit-button" onClick={openEdit}>Edit profile</Button>
+                        )}
                     </div>
+                    <div className="profile__info">
+                        <h1>{profile.username}</h1>
+                        {/* Email is private, so it's only shown it to the profile owner */}
+                        {user?.userId === profile.userId && (
+                            <p className="profile__email">{profile.email}</p>
+                        )}
+                        {/* If the user hasn't written a bio, show a placeholder */}
+                        <p className={`profile__about${!profile.aboutMe ? " profile__about--empty" : ""}`}>
+                            {profile.aboutMe || "No description yet."}
+                        </p>
+                    </div>
+                </div>
 
-                    {/* Edit form only shows up when the owner clicks "Edit profile" */}
-                    {user?.userId === profile.userId && isEditing && (
-                        <form onSubmit={handleSave} className="form userPage__form">
-                            {saveError && <p className="status status--error">{saveError}</p>}
-                            {saveSuccess && <p className="status status--success">Profile updated successfully</p>}
+                {/* Edit form only shows up when the owner clicks "Edit profile" */}
+                {user?.userId === profile.userId && isEditing && (
+                    <form onSubmit={handleSave} className="form userPage__form">
+                        {saveError && <p className="status status--error">{saveError}</p>}
+                        {saveSuccess && <p className="status status--success">Profile updated successfully</p>}
 
-                            <FormField label="Email" error={fieldErrors.email}>
-                                <input aria-label="Email" value={editData.email} placeholder="Your email" onChange={event => handleChange("email", event.target.value)} type="email" />
-                            </FormField>
+                        <FormField label="Email" error={fieldErrors.email}>
+                            <input aria-label="Email" value={editData.email} placeholder="Your email" onChange={event => handleChange("email", event.target.value)} type="email" />
+                        </FormField>
 
-                            {/* maxLength stops the user from typing more than 160 characters */}
-                            <FormField label="About me" error={fieldErrors.aboutMe}>
-                                <input aria-label="About me" value={editData.aboutMe} placeholder="Write a description about yourself" maxLength={160} onChange={event => handleChange("aboutMe", event.target.value)} />
-                            </FormField>
+                        {/* maxLength stops the user from typing more than 160 characters */}
+                        <FormField label="About me" error={fieldErrors.aboutMe}>
+                            <input aria-label="About me" value={editData.aboutMe} placeholder="Write a description about yourself" maxLength={160} onChange={event => handleChange("aboutMe", event.target.value)} />
+                        </FormField>
 
-                            <FormField label="New password" error={fieldErrors.password}>
-                                <input aria-label="New password" value={editData.password} placeholder="Want to change your password?" onChange={event => handleChange("password", event.target.value)} type="password" />
-                            </FormField>
+                        <FormField label="New password" error={fieldErrors.password}>
+                            <input aria-label="New password" value={editData.password} placeholder="Want to change your password?" onChange={event => handleChange("password", event.target.value)} type="password" />
+                        </FormField>
 
-                            {/* accept="image/*" restricts the file picker to image files only */}
-                                            <FormField label="Profile image">
-                                                <input
-                                                    type="file"
-                                                    accept="image/*"
-                                                    onChange={event => {
-                                                        const file = event.target.files[0];
-                                                        setProfileImageFile(file);
-                                                        if (!file) return;
-                                                        const reader = new FileReader();
-                                                        reader.onload = () => {
-                                                            const dataUrl = reader.result;
-                                                            setProfileImagePreview(dataUrl);
-                                                            // Do not save images to localStorage or filesystem per user request
-                                                        };
-                                                        reader.readAsDataURL(file);
-                                                    }}
-                                                />
-                                                {profileImagePreview && <div className="profile__image-preview"><img src={profileImagePreview} alt="Preview" /></div>}
-                                            </FormField>
+                        {/* accept="image/*" restricts the file picker to image files only */}
+                        <FormField label="Profile image">
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={event => {
+                                    const file = event.target.files[0];
+                                    setProfileImageFile(file);
+                                    if (!file) return;
+                                    const reader = new FileReader();
+                                    reader.onload = () => {
+                                        const dataUrl = reader.result;
+                                        setProfileImagePreview(dataUrl);
+                                        // Do not save images to localStorage or filesystem per user request
+                                    };
+                                    reader.readAsDataURL(file);
+                                }}
+                            />
+                            {profileImagePreview && <div className="profile__image-preview"><img src={profileImagePreview} alt="Preview" /></div>}
+                        </FormField>
 
-                            <div className="userPage__form-buttons">
-                                <Button type="submit">Save</Button>
-                                <Button type="button" onClick={() => setIsEditing(false)}>Cancel</Button>
-                            </div>
-                        </form>
-                    )}
+                        <div className="userPage__form-buttons">
+                            <Button type="submit">Save</Button>
+                            <Button type="button" onClick={() => setIsEditing(false)}>Cancel</Button>
+                        </div>
+                    </form>
+                )}
 
                 <div className="container container--stats">
                     <div className="stats">
@@ -221,18 +244,36 @@ export default function User() {
                 </div>
 
                 <div>
-                    <h2>Last 10 games</h2>
-                    <div className="lastGames">
-                        {profile.recentGames?.length > 0
-                            ? profile.recentGames.map((match, i) => (
-                                <GameCard key={match.matchId} match={match} index={i} variant="recentGames" />
-                            ))
-                            : <p className="profile__about--empty">No games played yet. Head to the lobby to get started!</p>
-                        }
+                    <div>
+                        <h2>Recent games</h2>
+                        <div className="lastGames">
+                            {games.length > 0
+                                ? games.map((match, i) => (
+                                    <GameCard key={match.matchId} match={match} index={i} variant="recentGames" />
+                                ))
+                                : <p className="profile__about--empty">No games played yet. Head to the lobby to get started!</p>
+                            }
+                        </div>
+                        {gamesTotalPages > 1 && (
+                            <div className="pagination">
+                                <Button type="button" onClick={() => setGamesPage(prev => Math.max(1, prev - 1))} disabled={gamesPage === 1}>Prev</Button>
+                                {getPageNumbers(gamesPage, gamesTotalPages).map((pageNum, i) =>
+                                    pageNum === '...'
+                                        ? <span key={`ellipsis-${i}`}>...</span>
+                                        : <Button
+                                            key={pageNum}
+                                            type="button"
+                                            className={`btn--chip${gamesPage === pageNum ? " btn--chip--active" : ""}`}
+                                            onClick={() => setGamesPage(pageNum)}
+                                        >
+                                            {pageNum}
+                                        </Button>
+                                )}
+                                <Button type="button" onClick={() => setGamesPage(prev => Math.min(gamesTotalPages, prev + 1))} disabled={gamesPage === gamesTotalPages}>Next</Button>
+                            </div>
+                        )}
                     </div>
                 </div>
-
-                <Link className="all-games-btn" to={`/user/${id}/games`}>View all games</Link>
             </section>
         </>
     );
