@@ -11,8 +11,8 @@
 10. ✅ Sound --> Chanya
 11. ✅ Upcomming tournaments on homepage(sortable and searchable) --> Chanya
 12. ✅ Idevidual tournament Page --> Chanya
-13. ✅ Filtering on lobby page
-14. Leaving game before it starts
+13. ✅ Filtering on lobby page --> Marie
+14. ✅ Leaving game before it starts --Tuva
 15. ✅ In game money(gambelinggggggg), needs to be shown on player page. --> Marie 
 16. More game varients.
 17. ✅ Implement actuall authorization and authentication. --> Marie
@@ -26,7 +26,6 @@
     4. tournament creation
 22. ✅ anonymous can no longer play just spectate --> Chanya
 23. Focus on match making switches focus from queue to "rooms" where player can join and wait for other players to join. --> Chanya 
-24. Seeding script.
 25. ✅ verify email when signing up --> Marie
 
 

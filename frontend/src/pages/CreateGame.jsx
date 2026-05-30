@@ -23,7 +23,7 @@ export default function CreateGame() {
         gameRules: "straights_allowed",
         timeController: 10,
         desiredOpponentElo: "",
-        coinWager: "",
+        coinWager: 0,
         numberOfPlayers: 2
     });
 
@@ -87,7 +87,7 @@ export default function CreateGame() {
                 <FormField label="Number of players">
                     <select
                         value={formData.numberOfPlayers}
-                        onChange={event => handleChange("desiredOpponentElo", event.target.value)}
+                        onChange={event => handleChange("numberOfPlayers", Number(event.target.value))}
                     >
                         <option value={2}>2 players</option>
                         <option value={3}>3 players</option>
@@ -103,22 +103,21 @@ export default function CreateGame() {
                             type="number"
                             min="1000"
                             value={formData.desiredOpponentElo}
-                            onChange={event => handleChange("desiredOpponentElo", parseInt(event.target.value))}
+                            onChange={event => handleChange("desiredOpponentElo", event.target.value)}
                             placeholder="Leave empty for any Elo"
                         />
                     </FormField>
-                    {user && (
-                        <FormField label={`Coin wager (you have ${user.coins ?? 0})`}>
-                            <input
-                                type="number"
-                                min="0"
-                                max={user.coins}
-                                value={formData.coinWager}
-                                onChange={event => handleChange("coinWager", event.target.value)}
-                                placeholder="0"
-                            />
-                        </FormField>
-                    )}
+                    <FormField label={`Buy-in (you have ${user.coins ?? 0})`}>
+                        <select
+                            value={formData.coinWager}
+                            onChange={event => handleChange("coinWager", Number(event.target.value))}
+                        >
+                            <option value={0}>No buy-in</option>
+                            <option value={1}>1 coin</option>
+                            <option value={10}>10 coins</option>
+                            <option value={50}>50 coins</option>
+                        </select>
+                    </FormField>
                 </div>
                 {error && <p className="status status--error">{error}</p>}
 
