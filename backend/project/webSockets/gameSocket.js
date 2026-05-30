@@ -303,7 +303,11 @@ export default function attachWebSocket(server) {
                         broadcast(matchId, { type: 'player-matched', userId, pot: state.pot });
                         advanceBetting(matchId, state);
                     }
-                    // Rolling phase: rolling timer fires autoCompleteRoll automatically
+
+                    if (state.phase === 'rolling' && !state.players[userId].doneRolling) {
+                        clearRollingTimer(matchId, userId);
+                        autoCompleteRoll(matchId, userId);
+                    }
                 }
             }
 
