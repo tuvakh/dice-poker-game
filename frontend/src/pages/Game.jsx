@@ -37,6 +37,7 @@ export default function Game() {
     const timerRef = useRef(null);
     const [readySent, setReadySent] = useState(false);
     const [forfeitBy, setForfeitBy] = useState(null);
+    const [playerLeftNotice, setPlayerLeftNotice] = useState(null);
 
     // Fetches the latest match data from the backend
     async function fetchMatch() {
@@ -120,9 +121,7 @@ export default function Game() {
         }
 
         if (message.type === 'player-disconnected') {
-            setForfeitBy(message.userId);
-            clearInterval(timerRef.current);
-            setTimeLeft(null);
+            setPlayerLeftNotice(message.userId);
         }
 
         if (message.type === 'game-started') {
@@ -306,7 +305,7 @@ export default function Game() {
     useEffect(() => {
         return () => {
             if (matchRef.current?.status === 'waiting' && user) {
-                leaveMatch(matchRef.current.matchId, user._id).catch(() => {});
+                leaveMatch(matchRef.current.matchId, user._id).catch(() => { });
             }
         };
     }, []);
@@ -365,6 +364,12 @@ export default function Game() {
                                 {user && match.players.some(player => player?._id === user._id) && (
                                     <button onClick={handleLeave}>Leave game</button>
                                 )}
+                                {playerLeftNotice && (
+                                    <p className="status status--error">
+                                        {match.players.find(player => player?._id === playerLeftNotice)?.username ?? 'Opponent'} left — their moves are now automatic
+                                    </p>
+                                )}
+
                             </>
                         )}
 

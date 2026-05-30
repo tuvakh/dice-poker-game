@@ -282,10 +282,29 @@ export default function attachWebSocket(server) {
                 const state = gameStates.get(matchId);
                 if (!state) return;
 
-                state.forfeitBy = userId;
-                delete state.players[userId];
-                broadcast(matchId, { type: 'player-disconnected', userId });
-                endGame(matchId, state);
+                if (state.phase === 'waiting') {
+                    // Game hasn't started — can't continue without all players
+                    state.forfeitBy = userId;
+                    delete state.players[userId];
+                    broadcast(matchId, { type: 'player-disconnected', userId });
+                    endGame(matchId, state);
+                } else {
+                    // Game is in progress — mark disconnected and let it continue
+                    state.players[userId].disconnected = true;
+                    broadcast(matchId, { type: 'player-disconnected', userId });
+
+                    if (state.phase === 'betting' && state.currentBettor === userId) {
+                        const player = state.players[userId];
+                        const toMatch = state.highestBet - player.bet;
+                        player.bet = state.highestBet;
+                        player.stack -= toMatch;
+                        state.pot += toMatch;
+                        state.bettorsActed.add(userId);
+                        broadcast(matchId, { type: 'player-matched', userId, pot: state.pot });
+                        advanceBetting(matchId, state);
+                    }
+                    // Rolling phase: rolling timer fires autoCompleteRoll automatically
+                }
             }
 
             const tournamentKey = tournamentClients.get(ws);
@@ -394,6 +413,17 @@ export default function attachWebSocket(server) {
             pot: state.pot,
             stacks
         });
+
+        // If the opening bettor is already disconnected, advance past them automatically
+        if (state.players[state.currentBettor]?.disconnected) {
+            const player = state.players[state.currentBettor];
+            const toMatch = state.highestBet - player.bet;
+            player.bet = state.highestBet;
+            player.stack -= toMatch;
+            state.bettorsActed.add(state.currentBettor);
+            broadcast(matchId, { type: 'player-matched', userId: state.currentBettor, pot: state.pot });
+            advanceBetting(matchId, state);
+        }
     }
 
     // Moves to the next bettor, or triggers reveal if all active players have matched
@@ -427,6 +457,7 @@ export default function attachWebSocket(server) {
                     disconnectedPlayer.bet = state.highestBet;
                     disconnectedPlayer.stack -= toMatch;
                     state.pot += toMatch;
+                    state.bettorsActed.add(nextId);
                     broadcast(matchId, { type: 'player-matched', userId: nextId, pot: state.pot });
                     advanceBetting(matchId, state);
                     return;
@@ -455,8 +486,13 @@ export default function attachWebSocket(server) {
         }
 
         // Find all winners (there may be more than one in a draw)
+        // Disconnected players can't win — only connected players compete for the pot
+        // If everyone left is disconnected, fall back to all non-folded so the pot isn't lost
+        const eligibleIds = Object.keys(results).filter((userId) => !state.players[userId].disconnected);
+        const competeIds = eligibleIds.length > 0 ? eligibleIds : Object.keys(results);
+
         const winners = [];
-        for (const userId of Object.keys(results)) {
+        for (const userId of competeIds) {
             if (winners.length === 0) {
                 winners.push(userId);
                 continue;
@@ -522,17 +558,20 @@ export default function attachWebSocket(server) {
                 type: 'game-started',
                 yourDice: player.dice ?? [],
                 rollsLeft: player.rollsLeft,
-                players: Object.keys(state.players)
+                players: Object.keys(state.players),
+                timeRemaining: Math.ceil(player.timeRemaining / 1000)
             })
         );
 
         // If betting is in progress, send the current betting state too
         if (state.phase === 'betting') {
+            const stacks = Object.fromEntries(Object.entries(state.players).map(([uid, player]) => [uid, player.stack]));
             ws.send(
                 JSON.stringify({
                     type: 'betting-start',
                     currentBettor: state.currentBettor,
-                    pot: state.pot
+                    pot: state.pot,
+                    stacks
                 })
             );
         }
