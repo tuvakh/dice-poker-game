@@ -14,7 +14,7 @@
 13. ✅ Filtering on lobby page --> Marie
 14. ✅ Leaving game before it starts --Tuva
 15. ✅ In game money(gambelinggggggg), needs to be shown on player page. --> Marie 
-16. More game varients.
+16. ✅ More game varients. --> Tuva
 17. ✅ Implement actuall authorization and authentication. --> Marie
 18. ✅ implement a 404 page --> Marie
 19. Implement comments using websockets
@@ -24,7 +24,7 @@
     2. User administation
     3. comment administration
     4. tournament creation
-22. ✅ anonymous can no longer play just spectate --> Chanya
+22. ✅ anonymous can no longer play just spectate --> Tuva
 23. Focus on match making switches focus from queue to "rooms" where player can join and wait for other players to join. --> Chanya 
 25. ✅ verify email when signing up --> Marie
 

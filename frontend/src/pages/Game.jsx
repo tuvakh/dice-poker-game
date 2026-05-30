@@ -86,7 +86,7 @@ export default function Game() {
     };
 
 
-    // Poll the match every 15 seconds to check if someone joined
+    // Poll the match every 5 seconds to check if someone joined
     usePolling(fetchMatch, 5000);
 
     // Refetch comments whenever the match updates
@@ -153,7 +153,6 @@ export default function Game() {
 
                 board.currentUserId = user?._id;
                 board.setDice(user?._id, message.yourDice, true);
-                board.resetAllHeld();
                 board.setInteractive(user?._id, true);
                 board.clearResults();
                 board.resetAllHeld();
@@ -199,11 +198,6 @@ export default function Game() {
         if (message.type === 'player-matched') {
             setBettingState(prev => ({ ...prev, pot: message.pot }));
         }
-
-        if (message.type === 'player-folded') {
-            // noted — board could show folded state later
-        }
-
 
         if (message.type === 'round-end') {
             setGamePhase(null);
@@ -337,29 +331,21 @@ export default function Game() {
 
                         {match.status === "ongoing" && gamePhase !== 'ended' && !forfeitBy && (
                             <>
-                                {forfeitBy ? (
-                                    <div className="game__forfeit-notice">
-                                        <p>{match.players.find(player => player?._id === forfeitBy)?.username ?? 'Opponent'} left the game</p>
-                                        <p>Waiting for results...</p>
+
+                                {gamePhase === 'rolling' && timeLeft !== null && (
+                                    <p className="game__timer">⏱ {timeLeft}s</p>
+                                )}
+                                {gamePhase === 'ready' && (
+                                    <div className="game__ready-overlay">
+                                        {readySent
+                                            ? <p>Waiting for opponent...</p>
+                                            : <button onClick={handleReady}>Ready</button>
+                                        }
                                     </div>
-                                ) : (
-                                    <>
-                                        {gamePhase === 'rolling' && timeLeft !== null && (
-                                            <p className="game__timer">⏱ {timeLeft}s</p>
-                                        )}
-                                        {gamePhase === 'ready' && (
-                                            <div className="game__ready-overlay">
-                                                {readySent
-                                                    ? <p>Waiting for opponent...</p>
-                                                    : <button onClick={handleReady}>Ready</button>
-                                                }
-                                            </div>
-                                        )}
-                                        <dice-poker-board ref={boardRef}></dice-poker-board>
-                                        {user && match.players.some(player => player?._id === user._id) && (
-                                            <button onClick={handleLeave}>Leave game</button>
-                                        )}
-                                    </>
+                                )}
+                                <dice-poker-board ref={boardRef}></dice-poker-board>
+                                {user && match.players.some(player => player?._id === user._id) && (
+                                    <button onClick={handleLeave}>Leave game</button>
                                 )}
                             </>
                         )}
@@ -381,11 +367,10 @@ export default function Game() {
                                 {standings && (
                                     <ol className="game__standings">
                                         {standings.map((entry, i) => {
-                                            const player = match.players.find(matchPlayer => matchPlayer?._id === entry.userId);
-                                            const name = player?.username;
+                                            const playerName = match.players.find(matchPlayer => matchPlayer?._id === entry.userId)?.username;
                                             return (
                                                 <li key={entry.userId}>
-                                                    {i === 0 && '🏆 '}{name} — {entry.stack} coins
+                                                    {i === 0 && '🏆 '}{playerName} — {entry.stack} coins
                                                 </li>
                                             );
                                         })}
@@ -444,7 +429,7 @@ export default function Game() {
                         </>
                     }
                 </aside>
-            </div>
+            </div >
         </>
     );
 }

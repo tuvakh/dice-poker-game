@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router";
 import { useAuth } from "../contexts/AuthContext.jsx";
-import { getAllMatches } from "../api/matches";
+import { createMatch, getAllMatches } from "../api/matches";
 import { getAllGameCategories } from "../api/gameCategories";
 
 import Hero from "../components/Hero.jsx";
@@ -16,20 +17,27 @@ import { usePolling } from "../hooks/usePolling.js";
 // The lobby page shows all the waiting games this user is allowed to join
 export default function Lobby() {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const [lobbyGames, setLobbyGames] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [fetchError, setFetchError] = useState(null);
+
     const [categories, setCategories] = useState([]);
 
     const [selectedRounds, setSelectedRounds] = useState("");
     const [selectedStraights, setSelectedStraights] = useState("");
     const [selectedSeconds, setSelectedSeconds] = useState("");
 
-    // This fetch 100 games at once so it have enough to filter down from
+    const [joining, setJoining] = useState(false);
+
+    const [visibleCount, setVisibleCount] = useState(6);
+
+    // This fetch 100 games at once so it has enough to filter down from
     function fetchGames() {
         getAllMatches({ status: "waiting", limit: 100 })
             .then(data => setLobbyGames(data.matchList))
-            .catch(() => setError("Failed to load games. Please try again."))
+            .catch(() => setFetchError("Failed to load games. Please try again."))
             .finally(() => setLoading(false));
     }
 
@@ -43,114 +51,181 @@ export default function Lobby() {
                 const list = Array.isArray(result) ? result : (result.gameCategories || result.categoryList || []);
                 if (mounted) setCategories(list);
             })
-            .catch(() => {})
+            .catch(() => { })
         return () => { mounted = false };
     }, []);
 
     // Logged in: hide games the user already joined, and hide games where their Elo is out of range
     // Not logged in: show all waiting games (anonymous play is being phased out)
-    const baseFiltered = lobbyGames.filter(match => {
-        if (!user) return true;
-        const alreadyIn = match.players.some(player => player._id === user._id);
-        // If the game has no Elo requirement, anyone can join, so eloOk defaults to true
-        const eloOk = !match.desiredOpponentElo || Math.abs(match.desiredOpponentElo - user.eloRating) <= 200;
-        return !alreadyIn && eloOk;
-    });
+    const baseFiltered = filterLobbyMatches(lobbyGames, user);
 
-    // Derive helper maps for category lookup and available filter options
-    const categoryById = categories.reduce((acc, c) => {
-        acc[c._id || c.id] = c;
-        return acc;
-    }, {});
-
-    const roundsOptions = Array.from(new Set(categories.map(c => c.numberOfRounds))).sort((a, b) => a - b);
-    const secondsOptions = Array.from(new Set(categories.map(c => c.timeController))).sort((a, b) => a - b);
+    const roundsOptions = Array.from(new Set(categories.map(category => category.numberOfRounds))).sort((roundA, roundB) => roundA - roundB);
+    const secondsOptions = Array.from(new Set(categories.map(category => category.timeController))).sort((secondsA, secondsB) => secondsA - secondsB);
 
     // Apply UI filters on top of baseFiltered
     const filteredGames = baseFiltered.filter(match => {
         // Resolve category object (match.gameCategory may be populated object or id)
-        const matchCat = match.gameCategory && (typeof match.gameCategory === 'object' ? match.gameCategory : categoryById[match.gameCategory]);
+        const matchCategory = typeof match.gameCategory === 'object' ? match.gameCategory : null;
 
         // rounds filter
         if (selectedRounds) {
-            if (!matchCat || Number(matchCat.numberOfRounds) !== Number(selectedRounds)) return false;
+            if (!matchCategory || Number(matchCategory.numberOfRounds) !== Number(selectedRounds)) return false;
         }
 
         // straights filter
         if (selectedStraights) {
-            const hasStraights = matchCat?.gameRules === "straights_allowed";
+            const hasStraights = matchCategory?.gameRules === "straights_allowed";
             if (selectedStraights === "allowed" && !hasStraights) return false;
             if (selectedStraights === "no" && hasStraights) return false;
         }
 
         // seconds filter
         if (selectedSeconds) {
-            if (!matchCat || Number(matchCat.timeController) !== Number(selectedSeconds)) return false;
+            if (!matchCategory || Number(matchCategory.timeController) !== Number(selectedSeconds)) return false;
         }
 
         return true;
     });
 
+    const visibleGames = filteredGames.slice(0, visibleCount);
+
+    useEffect(() => {
+        setVisibleCount(6);
+    }, [selectedRounds, selectedStraights, selectedSeconds]);
+
+    function getSelectedCategory() {
+        return categories.find(category => {
+            if (selectedRounds && category.numberOfRounds !== Number(selectedRounds)) return false;
+            if (selectedStraights === "allowed" && category.gameRules !== "straights_allowed") return false;
+            if (selectedStraights === "no" && category.gameRules === "straights_allowed") return false;
+            if (selectedSeconds && category.timeController !== Number(selectedSeconds)) return false;
+            return true;
+        });
+    }
+
+    // Finds an waiting game matching the filters, or creates a new one, then navigates there
+    async function handleFindGame() {
+        setError(null);
+        setJoining(true);
+        try {
+            const category = getSelectedCategory();
+            if (!category) {
+                setError("No game variant matches your settings. Try a different combination.");
+                return;
+            }
+
+            // Look for a waiting game the user hasn't joined yet
+            const data = await getAllMatches({ status: "waiting", gameCategoryId: category._id, limit: 10 });
+            const waitingGame = data.matchList.find(waitingMatch =>
+                !waitingMatch.players.some(player => player?._id === user._id)
+            );
+
+            if (waitingGame) {
+                navigate(`/game/${waitingGame.matchId}`);
+                return;
+            }
+
+            // No waiting game found — create a new one and wait there
+            const newMatch = await createMatch({
+                gameCategoryId: category._id,
+                players: [user._id],
+            });
+            navigate(`/game/${newMatch.matchId}`);
+        } catch (err) {
+            setError(err.message ?? "Something went wrong. Please try again.");
+        } finally {
+            setJoining(false);
+        }
+    }
+
     if (loading) return <Spinner />;
-    if (error) return <p className="status status--error">{error}</p>;
+    if (fetchError) return <p className="status status--error">{fetchError}</p>;
 
     return (
-      <>
-        <Hero title="Lobby" heroImg={lobbyHero}>
-            <p>Someone out there is waiting for you</p>
-            <p>Browse available games and jump in!</p>
-        </Hero>
-        <section>
-            <h2>Available games</h2>
-            <div className="lobby__filter-bar">
-                <div className="lobby__filter-item">
-                    <label>Rounds:</label>
-                    <div className="lobby__buttons">
-                        {roundsOptions.map(r => (
-                            <Button
-                                key={r}
-                                type="button"
-                                className={`btn--chip${String(selectedRounds) === String(r) ? ' btn--chip--active' : ''}`}
-                                onClick={() => setSelectedRounds(String(selectedRounds) === String(r) ? "" : String(r))}
-                            >
-                                {r}
-                            </Button>
-                        ))}
+        <>
+            <Hero title="Lobby" heroImg={lobbyHero}>
+                <p>Someone out there is waiting for you</p>
+                <p>Browse available games and jump in!</p>
+            </Hero>
+            <section>
+                <div className="queue-page__find">
+                    <div className="queue-page__find-text">
+                        <h1>Find a Match</h1>
+                        <p>Pick your settings and we&apos;ll find a suitable game you can join — or create a new one if none exist.</p>
                     </div>
+
+                    {categories.length === 0 ? <Spinner /> : (
+                        <>
+                            <div className="queue-page__filters">
+                                <div className="queue-page__filter-group">
+                                    <span className="queue-page__filter-label">Rounds</span>
+                                    <div className="queue-page__chips">
+                                        {roundsOptions.map(round => (
+                                            <Button
+                                                key={round}
+                                                type="button"
+                                                className={`btn--chip${String(selectedRounds) === String(round) ? " btn--chip--active" : ""}`}
+                                                onClick={() => setSelectedRounds(String(selectedRounds) === String(round) ? "" : String(round))}
+                                            >
+                                                {round}
+                                            </Button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="queue-page__filter-group">
+                                    <span className="queue-page__filter-label">Straights</span>
+                                    <div className="queue-page__chips">
+                                        <Button type="button" className={`btn--chip${selectedStraights === 'allowed' ? ' btn--chip--active' : ''}`} onClick={() => setSelectedStraights(selectedStraights === 'allowed' ? '' : 'allowed')}>Allowed</Button>
+                                        <Button type="button" className={`btn--chip${selectedStraights === 'no' ? ' btn--chip--active' : ''}`} onClick={() => setSelectedStraights(selectedStraights === 'no' ? '' : 'no')}>No straights</Button>
+                                    </div>
+                                </div>
+
+                                <div className="queue-page__filter-group">
+                                    <span className="queue-page__filter-label">Seconds</span>
+                                    <div className="queue-page__chips">
+                                        {secondsOptions.map(seconds => (
+                                            <Button
+                                                key={seconds}
+                                                type="button"
+                                                className={`btn--chip${String(selectedSeconds) === String(seconds) ? " btn--chip--active" : ""}`}
+                                                onClick={() => setSelectedSeconds(String(selectedSeconds) === String(seconds) ? "" : String(seconds))}
+                                            >
+                                                {seconds}s
+                                            </Button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {error && <p className="status status--error">{error}</p>}
+
+                            {user && (
+                                <Button onClick={handleFindGame} disabled={joining}>
+                                    {joining ? "Finding game…" : "Find a Game"}
+                                </Button>
+                            )}
+                        </>
+                    )}
                 </div>
 
-                <div className="lobby__filter-item">
-                    <label>Straights:</label>
-                    <div className="lobby__buttons">
-                        <Button type="button" className={`btn--chip${selectedStraights === 'allowed' ? ' btn--chip--active' : ''}`} onClick={() => setSelectedStraights(selectedStraights === 'allowed' ? '' : 'allowed')}>Allowed</Button>
-                        <Button type="button" className={`btn--chip${selectedStraights === 'no' ? ' btn--chip--active' : ''}`} onClick={() => setSelectedStraights(selectedStraights === 'no' ? '' : 'no')}>No</Button>
-                    </div>
+                <div className="queue-page__rooms-header">
+                    <h2>Available games</h2>
+                    <Link to="/createGame" className="queue-page__create-link">+ Create a game</Link>
                 </div>
-
-                <div className="lobby__filter-item">
-                    <label>Seconds:</label>
-                    <div className="lobby__buttons">
-                        {secondsOptions.map(s => (
-                            <Button
-                                key={s}
-                                type="button"
-                                className={`btn--chip${String(selectedSeconds) === String(s) ? ' btn--chip--active' : ''}`}
-                                onClick={() => setSelectedSeconds(String(selectedSeconds) === String(s) ? "" : String(s))}
-                            >
-                                {s}s
-                            </Button>
-                        ))}
-                    </div>
+                <p>Click a game to join and get started.</p>
+                <div className="cards-grid">
+                    {visibleGames.length === 0
+                        ? <p>No games available right now. Why not create one?</p>
+                        : visibleGames.map(match => <GameCard key={match.matchId} match={match} />)
+                    }
                 </div>
-            </div>
-            <p>Click a game to join and get started.</p>
-            <div className="cards-grid">
-                {filteredGames.length === 0
-                    ? <p>No games available right now. Why not create one?</p>
-                    : filteredGames.map(match => <GameCard key={match.matchId} match={match} />)
-                }
-            </div>
-        </section>
-      </>
+                {visibleCount < filteredGames.length && (
+                    <Button type="button" onClick={() => setVisibleCount(prev => prev + 6)}>
+                        Load more
+                    </Button>
+                )}
+            </section>
+        </>
     )
 }

@@ -6,20 +6,20 @@ const AuthContext = createContext(null);
 
 // AuthProvider wraps the whole app so every page knows who is logged in
 export function AuthProvider({ children }) {
-    // Check if a user was already saved in localStorage
+    // Check if a user was already saved in sessionStorage
     // If so, start with them logged in, otherwise start as not logged in
     const [user, setUser] = useState(() => {
-        const saved = localStorage.getItem("user");
+        const saved = sessionStorage.getItem("user");
         return saved ? JSON.parse(saved) : null;
     });
 
     // State for showing the ban modal
     const [bannedMessage, setBannedMessage] = useState(null);
 
-    // Logs out by clearing the user from both state and localStorage
+    // Logs out by clearing the user from both state and sessionStorage
     function logout() {
         setUser(null);
-        localStorage.removeItem("user");
+        sessionStorage.removeItem("user");
         setBannedMessage(null);
     }
 
@@ -62,12 +62,12 @@ export function AuthProvider({ children }) {
         };
     }, [user?.userId, bannedMessage, handleBan]);
 
-    // Sends the username and password to the backend, then saves the returned user to state and localStorage
-    // localStorage keeps the user logged in even if they refresh the page
+    // Sends the username and password to the backend, then saves the returned user to state and sessionStorage
+    // sessionStorage keeps the user logged in even if they refresh the page
     async function login(username, password) {
         const loggedInUser = await loginUser({ username, password });
         setUser(loggedInUser);
-        localStorage.setItem("user", JSON.stringify(loggedInUser));
+        sessionStorage.setItem("user", JSON.stringify(loggedInUser));
     }
 
     // Creates a new account and immediately logs the user in
@@ -81,7 +81,7 @@ export function AuthProvider({ children }) {
         // If the account is already verified, log them in.
         if (created?.emailVerified) {
             setUser(created);
-            localStorage.setItem("user", JSON.stringify(created));
+            sessionStorage.setItem("user", JSON.stringify(created));
             return { user: created };
         }
 
@@ -95,7 +95,7 @@ export function AuthProvider({ children }) {
     function updateUserData(updates) {
         setUser(prev => {
             const updated = { ...prev, ...updates };
-            localStorage.setItem("user", JSON.stringify(updated));
+            sessionStorage.setItem("user", JSON.stringify(updated));
             return updated;
         });
     }
