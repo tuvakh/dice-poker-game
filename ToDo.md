@@ -13,8 +13,7 @@
 8. ✅ More games on user page --> Marie
 9. ✅ Work needed on ELO system
 10. ✅ Sound --> Chanya
-11. ⚠️ Upcoming tournaments on homepage (sortable and searchable) --> Chanya
-        ❌ Sort/search not implemented on list page
+11. ✅ Upcoming tournaments on homepage (sortable and searchable) --> Tuva
 12. ⚠️ Individual tournament page --> Chanya
         ❌ Trophy won't show — getTournament never calls .populate('trophy')
         ❌ Game variant not shown — .populate('gameCategory') also missing
