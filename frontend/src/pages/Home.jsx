@@ -1,28 +1,18 @@
-import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 
 import Hero from "../components/Hero.jsx";
 import Button from "../components/Button.jsx";
-import GameCard from "../components/GameCard.jsx";
-import TournamentCard from "../components/TournamentCard.jsx";
-
-import { getAllMatches } from "../api/matches.js";
-import { getAllTournaments } from "../api/tournaments.js";
-import { BASE_URL, handleResponse } from "../api/config.js"; // Chanya
-import { useAppearance } from "../contexts/AppearanceContext.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
-import Spinner from "../components/Spinner.jsx";
 
 import homeHero from "../assets/home-hero.png";
-
-import { filterLobbyMatches } from "../hooks/useLobbyGames.js";
+import HomeDetails from "./home/HomeDetails.jsx";
 
 // The homepage introduces the platform and shows the lobby preview, top 5 games, and tournaments
 export default function Home() {
     const navigate = useNavigate();
-    const { preferences } = useAppearance();
     const { user } = useAuth();
 
+<<<<<<< HEAD
     const [lobbyGames, setLobbyGames] = useState([]);
     const [topGames, setTopGames] = useState([]);
     const [tournaments, setTournaments] = useState([]);

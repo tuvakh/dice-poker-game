@@ -1,14 +1,16 @@
 import { useState } from "react";
 import { getAllComments, deleteComment } from "../../api/comments.js";
 import { useFetch } from "../../hooks/useFetch.js";
+import { useDebouncedValue } from "../../hooks/useDebouncedValue.js";
 import Spinner from "../../components/Spinner.jsx";
 
 export default function AdminComments(){
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState("");
     const limit = 10;
+    const debouncedSearch = useDebouncedValue(search, 250);
 
-    const { data, loading, error } = useFetch(() => getAllComments({ page, limit, search }), [page, search]);
+    const { data, loading, error } = useFetch((signal) => getAllComments({ page, limit, search: debouncedSearch }, signal), [page, debouncedSearch]);
 
     if (error) return <p className="status status--error">{error}</p>;
 

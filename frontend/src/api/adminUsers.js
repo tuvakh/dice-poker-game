@@ -1,13 +1,14 @@
 import { BASE_URL, handleResponse, getAuthHeaders } from "./config.js";
 
-export async function getUsers({ page = 1, limit = 10, search = "" } = {}) {
+export async function getUsers({ page = 1, limit = 10, search = "" } = {}, signal) {
     const params = new URLSearchParams();
     if (page) params.append('page', page);
     if (limit) params.append('limit', limit);
     if (search) params.append('search', search);
 
     const res = await fetch(`${BASE_URL}/users?${params.toString()}`, {
-        headers: { ...getAuthHeaders() }
+        headers: { ...getAuthHeaders() },
+        signal
     });
     return handleResponse(res);
 }
