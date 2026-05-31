@@ -31,8 +31,10 @@ const server = http.createServer(app);  // Express handles HTTP requests
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 500,
+    skip: (req) => process.env.NODE_ENV !== 'production',
     message: { error: "TOO_MANY_REQUESTS", message: "Too many requests, please try again later" }
 });
+
 
 app.use(limiter);
 
