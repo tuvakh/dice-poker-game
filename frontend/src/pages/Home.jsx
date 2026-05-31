@@ -1,23 +1,31 @@
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 
 import Hero from "../components/Hero.jsx";
 import Button from "../components/Button.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
+import GameCard from "../components/GameCard.jsx";
+import TournamentCard from "../components/TournamentCard.jsx";
+import Spinner from "../components/Spinner.jsx";
+
+import { getAllMatches } from "../api/matches.js";
+import { getAllTournaments } from "../api/tournaments.js";
+import { useAppearance } from "../contexts/AppearanceContext.jsx";
+
+import { filterLobbyMatches } from "../hooks/useLobbyGames.js";
 
 import homeHero from "../assets/home-hero.png";
-import HomeDetails from "./home/HomeDetails.jsx";
 
 // The homepage introduces the platform and shows the lobby preview, top 5 games, and tournaments
 export default function Home() {
     const navigate = useNavigate();
     const { user } = useAuth();
+    const { preferences } = useAppearance();
     const [lobbyGames, setLobbyGames] = useState([]);
     const [topGames, setTopGames] = useState([]);
     const [tournaments, setTournaments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    // Chanya: activity stats fetched from the /activities endpoint
-    const [activity, setActivity] = useState(null);
 
     useEffect(() => {
         async function load() {
@@ -30,11 +38,9 @@ export default function Home() {
                     getAllTournaments({ status: 'upcoming', limit: 5 })
                 ]);
 
-
                 setLobbyGames(waitingData.matchList);
                 setTournaments(tournamentData.tournamentList.slice(0, 5));
-                setActivity(activityData); // Chanya
-
+          
                 // This is a helper function that calculates the average Elo of all players in a match
                 // and sorts matches so the highest-Elo games come first
                 const byAvgElo = matches => matches
@@ -80,23 +86,6 @@ export default function Home() {
                 )}
                 <Link to="/aboutGame">Learn how to play</Link>
             </Hero>
-
-            {/* Chanya: Platform activity stats pulled from the /activities endpoint */}
-            {activity && (
-                <section className="home-activity">
-                    <h2>Platform activity</h2>
-                    <div className="home-activity__stats">
-                        <div className="home-activity__stat">
-                            <span className="home-activity__number">{activity.ongoingMatches}</span>
-                            <span>games live right now</span>
-                        </div>
-                        <div className="home-activity__stat">
-                            <span className="home-activity__number">{activity.activeUsers}</span>
-                            <span>players active this week</span>
-                        </div>
-                    </div>
-                </section>
-            )}
 
             {/* Lobby preview: shows waiting games the user can join */}
             <section>
