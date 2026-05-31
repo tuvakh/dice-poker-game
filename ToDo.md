@@ -59,4 +59,5 @@
 - Error messages on light mode has bad readability
 - Should automatically logout, when we reseed the database and the user don’t exist anymore
 - When watching a game you shouldn’t see the buttons
+- Confirmation message when leaving game
 - Test everything to see if both functionality and styling works (both light and dark mode) 
