@@ -143,6 +143,13 @@
         font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
     }
 
+    &__waiting-count {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--text-color);
+        font-family: inherit;
+    }
+
     &__variant {
         margin-block-start: var(--small-space);
     }
