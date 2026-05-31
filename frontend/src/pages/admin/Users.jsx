@@ -1,14 +1,16 @@
 import { useState } from "react";
 import { getUsers, banUser, unbanUser, changeRole } from "../../api/adminUsers.js";
 import { useFetch } from "../../hooks/useFetch.js";
+import { useDebouncedValue } from "../../hooks/useDebouncedValue.js";
 import Spinner from "../../components/Spinner.jsx";
 
 export default function AdminUsers(){
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState("");
     const limit = 10;
+    const debouncedSearch = useDebouncedValue(search, 250);
 
-    const { data, loading, error } = useFetch(() => getUsers({ page, limit, search }), [page, search]);
+    const { data, loading, error } = useFetch((signal) => getUsers({ page, limit, search: debouncedSearch }, signal), [page, debouncedSearch]);
 
     if (error) return <p className="status status--error">{error}</p>;
 
