@@ -275,17 +275,6 @@ export async function loginUser(username, password) {
     // prevent banned users from logging in
     if (user.banned) throw new CustomError('This account has been banned. Time to reflect on your choices!', 403, 'FORBIDDEN');
 
-    // Prevent unverified users from logging in
-    if (!user.emailVerified) {
-        try {
-            await resendVerificationEmail(user);
-            console.log('Verification email resent to:', user.email);
-        } catch (err) {
-            console.error('Failed to resend verification email:', err);
-        }
-        throw new CustomError('Please verify your email before logging in. Check your inbox for the verification link.', 403, 'FORBIDDEN');
-    }
-
     // checkPassword hashes the input and compares it to the stored hash
     const correctPassword = checkPassword(password, user.password);
 
