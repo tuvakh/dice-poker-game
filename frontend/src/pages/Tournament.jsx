@@ -16,6 +16,7 @@ const STATUS_TABS = [
     { value: "finished", label: "Finished" },
 ];
 
+// All sorting is done client-side — no backend changes needed
 const SORT_OPTIONS = [
     { value: "date-desc",    label: "Date (newest first)" },
     { value: "date-asc",     label: "Date (oldest first)" },
@@ -45,6 +46,8 @@ export default function Tournament() {
             .finally(() => setLoading(false));
     }, [statusFilter]);
 
+    // visibleTournaments is re-computed only when tournaments, searchQuery, or sortBy changes
+    // Search only activates at 3+ characters (requirement says "at least 3")
     const visibleTournaments = useMemo(() => {
         let list = [...tournaments];
 
@@ -55,6 +58,8 @@ export default function Tournament() {
             );
         }
 
+        // Sort the filtered list
+        // localeCompare handles accented characters correctly for title sort
         list.sort((tournamentA, tournamentB) => {
             switch (sortBy) {
                 case "date-asc":    return new Date(tournamentA.date) - new Date(tournamentB.date);
@@ -88,8 +93,9 @@ export default function Tournament() {
                         </button>
                     ))}
                 </div>
-
-<div className="tournament-controls">
+                
+                {/* Search input and sort dropdown — controls the visibleTournaments list above */}
+                <div className="tournament-controls">
                     <input
                         type="text"
                         className="tournament-controls__search"

@@ -1,23 +1,22 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { getAllGameCategories } from "../api/gameCategories.js";
+import { createMatch } from "../api/matches.js";
 import { useAuth } from "../contexts/AuthContext.jsx";
+
 import RoundsSelector from "../components/RoundsSelector.jsx";
 import GameRulesSelector from "../components/GameRulesSelector.jsx";
 import TimeControlSelector from "../components/TimeControlSelector.jsx";
-
-import { getAllGameCategories } from "../api/gameCategories.js";
-import { createMatch } from "../api/matches.js";
 import Button from "../components/Button.jsx";
 import FormField from "../components/FormField.jsx";
 
-// The create Game page lets the user picks their game settings and submits to create a new match
+// The create game page lets the user pick their game settings and submit to create a new match
 export default function CreateGame() {
     const navigate = useNavigate();
     const { user } = useAuth();
     const [error, setError] = useState(null);
 
-    // All the form values starts with sensible defaults
-    // When a selector changes, only that field gets updated
+    // All form values start with sensible defaults — each selector only updates its own field
     const [formData, setFormData] = useState({
         numberOfRounds: 3,
         gameRules: "straights_allowed",
@@ -27,41 +26,7 @@ export default function CreateGame() {
         numberOfPlayers: 2
     });
 
-    // This gets called by each selector component when the user picks something
-    function handleChange(field, value) {
-        setFormData(prev => ({ ...prev, [field]: value }));
-    }
-
-    async function handleSubmit(event) {
-        event.preventDefault();
-        setError(null);
-
-        try {
-            // The backend stores game variants as pre-defined categories
-            // This fetch them all and find the one that matches what the user selected
-            const categories = await getAllGameCategories();
-            const category = categories.find(category =>
-                category.numberOfRounds === formData.numberOfRounds &&
-                category.gameRules === formData.gameRules &&
-                category.timeController === formData.timeController
-            );
-
-            // When creating a match, logged-in users join as a named player
-            const match = await createMatch({
-                gameCategoryId: category._id,
-                players: [user._id],
-                coinWager: user ? (formData.coinWager ? Number(formData.coinWager) : 0) : 0,
-                maxPlayers: formData.numberOfPlayers,
-                ...(Number(formData.desiredOpponentElo) > 0 ? { desiredOpponentElo: Number(formData.desiredOpponentElo) } : {})
-            });
-
-            // Send the user straight to their new game
-            navigate(`/game/${match.matchId}`);
-        } catch (err) {
-            setError(err.message);
-        }
-    }
-
+    // Not logged in: show a message instead of the form
     if (!user) {
         return (
             <section className="create-game">
@@ -70,6 +35,40 @@ export default function CreateGame() {
                 <Link to="/login">Login</Link>
             </section>
         );
+    }
+
+    // Called by each selector component when the user changes a setting
+    function handleChange(field, value) {
+        setFormData(prev => ({ ...prev, [field]: value }));
+    }
+
+    // Finds the matching game category and creates a new match with the selected settings
+    async function handleSubmit(event) {
+        event.preventDefault();
+        setError(null);
+
+        try {
+            // Fetch all game categories and find the one matching the user's selection
+            const categories = await getAllGameCategories();
+            const category = categories.find(category =>
+                category.numberOfRounds === formData.numberOfRounds &&
+                category.gameRules === formData.gameRules &&
+                category.timeController === formData.timeController
+            );
+
+            const match = await createMatch({
+                gameCategoryId: category._id,
+                players: [user._id],
+                coinWager: formData.coinWager,
+                maxPlayers: formData.numberOfPlayers,
+                // desiredOpponentElo is optional — only included if the user entered a positive number
+                ...(Number(formData.desiredOpponentElo) > 0 ? { desiredOpponentElo: Number(formData.desiredOpponentElo) } : {})
+            });
+
+            navigate(`/game/${match.matchId}`);
+        } catch (err) {
+            setError(err.message);
+        }
     }
 
     return (
@@ -95,7 +94,7 @@ export default function CreateGame() {
                     </select>
                 </FormField>
 
-                {/* Two fields side by side */}
+                {/* Two optional fields side by side */}
                 <div className="form__inputs">
                     <FormField label="Desired opponent Elo">
                         <input
@@ -118,8 +117,8 @@ export default function CreateGame() {
                         </select>
                     </FormField>
                 </div>
-                {error && <p className="status status--error">{error}</p>}
 
+                {error && <p className="status status--error">{error}</p>}
                 <Button type="submit">Create game</Button>
             </form>
         </section>

@@ -3,7 +3,7 @@
 // roll() only triggers the shake animation — it no longer generates a random face.
 
 class DicePokerDie extends HTMLElement {
-    // Tells the browser which attributes to watch for changes
+    // Tells the browser which attributes to watch — changes fire attributeChangedCallback
     static get observedAttributes() {
         return ['face', 'held', 'owner', 'die-id'];
     }
@@ -21,67 +21,13 @@ class DicePokerDie extends HTMLElement {
         this.refs = { faceEl: null, dieEl: null };
     }
 
-    // Getters and setters keep the internal state and the HTML attribute in sync
-    get face() {
-        return this._face;
-    }
-
-    set face(value) {
-        if (this._face === value) return;
-        this._face = value;
-        this.setAttribute('face', value);
-        this.updateUI();
-    }
-
-    get held() {
-        return this._held;
-    }
-
-    set held(value) {
-        const next = Boolean(value);
-        if (this._held === next) return;
-        this._held = next;
-        this.setAttribute('held', next ? 'true' : 'false');
-        this.updateUI();
-    }
-
-    get owner() {
-        return this._owner;
-    }
-
-    set owner(value) {
-        this._owner = value;
-        this.setAttribute('owner', value);
-    }
-
-    get dieId() {
-        return this._dieId;
-    }
-
-    set dieId(value) {
-        this._dieId = value;
-        this.setAttribute('die-id', value);
-    }
-
-    // Fires when an observed attribute changes — keeps internal state in sync
-    attributeChangedCallback(name, oldValue, newValue) {
-        if (oldValue === newValue) return;
-
-        if (name === 'face') this._face = newValue;
-        if (name === 'held') this._held = newValue === 'true';
-        if (name === 'owner') this._owner = newValue;
-        if (name === 'die-id') this._dieId = newValue;
-
-        this.updateUI();
-    }
-
     connectedCallback() {
         // Read any attributes set before the element was added to the DOM
         if (this.hasAttribute('face')) this._face = this.getAttribute('face');
         if (this.hasAttribute('held')) this._held = this.getAttribute('held') === 'true';
         if (this.hasAttribute('owner')) this._owner = this.getAttribute('owner');
         if (this.hasAttribute('die-id')) this._dieId = this.getAttribute('die-id');
-        
+
         // Shadow DOM isolates styles so they don't leak into the rest of the page
         this.shadowRoot.innerHTML = `
             <style>
@@ -122,11 +68,57 @@ class DicePokerDie extends HTMLElement {
 
         this.refs.dieEl = this.shadowRoot.querySelector('.die');
         this.refs.faceEl = this.shadowRoot.querySelector('span');
-        
+
         // Clicking a die toggles its held state
         this.refs.dieEl.addEventListener('click', () => this.toggleHeld());
 
         this.updateUI();
+    }
+
+    // Fires when an observed attribute changes — keeps internal state in sync
+    attributeChangedCallback(name, oldValue, newValue) {
+        if (oldValue === newValue) return;
+
+        if (name === 'face') this._face = newValue;
+        if (name === 'held') this._held = newValue === 'true';
+        if (name === 'owner') this._owner = newValue;
+        if (name === 'die-id') this._dieId = newValue;
+
+        this.updateUI();
+    }
+
+    // Getters and setters keep the internal state and the HTML attribute in sync
+    get face() { return this._face; }
+    set face(value) {
+        if (this._face === value) return;
+        this._face = value;
+        this.setAttribute('face', value);
+        this.updateUI();
+    }
+
+    // Held needs change detection 
+    // Toggling it triggers a repaint and fires events
+    get held() { return this._held; }
+    set held(value) {
+        const next = Boolean(value);
+        if (this._held === next) return;
+        this._held = next;
+        this.setAttribute('held', next ? 'true' : 'false');
+        this.updateUI();
+    }
+
+    // Owner identifies which player this die belongs to. It's set once on creation
+    get owner() { return this._owner; }
+    set owner(value) {
+        this._owner = value;
+        this.setAttribute('owner', value);
+    }
+
+    // dieId is the die's position in the hand (0–4). It's set once on creation
+    get dieId() { return this._dieId; }
+    set dieId(value) {
+        this._dieId = value;
+        this.setAttribute('die-id', value);
     }
 
     // Updates the visual state — face value and held outline
@@ -136,6 +128,7 @@ class DicePokerDie extends HTMLElement {
         this.refs.faceEl.textContent = this._face;
         this.refs.dieEl.classList.toggle('held', this._held);
 
+        // A, K, and 8 are red in Spanish playing cards (hearts/diamonds suit association)
         const isRed = this._face === 'A' || this._face === 'K' || this._face === '8';
         this.refs.faceEl.style.color = isRed
             ? 'var(--die-face-color-red)'
@@ -145,7 +138,7 @@ class DicePokerDie extends HTMLElement {
     // Toggles held state and notifies the board so it can send the update to the server
     toggleHeld() {
         if (this._face === '?') return;
-        
+
         this.held = !this._held;
 
         this.dispatchEvent(
@@ -161,15 +154,11 @@ class DicePokerDie extends HTMLElement {
         );
     }
 
-    // Triggers the shake animation — face is set by the server before this is called
+    // Triggers the shake animation — the 350ms matches the @keyframes rollShake duration
     roll() {
         if (this.getAttribute('held') === 'true') return;
-        
+
         this.setAttribute('rolling', 'true');
-
-        if (this._held) return;
-
-        // Face is set externally via setAttribute('face', value) from the server
 
         setTimeout(() => {
             this.removeAttribute('rolling');

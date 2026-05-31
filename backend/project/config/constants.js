@@ -27,7 +27,7 @@ export const COMMENT_TARGET = ["match", "tournament"];
 
 export const LEADERBOARD_SORT_OPTIONS = ["wins", "winPercentage", "matches", "elo"];
 
-export const WEEKLY_COIN_GRANT = 100;
+export const WEEKLY_COIN_GRANT = 100; // Coins awarded to the user once per week on login
 
-export const REVEAL_DELAY_MS = 3000;
+export const REVEAL_DELAY_MS = 3000; // Pause before revealing hands at round end
 

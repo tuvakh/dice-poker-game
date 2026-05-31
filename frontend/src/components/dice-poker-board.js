@@ -5,20 +5,19 @@
 class DicePokerBoard extends HTMLElement {
     constructor() {
         super();
+        // Shadow DOM isolates this component's styles and structure from the rest of the page
         this.attachShadow({ mode: 'open' });
 
-        // The current user's ID — only they can interact with their own dice
+        // The logged-in user's ID — used to decide whose dice are interactive
         this.currentUserId = null;
 
-        // Map of userId → array of dice-poker-die elements
+        // Lookup table: userId → array of 5 dice-poker-die elements for that player
         this.diceElements = {};
-
-        // Whether the current user is done rolling
-        this.doneRolling = false;
     }
 
+    // Called by the browser when the element enters the DOM
     connectedCallback() {
-        // Renders the initial empty shell — players are added dynamically via addPlayer()
+        // Renders the board shell once. Players and their dice are added later via addPlayer()
         this.shadowRoot.innerHTML = `
         <style>
             :host { display: block; padding: 1rem; }
@@ -40,9 +39,12 @@ class DicePokerBoard extends HTMLElement {
         </div>
         `;
 
+        // Wire up the two action buttons
         this.shadowRoot.getElementById('btn-roll').addEventListener('click', () => this.handleRollAgain());
         this.shadowRoot.getElementById('btn-done').addEventListener('click', () => this.handleDoneRolling());
 
+        // Block hold-toggle events from opponents' dice
+        // capture:true intercepts before the die reacts
         this.addEventListener(
             'dp:die-held-changed',
             (event) => {
@@ -54,21 +56,15 @@ class DicePokerBoard extends HTMLElement {
         );
     }
 
-    // Collects held dice and dispatches to Game.jsx so it can send 'hold' to the server
-    handleRollAgain() {
-        const held = this.diceElements[this.currentUserId].map((die) => die.getAttribute('held') === 'true');
-        this.dispatch('dp:roll-again', { held });
-    }
-
-    // Called by Game.jsx when a new player joins, and creates their dice section
+    // Creates a section with 5 dice for a player, called once per player when the game starts
     addPlayer(userId, name) {
-        // Skip if this player has already been added
+        // Avoid duplicating a player if addPlayer is called again (e.g., on rejoin)
         if (this.diceElements[userId]) return;
 
         const playersContainer = this.shadowRoot.getElementById('players');
 
-        // Create the player section
         const section = document.createElement('section');
+        // data-user-id is stored on the section so showResult can find it by userId later
         section.dataset.userId = userId;
         section.innerHTML = `
             <div class="player">
@@ -77,7 +73,7 @@ class DicePokerBoard extends HTMLElement {
             </div>
         `;
 
-        // Create 5 dice for this player
+        // Create and register 5 dice for this player
         const diceContainer = section.querySelector('.dice');
         this.diceElements[userId] = [];
 
@@ -94,7 +90,8 @@ class DicePokerBoard extends HTMLElement {
         playersContainer.appendChild(section);
     }
 
-    // Called by Game.jsx when the server sends new dice values after a roll
+    // Updates each die's face
+    // resetHeld:true is passed at round start to unhold all dice
     setDice(userId, faces, resetHeld = false) {
         const dice = this.diceElements[userId];
         if (!dice) return;
@@ -102,12 +99,12 @@ class DicePokerBoard extends HTMLElement {
         faces.forEach((face, i) => {
             dice[i].setAttribute('face', face);
             if (resetHeld) dice[i].setAttribute('held', 'false');
+            // roll() triggers the shake animation — the face was already set above
             dice[i].roll();
         });
     }
 
-    // Enables or disables dice interaction
-    // Only the current player can hold their own dice
+    // Enables/disables the current player's dice and buttons, and always locks opponents' dice
     setInteractive(userId, canInteract) {
         const dice = this.diceElements[userId];
         if (dice) {
@@ -117,7 +114,7 @@ class DicePokerBoard extends HTMLElement {
             });
         }
 
-        // Opponent dice: non-interactive and visually disabled
+        // Dim and disable all opponents' dice regardless of canInteract
         for (const [otherId, otherDice] of Object.entries(this.diceElements)) {
             if (otherId !== userId) {
                 otherDice.forEach((die) => {
@@ -127,13 +124,15 @@ class DicePokerBoard extends HTMLElement {
             }
         }
 
+        // Enable or disable the Roll Again / Done Rolling buttons
         const btnRoll = this.shadowRoot.getElementById('btn-roll');
         const btnDone = this.shadowRoot.getElementById('btn-done');
         if (btnRoll) btnRoll.disabled = !canInteract;
         if (btnDone) btnDone.disabled = !canInteract;
     }
 
-    // Shows which of another player's dice are held (without revealing face values)
+    // Marks an opponent's dice as held visually
+    // We show holds but never reveal their face values
     setHeld(userId, heldArray) {
         const dice = this.diceElements[userId];
         if (!dice) return;
@@ -142,25 +141,14 @@ class DicePokerBoard extends HTMLElement {
         });
     }
 
-    // Resets held state on all players' dice — called at the start of each round
+    // Clears held state on every player's dice — called at the start of each round
     resetAllHeld() {
         for (const diceArray of Object.values(this.diceElements)) {
             diceArray.forEach((die) => die.setAttribute('held', 'false'));
         }
     }
 
-    // Fires when the player clicks Done Rolling, and dispatches the held dice up to Game.jsx
-    handleDoneRolling() {
-        const dice = this.diceElements[this.currentUserId];
-        const hasUnrevealedDice = dice?.some(die => die.getAttribute('face') === '?');
-        if (hasUnrevealedDice) return;
-
-        this.doneRolling = true;
-        this.setInteractive(this.currentUserId, false);
-        const held = this.diceElements[this.currentUserId].map((die) => die.getAttribute('held') === 'true');
-        this.dispatch('dp:done-rolling', { held });
-    }
-
+    // Shows the hand type label next to a player's dice, created lazily if it doesn't exist yet
     showResult(userId, handType, isWinner) {
         const section = this.shadowRoot.querySelector(`[data-user-id="${userId}"]`);
         if (!section) return;
@@ -176,11 +164,32 @@ class DicePokerBoard extends HTMLElement {
         resultEl.classList.toggle('winner', isWinner);
     }
 
+    // Removes all hand result labels — called at the start of a new round
     clearResults() {
         this.shadowRoot.querySelectorAll('.hand-result').forEach((result) => result.remove());
     }
 
-    // Bubbles a CustomEvent up through the DOM so Game.jsx can listen to it
+    // Reads which dice are held and fires dp:roll-again 
+    // Game.jsx forwards this to the server
+    handleRollAgain() {
+        const held = this.diceElements[this.currentUserId].map((die) => die.getAttribute('held') === 'true');
+        this.dispatch('dp:roll-again', { held });
+    }
+
+    // Fires dp:done-rolling 
+    // guard prevents firing before all dice have loaded (face === '?')
+    handleDoneRolling() {
+        const dice = this.diceElements[this.currentUserId];
+        const hasUnrevealedDice = dice?.some(die => die.getAttribute('face') === '?');
+        if (hasUnrevealedDice) return;
+
+        // Disable interaction immediately so the player can't change holds after confirming
+        this.setInteractive(this.currentUserId, false);
+        const held = this.diceElements[this.currentUserId].map((die) => die.getAttribute('held') === 'true');
+        this.dispatch('dp:done-rolling', { held });
+    }
+
+    // Fires a custom event with bubbles:true and composed:true so Game.jsx can catch it across the shadow DOM
     dispatch(type, detail) {
         this.dispatchEvent(
             new CustomEvent(type, {

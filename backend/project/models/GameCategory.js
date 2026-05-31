@@ -1,5 +1,5 @@
 // This model represents one of the 18 possible game variants based on:
-// numberOfRounds (3/5/7)
+// numberOfRounds (3/5/7) × gameRules (2 options) × timeController (10/30/90) = 18 combinations
 // gameRules (is straights allowed or not)
 // and timeController (10/30/90 seconds).
 

@@ -26,6 +26,7 @@ export default function TournamentPage() {
     const wsRef = useRef(null);
     const [comments, setComments] = useState([]);
 
+    // Fetches tournament data when the page loads or the URL id changes
     useEffect(() => {
         setLoading(true);
         setError(null);
@@ -69,6 +70,8 @@ export default function TournamentPage() {
             await joinTournament(id, user._id);
             setJoined(true);
             playJoin();
+            // Add the user to the participants list locally without re-fetching
+            // (Optimistic update)
             setTournament(prev => prev
                 ? { ...prev, participants: [...(prev.participants ?? []), { _id: user._id, username: user.username }] }
                 : prev
@@ -87,6 +90,8 @@ export default function TournamentPage() {
         try {
             await leaveTournament(id, user._id);
             setJoined(false);
+            // Remove the user from the participants list locally without re-fetching
+            // (Optimistic update)
             setTournament(prev => prev
                 ? { ...prev, participants: prev.participants.filter(p => (p._id ?? p)?.toString() !== user._id?.toString()) }
                 : prev
@@ -110,6 +115,9 @@ export default function TournamentPage() {
         : "TBA";
 
     const participantCount = tournament.participants?.length ?? 0;
+
+    // joined is set when the user joins in this browser session
+    // alreadyIn is computed from the tournament data for returning visitors who were already registered
     const alreadyIn = user && tournament.participants?.some(
         p => (p._id ?? p)?.toString() === user._id?.toString()
     );
@@ -209,7 +217,7 @@ export default function TournamentPage() {
                 </ul>
             )}
 
-            {/* Bracket */}
+            {/* Bracket - Rounds is a 2D array: rounds[roundIndex][matchIndex], each entry holds a match */}
             {tournament.rounds?.length > 0 && (
                 <>
                     <h2>Bracket</h2>
