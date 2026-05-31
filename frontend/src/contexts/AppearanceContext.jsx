@@ -22,9 +22,6 @@ export function AppearanceProvider({ children }) {
     // I used ref instead of state because changing the timer shouldn't cause the component to re-render
     const saveTimeout = useRef(null);
 
-    // audioRef holds the background music instance so it persists across re-renders
-    const audioRef = useRef(null);
-
     // Try to load saved preferences from localStorage when the app first opens
     // If it's the users first visit (nothing saved), use the defaults above
     const [preferences, setPreferences] = useState(() => {
@@ -37,45 +34,6 @@ export function AppearanceProvider({ children }) {
     useEffect(() => {
         document.documentElement.setAttribute("data-theme", preferences.theme);
     }, [preferences.theme]);
-
-    // Create the background music once on mount and play/pause based on soundEnabled
-    // Browsers block autoplay until a user gesture, so we also listen for the first click/keydown
-    useEffect(() => {
-        const audio = new Audio('/sounds/coffee%20time.wav');
-        audio.loop = true;
-        audio.volume = 0.4;
-        audioRef.current = audio;
-
-        if (preferences.soundEnabled) audio.play().catch(() => {});
-
-        function handleInteraction() {
-            if (audioRef.current && preferences.soundEnabled) {
-                audioRef.current.play().catch(() => {});
-            }
-            document.removeEventListener('click', handleInteraction);
-            document.removeEventListener('keydown', handleInteraction);
-        }
-        document.addEventListener('click', handleInteraction);
-        document.addEventListener('keydown', handleInteraction);
-
-        return () => {
-            audio.pause();
-            audioRef.current = null;
-            document.removeEventListener('click', handleInteraction);
-            document.removeEventListener('keydown', handleInteraction);
-        };
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-    // Play or pause whenever the user toggles soundEnabled
-    useEffect(() => {
-        const audio = audioRef.current;
-        if (!audio) return;
-        if (preferences.soundEnabled) {
-            audio.play().catch(() => {});
-        } else {
-            audio.pause();
-        }
-    }, [preferences.soundEnabled]);
 
     // When a user logs in, load their saved preferences from the backend
     // and merge them on top of whatever is currently in localStorage

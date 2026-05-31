@@ -293,14 +293,16 @@ export default function TournamentPage() {
                 </>
             )}
 
-            {/* Trophy section: only shows if a trophy object is linked to this tournament */}
-            {(tournament.trophy?.title || tournament.trophy?.imageUrl) && (
+            {/* Trophy section: only shows if a trophy is linked to this tournament.
+                Images are stored as filenames (e.g. "spring-trophy.png") in the Trophy model.
+                They live in /frontend/public/ so the browser can reach them at /<filename> */}
+            {(tournament.trophy?.title || tournament.trophy?.image) && (
                 <>
-                    <h2>🏆 Trophy</h2>
+                    <h2>Trophy</h2>
                     <div className="tournament-detail__trophy">
-                        {tournament.trophy.imageUrl && (
+                        {tournament.trophy.image && (
                             <img
-                                src={tournament.trophy.imageUrl}
+                                src={`/${tournament.trophy.image}`}
                                 alt={tournament.trophy.title ?? "Trophy"}
                                 className="tournament-detail__trophy-img"
                             />

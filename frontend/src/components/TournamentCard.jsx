@@ -33,9 +33,14 @@ export default function TournamentCard({ tournament, onClick }) {
                 {tournament.gameCategory && (
                     <span>🎲 {tournament.gameCategory.gameRules === "straights_allowed" ? "Straights" : "No straights"} · {tournament.gameCategory.timeController}s</span>
                 )}
-                {/* Trophy badge only shows if the tournament has a trophy linked to it */}
-                {tournament.trophy?.title && (
-                    <span>🏆 {tournament.trophy.title}</span>
+                {/* Trophy: image from /public/<filename> next to the trophy title */}
+                {tournament.trophy && (
+                    <span>
+                        {tournament.trophy.image && (
+                            <img src={`/${tournament.trophy.image}`} alt={tournament.trophy.title ?? "Trophy"} style={{ width: 20, height: 20, objectFit: "contain", verticalAlign: "middle", marginRight: 4 }} />
+                        )}
+                        {tournament.trophy.title}
+                    </span>
                 )}
             </div>
         </Link>
