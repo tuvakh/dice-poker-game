@@ -41,7 +41,7 @@ export default function Home() {
                     getAllMatches({ status: "ongoing", limit: 100 }),
                     getAllMatches({ status: "finished", limit: 100 }),
                     getAllTournaments({ status: 'upcoming', limit: 5 }),
-                    fetch(`${BASE_URL}/activities`).then(handleResponse) // Chanya
+                    fetch(`${BASE_URL}/activities`).then(handleResponse).catch(() => null) // Chanya — .catch prevents a failed activity fetch from crashing the whole page
                 ]);
 
                 setLobbyGames(waitingData.matchList);

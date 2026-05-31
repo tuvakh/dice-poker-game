@@ -25,7 +25,7 @@ export default function Game() {
     const { id } = useParams();
     const { user, updateUserData } = useAuth();
     const { preferences } = useAppearance();
-    const { playClick, playJoin } = useSoundEffects(); // Chanya
+    const { playClick, playJoin, playRoll, playHold, playRoundEnd } = useSoundEffects();
 
     // Match data fetched from the backend and comments loaded for the sidebar
     const [match, setMatch] = useState(null);
@@ -166,8 +166,9 @@ export default function Game() {
             }
         }
 
-        // Server re-rolled our non-held dice: update our board
+        // Server re-rolled our non-held dice: play the dice sound and update our board
         if (message.type === 'roll-result') {
+            playRoll();
             if (board) {
                 board.setDice(user?._id, message.yourDice);
             }
@@ -212,8 +213,9 @@ export default function Game() {
             setBettingState(prev => ({ ...prev, pot: message.pot }));
         }
 
-        // Round finished: reveal all dice and show hand results
+        // Round finished: play the end sound, reveal all dice and show hand results
         if (message.type === 'round-end') {
+            playRoundEnd();
             setGamePhase(null);
 
             if (board) {
@@ -318,7 +320,10 @@ export default function Game() {
             wsRef.current?.send(JSON.stringify({ type: 'done-rolling' }));
         }
 
+        // dp:roll-again fires when the player picks which dice to hold and clicks roll
+        // playHold gives a soft click so the player knows their hold was registered
         function onRollAgain(event) {
+            playHold();
             wsRef.current?.send(JSON.stringify({
                 type: 'hold',
                 held: event.detail.held
