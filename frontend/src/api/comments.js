@@ -1,7 +1,7 @@
 import { BASE_URL, handleResponse, getAuthHeaders } from "./config.js";
 
 // Fetches a list of comments, with optional filters for target, search, and pagination
-export async function getAllComments({ page, limit, search, targetId, targetType } = {}) {
+export async function getAllComments({ page, limit, search, targetId, targetType } = {}, signal) {
     const params = new URLSearchParams();
     if (page) params.append("page", page);
     if (limit) params.append("limit", limit);
@@ -9,7 +9,7 @@ export async function getAllComments({ page, limit, search, targetId, targetType
     if (targetId) params.append("targetId", targetId);
     if (targetType) params.append("targetType", targetType);
 
-    const res = await fetch(`${BASE_URL}/comments?${params}`);
+    const res = await fetch(`${BASE_URL}/comments?${params}`, { signal });
     return handleResponse(res);
 }
 

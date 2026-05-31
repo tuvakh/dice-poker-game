@@ -9,13 +9,19 @@ export function usePolling(callBack, interval) {
     callBackRef.current = callBack;
 
     useEffect(() => {
-        // Call it once immediately so there's no wait on first load
-        callBackRef.current();
+        // running prevents a new tick from starting if the previous fetch hasn't finished yet
+        let running = false;
 
-        // Then set up a repeating timer (interval is in milliseconds)
-        const timer = setInterval(() => callBackRef.current(), interval);
+        async function tick() {
+            // Skip this tick if the previous one is still in progress
+            if (running) return;
+            running = true;
+            await callBackRef.current();
+            running = false;
+        }
 
-        // When the user navigates away from the page, stop the timer
+        tick();
+        const timer = setInterval(tick, interval);
         return () => clearInterval(timer);
     }, []);
 }
