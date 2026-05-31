@@ -77,6 +77,7 @@ export default function attachWebSocket(server) {
                         round: 1,
                         totalRounds: message.totalRounds,
                         timeController: message.timeController,
+                        gameRules: message.gameRules ?? 'straights_allowed',
                         coinWager: message.coinWager ?? 0,
                         requiredPlayers: message.requiredPlayers,
                         pot: 0,
@@ -585,7 +586,7 @@ export default function attachWebSocket(server) {
 
         for (const [userId, player] of Object.entries(state.players)) {
             if (!player.folded) {
-                results[userId] = evaluateHand(player.dice);
+                results[userId] = evaluateHand(player.dice, state.gameRules !== 'no_straights');
             }
         }
 

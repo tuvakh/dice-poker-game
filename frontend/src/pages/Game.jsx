@@ -280,7 +280,8 @@ export default function Game() {
                 requiredPlayers,
                 totalRounds: match.gameCategory?.numberOfRounds ?? 3,
                 timeController: match.gameCategory?.timeController ?? 10,
-                coinWager: match.coinWager ?? 0
+                coinWager: match.coinWager ?? 0,
+                gameRules: match.gameCategory?.gameRules ?? 'straights_allowed'
             }));
         };
 
