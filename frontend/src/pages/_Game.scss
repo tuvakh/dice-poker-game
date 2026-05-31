@@ -20,8 +20,8 @@
 
     @media (max-width: 768px) {
         grid-template-columns: 1fr;
-        grid-template-areas: 
-            "left" 
+        grid-template-areas:
+            "left"
             "right";
     }
 
@@ -32,40 +32,117 @@
         flex-direction: column;
         margin-block: var(--big-space);
     }
+
     &__players {
         display: flex;
         gap: var(--big-space);
     }
+
     &__game-board {
         display: flex;
-        text-align: center;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
-        height: 45vh;
-        width: clamp(300px, 50%, 800px);
+        width: clamp(300px, 70%, 900px);
+        min-height: 45vh;
         margin-block-start: var(--normal-space);
-        border: 5px solid var(--secondary-color);
+        padding: var(--big-space);
+        border: 3px solid var(--secondary-color);
         border-radius: var(--border-radius);
+        position: relative;
     }
+
+    &__timer {
+        font-size: 1.4rem;
+        font-weight: bold;
+        color: var(--button-color);
+        margin-block-end: var(--small-space);
+    }
+
+    &__ready-overlay {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--normal-space);
+        font-size: 1.2rem;
+    }
+
+    &__ended {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--normal-space);
+        text-align: center;
+    }
+
+    &__standings {
+        list-style: none;
+        padding: 0;
+        font-size: 1.1rem;
+
+        li {
+            padding: var(--mini-space) 0;
+        }
+    }
+
+    &__betting {
+        width: clamp(300px, 70%, 900px);
+        margin-block-start: var(--small-space);
+        padding: var(--normal-space);
+        background-color: var(--box-color);
+        border-radius: var(--border-radius);
+        display: flex;
+        align-items: center;
+        gap: var(--big-space);
+    }
+
+    &__pot {
+        font-weight: bold;
+        font-size: 1.1rem;
+    }
+
+    &__bet-actions {
+        display: flex;
+        align-items: center;
+        gap: var(--small-space);
+        flex-wrap: wrap;
+    }
+
+    &__bet-input {
+        display: flex;
+        gap: var(--mini-space);
+
+        input {
+            width: 80px;
+            padding: var(--mini-space);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--secondary-color);
+        }
+    }
+    
     &__comments {
         grid-area: right;
         padding: var(--normal-space);
         background-color: var(--box-color);
+
         button {
             display: block;
             font-size: 0.9rem;
             margin-inline-start: auto;
             margin-block-start: var(--mini-space);
         }
+
         input {
             padding: var(--mini-space);
         }
     }
+
     &__waiting-overlay {
         font-size: 1.8rem;
         color: var(--secondary-color);
         font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
     }
+
     &__variant {
         margin-block-start: var(--small-space);
     }

@@ -20,16 +20,74 @@ class DicePokerBoard extends HTMLElement {
         // Renders the board shell once. Players and their dice are added later via addPlayer()
         this.shadowRoot.innerHTML = `
         <style>
-            :host { display: block; padding: 1rem; }
-            .players { display: flex; flex-wrap: wrap; gap: 1rem; }
-            .player-section { flex: 1; min-width: 200px; }
-            .player-name { font-weight: bold; margin-bottom: 0.5rem; }
-            .dice { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-            .controls { margin-top: 1rem; display: flex; gap: 0.5rem; }
-            button { padding: 0.5rem 1rem; cursor: pointer; }
-            button:disabled { opacity: 0.5; cursor: not-allowed; }
-            .hand-result { margin-top: 0.5rem; font-weight: bold; }
-            .hand-result.winner { color: green; }
+            :host { display: block; padding: 1rem; width: 100%; }
+
+            .players {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 1.5rem;
+                justify-content: center;
+            }
+
+            .player {
+                background-color: rgba(0,0,0,0.06);
+                border-radius: 0.8rem;
+                padding: 1rem;
+                min-width: 180px;
+            }
+
+            .player-name {
+                font-weight: bold;
+                font-size: 1rem;
+                margin-bottom: 0.75rem;
+                text-align: center;
+            }
+
+            .dice {
+                display: flex;
+                gap: 0.4rem;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .controls {
+                margin-top: 1.5rem;
+                display: flex;
+                gap: 0.75rem;
+                justify-content: center;
+            }
+
+            button {
+                padding: 0.5rem 1.2rem;
+                cursor: pointer;
+                border-radius: 0.5rem;
+                border: 2px solid #85b5a8;
+                background: white;
+                font-weight: bold;
+                font-size: 0.95rem;
+                transition: background 0.15s;
+            }
+
+            button:hover:not(:disabled) {
+                background: #d4efe8;
+            }
+
+            button:disabled {
+                opacity: 0.4;
+                cursor: not-allowed;
+            }
+
+            .hand-result {
+                margin-top: 0.6rem;
+                font-weight: bold;
+                text-align: center;
+                font-size: 0.95rem;
+            }
+
+            .hand-result.winner {
+                color: #2a8c4a;
+                font-size: 1.05rem;
+            }
         </style>
 
         <div class="players" id="players"></div>
@@ -169,18 +227,18 @@ class DicePokerBoard extends HTMLElement {
         this.shadowRoot.querySelectorAll('.hand-result').forEach((result) => result.remove());
     }
 
-    // Reads which dice are held and fires dp:roll-again 
+    // Reads which dice are held and fires dp:roll-again
     // Game.jsx forwards this to the server
     handleRollAgain() {
         const held = this.diceElements[this.currentUserId].map((die) => die.getAttribute('held') === 'true');
         this.dispatch('dp:roll-again', { held });
     }
 
-    // Fires dp:done-rolling 
+    // Fires dp:done-rolling
     // guard prevents firing before all dice have loaded (face === '?')
     handleDoneRolling() {
         const dice = this.diceElements[this.currentUserId];
-        const hasUnrevealedDice = dice?.some(die => die.getAttribute('face') === '?');
+        const hasUnrevealedDice = dice?.some((die) => die.getAttribute('face') === '?');
         if (hasUnrevealedDice) return;
 
         // Disable interaction immediately so the player can't change holds after confirming
