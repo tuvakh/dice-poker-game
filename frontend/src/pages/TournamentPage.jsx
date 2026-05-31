@@ -1,4 +1,5 @@
 //Chanya
+// tournmanet will take rounds instead of every body playing at the same time.
 // Individual tournament detail page
 import { useState, useEffect, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router";
