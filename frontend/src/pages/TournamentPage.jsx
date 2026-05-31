@@ -12,6 +12,7 @@ import CommentList from "../components/CommentList.jsx";
 import CommentForm from "../components/CommentForm.jsx";
 import Spinner from "../components/Spinner.jsx";
 import Button from "../components/Button.jsx";
+import ConfirmDialog from "../components/ConfirmDialog.jsx";
 
 export default function TournamentPage() {
     const { id } = useParams();
@@ -26,6 +27,7 @@ export default function TournamentPage() {
     const [joined, setJoined] = useState(false);
     const [leaving, setLeaving] = useState(false);
     const [leaveError, setLeaveError] = useState(null);
+    const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
     const wsRef = useRef(null);
     const [comments, setComments] = useState([]);
 
@@ -219,13 +221,22 @@ export default function TournamentPage() {
             {canLeave && (
                 <div className="tournament-detail__join-area">
                     <p className="status status--success">You&apos;re registered!</p>
-                    <Button onClick={handleLeave} disabled={leaving} variant="danger">
+                    <Button onClick={() => setShowLeaveConfirm(true)} disabled={leaving} variant="danger">
                         {leaving ? "Leaving..." : "Leave Tournament"}
                     </Button>
                 </div>
             )}
             {joinError && <p className="status status--error">{joinError}</p>}
             {leaveError && <p className="status status--error">{leaveError}</p>}
+
+            {/* Leave confirmation popup */}
+            {showLeaveConfirm && (
+                <ConfirmDialog
+                    message="Are you sure you want to leave this tournament?"
+                    onConfirm={() => { setShowLeaveConfirm(false); handleLeave(); }}
+                    onCancel={() => setShowLeaveConfirm(false)}
+                />
+            )}
 
             {/* Admin controls: delete and cancel are only shown to admin users */}
             {user?.role === 'admin' && !["finished", "cancelled"].includes(tournament.status) && (

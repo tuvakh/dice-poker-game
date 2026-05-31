@@ -16,6 +16,7 @@ import BettingControls from "../components/BettingControls.jsx";
 import CommentList from "../components/CommentList";
 import CommentForm from "../components/CommentForm";
 import PlayerInfo from "../components/PlayerInfo";
+import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import '../components/dice-poker-board.js';
 import '../components/dice-poker-die.js';
 
@@ -59,6 +60,7 @@ export default function Game() {
     const [standings, setStandings] = useState(null);
     const [forfeitBy, setForfeitBy] = useState(null);
     const [playerLeftNotice, setPlayerLeftNotice] = useState(null);
+    const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
 
     // Fetches the latest match data from the backend
     async function fetchMatch() {
@@ -373,7 +375,7 @@ export default function Game() {
                                         <p>Waiting for other players to join...</p>
                                         <p className="game__waiting-count">{match.players.length}/{match.maxPlayers ?? 2} players</p>
                                         {match.players.some(player => player?._id === user._id) && (
-                                            <button onClick={handleLeave}>
+                                            <button onClick={() => setShowLeaveConfirm(true)}>
                                                 {match.players.length === 1 ? 'Cancel game' : 'Leave game'}
                                             </button>
                                         )}
@@ -400,7 +402,7 @@ export default function Game() {
                                 )}
                                 <dice-poker-board ref={boardRef}></dice-poker-board>
                                 {user && match.players.some(player => player?._id === user._id) && (
-                                    <button onClick={handleLeave}>Leave game</button>
+                                    <button onClick={() => setShowLeaveConfirm(true)}>Leave game</button>
                                 )}
                                 {playerLeftNotice && (
                                     <p className="status status--error">
@@ -475,6 +477,17 @@ export default function Game() {
                     }
                 </aside>
             </div >
+
+            {/* Leave game confirmation popup */}
+            {showLeaveConfirm && (
+                <ConfirmDialog
+                    message={match?.status === 'ongoing'
+                        ? "Leaving an ongoing game counts as a forfeit. Are you sure?"
+                        : "Are you sure you want to leave this game?"}
+                    onConfirm={() => { setShowLeaveConfirm(false); handleLeave(); }}
+                    onCancel={() => setShowLeaveConfirm(false)}
+                />
+            )}
         </>
     );
 }
