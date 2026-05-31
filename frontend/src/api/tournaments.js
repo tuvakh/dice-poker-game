@@ -1,3 +1,4 @@
+// Chanya
 import { BASE_URL, handleResponse, getAuthHeaders } from "./config.js";
 
 // Fetches all tournaments, optionally filtered by status
@@ -7,7 +8,7 @@ export async function getAllTournaments(params = {}) {
     return handleResponse(res);
 }
 
-// Fetches a single tournament by ID
+// Fetches a single tournament by its public tournamentId
 export async function getTournament(id) {
     const res = await fetch(`${BASE_URL}/tournaments/${id}`);
     return handleResponse(res);
@@ -25,7 +26,7 @@ export async function joinTournament(id, userId) {
     return handleResponse(res);
 }
 
-// Removes a user from an upcoming tournament
+// Removes a user from a tournament — allowed at any point until the tournament is finished/cancelled
 export async function leaveTournament(id, userId) {
     const res = await fetch(`${BASE_URL}/tournaments/${id}/leave`, {
         method: "DELETE",
@@ -41,6 +42,24 @@ export async function createTournament(data) {
         method: "POST",
         headers: { "Content-Type": "application/json", ...getAuthHeaders() },
         body: JSON.stringify(data)
+    });
+    return handleResponse(res);
+}
+
+// Permanently deletes a tournament (admin only)
+export async function deleteTournament(id) {
+    const res = await fetch(`${BASE_URL}/tournaments/${id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json", ...getAuthHeaders() }
+    });
+    return handleResponse(res);
+}
+
+// Marks a tournament as cancelled without deleting it (admin only)
+export async function cancelTournament(id) {
+    const res = await fetch(`${BASE_URL}/tournaments/${id}/cancel`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...getAuthHeaders() }
     });
     return handleResponse(res);
 }

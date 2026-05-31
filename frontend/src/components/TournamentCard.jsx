@@ -1,6 +1,8 @@
-import { Link } from "react-router-dom";
+//Chanya
+import { Link } from "react-router";
 
 // Displays a single tournament as a clickable card
+// trophy and gameCategory are populated from the backend so they arrive as objects
 export default function TournamentCard({ tournament, onClick }) {
     return (
         <Link
@@ -26,6 +28,14 @@ export default function TournamentCard({ tournament, onClick }) {
                 </span>
                 {tournament.numberOfRounds != null && (
                     <span>🔁 {tournament.numberOfRounds} round{tournament.numberOfRounds !== 1 ? "s" : ""}</span>
+                )}
+                {/* Game variant is populated by the backend — shows the rules and time control */}
+                {tournament.gameCategory && (
+                    <span>🎲 {tournament.gameCategory.gameRules === "straights_allowed" ? "Straights" : "No straights"} · {tournament.gameCategory.timeController}s</span>
+                )}
+                {/* Trophy badge only shows if the tournament has a trophy linked to it */}
+                {tournament.trophy?.title && (
+                    <span>🏆 {tournament.trophy.title}</span>
                 )}
             </div>
         </Link>

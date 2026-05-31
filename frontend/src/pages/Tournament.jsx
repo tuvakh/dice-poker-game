@@ -1,3 +1,4 @@
+//Chanya
 import { useMemo, useState, useEffect } from "react";
 import { getAllTournaments } from "../api/tournaments.js";
 import { useSoundEffects } from "../hooks/useSoundEffects.js";
@@ -5,6 +6,7 @@ import TournamentCard from "../components/TournamentCard.jsx";
 
 import Hero from "../components/Hero.jsx";
 import Spinner from "../components/Spinner.jsx";
+import Button from "../components/Button.jsx"; 
 
 // TODO: replace with a dedicated tournament hero image
 import tournamentHero from "../assets/lobby-hero.png";
@@ -16,7 +18,7 @@ const STATUS_TABS = [
     { value: "finished", label: "Finished" },
 ];
 
-// All sorting is done client-side — no backend changes needed
+// All sorting is done client-side so the backend does not need extra sort params
 const SORT_OPTIONS = [
     { value: "date-desc",    label: "Date (newest first)" },
     { value: "date-asc",     label: "Date (oldest first)" },
@@ -26,7 +28,7 @@ const SORT_OPTIONS = [
     { value: "players-asc",  label: "Players (fewest first)" },
 ];
 
-// ── Tournament list ───────────────────────────────────────────────────────────
+// Tournament list page: shows all tournaments with status tabs, search, sort, and load-more
 export default function Tournament() {
     const [statusFilter, setStatusFilter] = useState("");
     const [tournaments, setTournaments] = useState([]);
@@ -34,11 +36,14 @@ export default function Tournament() {
     const [error, setError] = useState(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [sortBy, setSortBy] = useState("date-desc");
+    const [visibleCount, setVisibleCount] = useState(6); // Chanya
     const { playClick } = useSoundEffects();
 
     useEffect(() => {
         setLoading(true);
         setError(null);
+        // Reset visible count when the status tab changes so the user starts fresh
+        setVisibleCount(6); // Chanya
         const params = statusFilter ? { status: statusFilter } : {};
         getAllTournaments(params)
             .then(data => setTournaments(data.tournamentList ?? []))
@@ -94,7 +99,7 @@ export default function Tournament() {
                     ))}
                 </div>
                 
-                {/* Search input and sort dropdown — controls the visibleTournaments list above */}
+                {/* Search input and sort dropdown - controls the visibleTournaments list above */}
                 <div className="tournament-controls">
                     <input
                         type="text"
@@ -128,10 +133,17 @@ export default function Tournament() {
 
                 {!loading && !error && tournaments.length > 0 && (
                     <div className="cards-grid">
-                        {visibleTournaments.map(tournament => (
+                        {/* Show only the first visibleCount tournaments, more are loaded on button click */}
+                        {visibleTournaments.slice(0, visibleCount).map(tournament => (
                             <TournamentCard key={tournament._id} tournament={tournament} onClick={playClick} />
                         ))}
                     </div>
+                )}
+                {/* Load more button appears only when there are more tournaments to show */}
+                {!loading && !error && visibleCount < visibleTournaments.length && (
+                    <Button type="button" onClick={() => setVisibleCount(prev => prev + 6)}>
+                        Load more
+                    </Button>
                 )}
             </section>
         </>

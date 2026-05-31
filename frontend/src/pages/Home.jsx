@@ -8,6 +8,7 @@ import TournamentCard from "../components/TournamentCard.jsx";
 
 import { getAllMatches } from "../api/matches.js";
 import { getAllTournaments } from "../api/tournaments.js";
+import { BASE_URL, handleResponse } from "../api/config.js"; // Chanya
 import { useAppearance } from "../contexts/AppearanceContext.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import Spinner from "../components/Spinner.jsx";
@@ -27,21 +28,25 @@ export default function Home() {
     const [tournaments, setTournaments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    // Chanya: activity stats fetched from the /activities endpoint
+    const [activity, setActivity] = useState(null);
 
     useEffect(() => {
         async function load() {
             try {
-                // This fetch all four data sources at the same time using Promise.all
-                const [waitingData, ongoingData, finishedData, tournamentData] = await Promise.all([
+                // Fetch all data sources at the same time using Promise.all
+                // The fifth call gets platform activity stats: ongoing match count and active users this week
+                const [waitingData, ongoingData, finishedData, tournamentData, activityData] = await Promise.all([
                     getAllMatches({ status: "waiting", limit: 100 }),
                     getAllMatches({ status: "ongoing", limit: 100 }),
                     getAllMatches({ status: "finished", limit: 100 }),
-                    getAllTournaments({ status: 'upcoming', limit: 5 })
+                    getAllTournaments({ status: 'upcoming', limit: 5 }),
+                    fetch(`${BASE_URL}/activities`).then(handleResponse) // Chanya
                 ]);
 
                 setLobbyGames(waitingData.matchList);
-                // Only show the 5 nearest upcoming tournaments (not implemented yet)
                 setTournaments(tournamentData.tournamentList.slice(0, 5));
+                setActivity(activityData); // Chanya
 
                 // This is a helper function that calculates the average Elo of all players in a match
                 // and sorts matches so the highest-Elo games come first
@@ -88,6 +93,23 @@ export default function Home() {
                 )}
                 <Link to="/aboutGame">Learn how to play</Link>
             </Hero>
+
+            {/* Chanya: Platform activity stats pulled from the /activities endpoint */}
+            {activity && (
+                <section className="home-activity">
+                    <h2>Platform activity</h2>
+                    <div className="home-activity__stats">
+                        <div className="home-activity__stat">
+                            <span className="home-activity__number">{activity.ongoingMatches}</span>
+                            <span>games live right now</span>
+                        </div>
+                        <div className="home-activity__stat">
+                            <span className="home-activity__number">{activity.activeUsers}</span>
+                            <span>players active this week</span>
+                        </div>
+                    </div>
+                </section>
+            )}
 
             {/* Lobby preview: shows waiting games the user can join */}
             <section>

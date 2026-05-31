@@ -20,7 +20,7 @@ export const GAME_RULES = ["straights_allowed", "straights_not_allowed"];
 export const NUMBER_OF_ROUNDS = [3, 5, 7];
 export const TIME_CONTROLLERS = [10, 30, 90];
 
-export const TOURNAMENT_STATUS = ["upcoming", "ongoing", "finished"];
+export const TOURNAMENT_STATUS = ["upcoming", "ongoing", "finished", "cancelled"];
 export const MATCH_STATUS = ["waiting", "ongoing", "finished"];
 export const USER_ROLE = ["user", "admin"];
 export const COMMENT_TARGET = ["match", "tournament"];

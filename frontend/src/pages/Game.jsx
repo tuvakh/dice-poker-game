@@ -9,6 +9,7 @@ import { usePolling } from "../hooks/usePolling.js";
 
 import { useAuth } from "../contexts/AuthContext.jsx";
 import { useAppearance } from "../contexts/AppearanceContext.jsx";
+import { useSoundEffects } from "../hooks/useSoundEffects.js"; 
 
 import Spinner from "../components/Spinner.jsx";
 import BettingControls from "../components/BettingControls.jsx";
@@ -24,26 +25,37 @@ export default function Game() {
     const { id } = useParams();
     const { user, updateUserData } = useAuth();
     const { preferences } = useAppearance();
+    const { playClick, playJoin } = useSoundEffects(); // Chanya
 
-    // --- Page data ---
+    // Match data fetched from the backend and comments loaded for the sidebar
     const [match, setMatch] = useState(null);
     const [comments, setComments] = useState([]);
     const [error, setError] = useState(null);
 
-    // --- Refs (don't cause re-renders) ---
+    // Refs persist across renders without triggering re-renders
+    // hasJoined prevents the auto-join effect from running twice
+    // wsRef holds the WebSocket connection so other handlers can send messages
+    // boardRef points at the dice-poker-board web component
+    // matchRef is a live copy of match used inside WebSocket callbacks that close over stale state
+    // timerRef holds the countdown interval so we can clear it when the round ends
     const hasJoined = useRef(false);
     const wsRef = useRef(null);
     const boardRef = useRef(null);
     const matchRef = useRef(null);
     const timerRef = useRef(null);
 
-    // --- Game phase ---
+    // gamePhase tracks which screen to show: null, 'ready', 'rolling', 'betting', 'ended', 'cancelled'
+    // readySent prevents showing the Ready button again after the player clicks it
+    // timeLeft counts down the rolling timer displayed to the player
+    // bettingState holds the current pot, highest bet, and whose turn it is
     const [gamePhase, setGamePhase] = useState(null);
     const [readySent, setReadySent] = useState(false);
     const [timeLeft, setTimeLeft] = useState(null);
     const [bettingState, setBettingState] = useState(null);
 
-    // --- Game outcome ---
+    // standings is the final score list shown after the game ends
+    // forfeitBy is the userId of a player who disconnected mid-game, triggering a forfeit
+    // playerLeftNotice is a non-critical notice shown while the game is still running
     const [standings, setStandings] = useState(null);
     const [forfeitBy, setForfeitBy] = useState(null);
     const [playerLeftNotice, setPlayerLeftNotice] = useState(null);
@@ -110,6 +122,7 @@ export default function Game() {
         // All required players have joined: show the Ready button
         if (message.type === 'all-joined') {
             setGamePhase('ready');
+            playJoin(); // Chanya
         }
 
         // A player disconnected mid-game: show a notice so the remaining player knows
@@ -120,6 +133,7 @@ export default function Game() {
         // A new round started: start the countdown timer and initialise the board
         if (message.type === 'game-started') {
             setGamePhase('rolling');
+            playClick(); // Chanya
             clearInterval(timerRef.current);
             setTimeLeft(message.timeRemaining);
             timerRef.current = setInterval(() => {
@@ -220,6 +234,7 @@ export default function Game() {
         // Game over: show standings and refresh coins/ELO
         if (message.type === 'game-end') {
             setGamePhase('ended');
+            playJoin(); // Chanya
             setStandings(message.standings);
             if (user) {
                 getUser(user.userId).then(freshUser => updateUserData({

@@ -1,22 +1,23 @@
-// This validator file validate incoming data for tournament endpoints using express-validator.
+// Chanya
+// This validator file validates incoming data for tournament endpoints using express-validator.
 
 import { param, body, query } from "express-validator";
 import { TOURNAMENT_STATUS } from "../config/constants.js";
 
 // This function validates the numeric tournamentId route parameter
-// .bail() stops the chain if invalid
-// .toInt() converts the string param to a number
+// .bail() stops the chain if the param is invalid so later validators don't run on bad data
+// .toInt() converts the string param to a number so it can be compared as an integer
 export function validateTournamentId(){
     return [
         param("tournamentId")
             .isInt({ min: 1, max: Number.MAX_SAFE_INTEGER })
             .withMessage("Tournament IDs are supposed to be integers larger than 0")
-            .bail() 
-            .toInt() 
+            .bail()
+            .toInt()
     ];
 }
 
-// All query params in this function are optional
+// All query params in this function are optional — they only apply if the client sends them
 export function validateGetAllTournaments(){
     return [
         query("page")
@@ -33,7 +34,7 @@ export function validateGetAllTournaments(){
         query("status")
             .optional()
             .isIn(TOURNAMENT_STATUS)
-            .withMessage("status must be 'upcoming', 'ongoing' or 'finished'")
+            .withMessage("status must be 'upcoming', 'ongoing', 'finished' or 'cancelled'")
     ];
 }
 
@@ -48,7 +49,7 @@ export function validateCreateTournament(){
         body("date")
             .notEmpty()
             .withMessage(`Date is required`),
-        // breaks is optional. Not all tournaments need breaks between rounds
+        // breaks is optional — not all tournaments need breaks between rounds
         body("breaks")
             .optional()
             .isInt()
@@ -62,11 +63,27 @@ export function validateCreateTournament(){
             .notEmpty()
             .withMessage(`Game category is required`)
             .isMongoId()
-            .withMessage("gameCategory must be a valid MongoDB ID")
+            .withMessage("gameCategory must be a valid MongoDB ID"),
+        // eloMin, eloMax, buyIn are optional — only validated if provided
+        body("eloMin")
+            .optional()
+            .isInt({ min: 0 })
+            .withMessage("eloMin must be a non-negative integer")
+            .toInt(),
+        body("eloMax")
+            .optional()
+            .isInt({ min: 0 })
+            .withMessage("eloMax must be a non-negative integer")
+            .toInt(),
+        body("buyIn")
+            .optional()
+            .isInt({ min: 0 })
+            .withMessage("buyIn must be a non-negative integer")
+            .toInt()
     ]
 };
 
-// This function validates both the route param and the request body
+// This function validates both the route param and the request body for joining
 export function validateJoinTournament(){
     return [
         param("tournamentId")
@@ -102,7 +119,7 @@ export function validateKnockoutRounds(){
             .isInt({ min: 1 })
             .withMessage("Tournament IDs are supposed to be integers larger than 0")
             .toInt()
-    ];      
+    ];
 }
 
 export default {
