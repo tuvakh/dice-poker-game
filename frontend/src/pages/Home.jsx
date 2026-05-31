@@ -34,14 +34,12 @@ export default function Home() {
     useEffect(() => {
         async function load() {
             try {
-                // Fetch all data sources at the same time using Promise.all
-                // The fifth call gets platform activity stats: ongoing match count and active users this week
-                const [waitingData, ongoingData, finishedData, tournamentData, activityData] = await Promise.all([
-                    getAllMatches({ status: "waiting", limit: 100 }),
-                    getAllMatches({ status: "ongoing", limit: 100 }),
-                    getAllMatches({ status: "finished", limit: 100 }),
-                    getAllTournaments({ status: 'upcoming', limit: 5 }),
-                    fetch(`${BASE_URL}/activities`).then(handleResponse) // Chanya
+                // This fetch all four data sources at the same time using Promise.all
+                const [waitingData, ongoingData, finishedData, tournamentData] = await Promise.all([
+                    getAllMatches({ status: "waiting", limit: 10 }),
+                    getAllMatches({ status: "ongoing", limit: 5 }),
+                    getAllMatches({ status: "finished", limit: 5 }),
+                    getAllTournaments({ status: 'upcoming', limit: 5 })
                 ]);
 
                 setLobbyGames(waitingData.matchList);
