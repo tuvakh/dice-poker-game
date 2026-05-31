@@ -1,73 +1,107 @@
+import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 
 import Hero from "../components/Hero.jsx";
 import Button from "../components/Button.jsx";
+import GameCard from "../components/GameCard.jsx";
+import TournamentCard from "../components/TournamentCard.jsx";
+import Spinner from "../components/Spinner.jsx";
+
+import { getActivity } from "../api/activity.js";
+import { getAllMatches } from "../api/matches.js";
+import { getAllTournaments } from "../api/tournaments.js";
+import { useAppearance } from "../contexts/AppearanceContext.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
+import { filterLobbyMatches } from "../hooks/useLobbyGames.js";
 
 import homeHero from "../assets/home-hero.png";
-import HomeDetails from "./home/HomeDetails.jsx";
+
+function sortByAverageElo(matches) {
+    return matches
+        .map(match => ({
+            ...match,
+            avgElo: match.players.reduce((sum, player) => sum + (player.eloRating ?? 0), 0) / (match.players.length || 1)
+        }))
+        .sort((a, b) => b.avgElo - a.avgElo);
+}
+
+function getIdleDelaySetter(setReady) {
+    if (typeof window === "undefined") return () => {};
+
+    if (typeof window.requestIdleCallback === "function") {
+        const idleId = window.requestIdleCallback(() => setReady(true));
+        return () => window.cancelIdleCallback(idleId);
+    }
+
+    const timeoutId = window.setTimeout(() => setReady(true), 0);
+    return () => window.clearTimeout(timeoutId);
+}
 
 // The homepage introduces the platform and shows the lobby preview, top 5 games, and tournaments
 export default function Home() {
     const navigate = useNavigate();
+    const { preferences } = useAppearance();
     const { user } = useAuth();
+    const [ready, setReady] = useState(false);
     const [lobbyGames, setLobbyGames] = useState([]);
     const [topGames, setTopGames] = useState([]);
     const [tournaments, setTournaments] = useState([]);
+    const [activity, setActivity] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    // Chanya: activity stats fetched from the /activities endpoint
-    const [activity, setActivity] = useState(null);
+
+    useEffect(() => getIdleDelaySetter(setReady), []);
 
     useEffect(() => {
+        if (!ready) return;
+
+        let cancelled = false;
+
         async function load() {
             try {
-                // This fetch all four data sources at the same time using Promise.all
-                const [waitingData, ongoingData, finishedData, tournamentData] = await Promise.all([
-                    getAllMatches({ status: "waiting", limit: 10 }),
+                const lobbyLimit = preferences.lobbyCount;
+                const [waitingData, ongoingData, tournamentData, activityData] = await Promise.all([
+                    getAllMatches({ status: "waiting", limit: lobbyLimit }),
                     getAllMatches({ status: "ongoing", limit: 5 }),
-                    getAllMatches({ status: "finished", limit: 5 }),
-                    getAllTournaments({ status: 'upcoming', limit: 5 })
+                    getAllTournaments({ status: "upcoming", limit: 5 }),
+                    getActivity()
                 ]);
 
+                if (cancelled) return;
 
                 setLobbyGames(waitingData.matchList);
                 setTournaments(tournamentData.tournamentList.slice(0, 5));
-                setActivity(activityData); // Chanya
+                setActivity(activityData);
 
-                // This is a helper function that calculates the average Elo of all players in a match
-                // and sorts matches so the highest-Elo games come first
-                const byAvgElo = matches => matches
-                    .map(match => ({
-                        ...match,
-                        // Add up all player Elos and divide by number of players
-                        // || 1 prevents dividing by zero if a match has no players yet
-                        avgElo: match.players.reduce((sum, player) => sum + (player.eloRating ?? 0), 0) / (match.players.length || 1)
-                    }))
-                    .sort((a, b) => b.avgElo - a.avgElo);
-
-                // Fill the top 5 with ongoing games first
-                // If there are fewer than 5 ongoing game, pad with the most recent finished games to always show 5 cards
-                const topOngoing = byAvgElo(ongoingData.matchList);
+                const topOngoing = sortByAverageElo(ongoingData.matchList);
                 const remaining = 5 - topOngoing.length;
-                const topFinished = remaining > 0 ? byAvgElo(finishedData.matchList).slice(0, remaining) : [];
+                const topFinished = remaining > 0
+                    ? sortByAverageElo((await getAllMatches({ status: "finished", limit: remaining })).matchList).slice(0, remaining)
+                    : [];
+
+                if (cancelled) return;
+
                 setTopGames([...topOngoing, ...topFinished].slice(0, 5));
             } catch {
-                setError("Failed to load data. Please try again.");
+                if (!cancelled) setError("Failed to load data. Please try again.");
             } finally {
-                setLoading(false);
+                if (!cancelled) setLoading(false);
             }
         }
+
         load();
-    }, []);
 
-    // Decide which games to show based on who is viewing
-    const availableGames = filterLobbyMatches(lobbyGames, user);
+        return () => {
+            cancelled = true;
+        };
+    }, [ready, preferences.lobbyCount]);
 
-    const filteredGames = availableGames.slice(0, preferences.lobbyCount);
-
+    if (!ready) return null;
     if (loading) return <Spinner />;
     if (error) return <p className="status status--error">{error}</p>;
+
+    const availableGames = filterLobbyMatches(lobbyGames, user);
+    const filteredGames = availableGames.slice(0, preferences.lobbyCount);
 
     return (
         <>
@@ -81,9 +115,8 @@ export default function Home() {
                 <Link to="/aboutGame">Learn how to play</Link>
             </Hero>
 
-            {/* Chanya: Platform activity stats pulled from the /activities endpoint */}
             {activity && (
-                <section className="home-activity">
+                <section className="home-details__section home-activity">
                     <h2>Platform activity</h2>
                     <div className="home-activity__stats">
                         <div className="home-activity__stat">
@@ -98,8 +131,7 @@ export default function Home() {
                 </section>
             )}
 
-            {/* Lobby preview: shows waiting games the user can join */}
-            <section>
+            <section className="home-details__section">
                 <h2>Games available for joining</h2>
                 <p>Pick a game and jump straight in, there are currently {filteredGames.length} available!</p>
 
@@ -108,21 +140,18 @@ export default function Home() {
                 </div>
             </section>
 
-            {/* Top 5 ongoing games with the highest average Elo */}
-            <section>
+            <section className="home-details__section">
                 <h2>Top 5 ongoing games</h2>
                 <p>Watch the highest-rated players in action!</p>
                 <div className="cards-grid">
                     {topGames.map((match, i) => <GameCard key={match.matchId} match={match} index={i} variant="topGames" />)}
                 </div>
             </section>
-            {/* Tournament preview: shows the 5 upcoming tournaments*/}
-            <section className="tournaments-preview">
+
+            <section className="home-details__section tournaments-preview">
                 <h2>Upcoming tournaments</h2>
                 <p>Sign up before they fill up!</p>
-                <div className="cards-grid">
-                    {tournaments.map(tournament => <TournamentCard key={tournament.tournamentId} tournament={tournament} />)}
-                </div>
+                {tournaments.map(tournament => <TournamentCard key={tournament.tournamentId} tournament={tournament} />)}
             </section>
         </>
     );
