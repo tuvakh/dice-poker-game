@@ -162,6 +162,12 @@
     font-weight: 800;
 }
 
+.leaderboard-list__player .player-info__image {
+    width: 3rem;
+    height: 3rem;
+    flex-shrink: 0;
+}
+
 .leaderboard-list__name-wrap {
     display: grid;
     gap: 0.15rem;

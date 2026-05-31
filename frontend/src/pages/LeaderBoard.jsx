@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 
 import Hero from "../components/Hero.jsx";
 import Spinner from "../components/Spinner.jsx";
+import ProfileImage from "../components/ProfileImage.jsx";
 
 import { getRankings } from "../api/leaderboards.js";
 import { getAllGameCategories } from "../api/gameCategories.js";
@@ -142,9 +143,13 @@ export default function LeaderBoard() {
                                     <li key={player._id} className="leaderboard-list__item">
                                         <span className="leaderboard-list__rank">#{position}</span>
                                         <Link to={`/user/${player.userId}`} className="leaderboard-list__player">
-                                            <span className="leaderboard-list__avatar">
-                                                {player.username?.[0]?.toUpperCase() ?? "?"}
-                                            </span>
+                                            {player.profileImage ? (
+                                                <ProfileImage src={player.profileImage} username={player.username} size="small" />
+                                            ) : (
+                                                <span className="leaderboard-list__avatar">
+                                                    {player.username?.[0]?.toUpperCase() ?? "?"}
+                                                </span>
+                                            )}
                                             <span className="leaderboard-list__name-wrap">
                                                 <strong>{player.username}</strong>
                                             </span>
