@@ -35,13 +35,13 @@ export default function Lobby() {
 
     // This fetch 100 games at once so it has enough to filter down from
     function fetchGames() {
-        getAllMatches({ status: "waiting", limit: 100 })
+        getAllMatches({ status: "waiting", limit: 30 })
             .then(data => setLobbyGames(data.matchList))
             .catch(() => setFetchError("Failed to load games. Please try again."))
             .finally(() => setLoading(false));
     }
 
-    usePolling(fetchGames, 3000);
+    usePolling(fetchGames, 8000);
 
     // Load game categories for filter dropdown
     useEffect(() => {

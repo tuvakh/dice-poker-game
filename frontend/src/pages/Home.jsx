@@ -33,11 +33,12 @@ export default function Home() {
             try {
                 // This fetch all four data sources at the same time using Promise.all
                 const [waitingData, ongoingData, finishedData, tournamentData] = await Promise.all([
-                    getAllMatches({ status: "waiting", limit: 100 }),
-                    getAllMatches({ status: "ongoing", limit: 100 }),
-                    getAllMatches({ status: "finished", limit: 100 }),
+                    getAllMatches({ status: "waiting", limit: 10 }),
+                    getAllMatches({ status: "ongoing", limit: 5 }),
+                    getAllMatches({ status: "finished", limit: 5 }),
                     getAllTournaments({ status: 'upcoming', limit: 5 })
                 ]);
+
 
                 setLobbyGames(waitingData.matchList);
                 // Only show the 5 nearest upcoming tournaments (not implemented yet)
