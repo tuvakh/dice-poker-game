@@ -30,21 +30,21 @@
 14. ✅ Leaving game before it starts --Tuva
 15. ✅ In game money(gambelinggg), needs to be shown on player page. --> Marie
 16. ✅ More game varients. --> Tuva
-17. ⚠️ Authentication and authorization --> Marie
-        ❌ No JWT — login returns raw user object in sessionStorage
-        ❌ No access/refresh tokens
-        ❌ Authorization faked — anyone can send X-User-Role: admin header and get full access
-        ❌ MD5 + global salt — two users with same password get same hash; needs per-user salt (bcrypt)
+17. ✅ Authentication and authorization --> Marie
+        ✅ No JWT — login returns raw user object in sessionStorage
+        ✅ No access/refresh tokens
+        ✅ Authorization faked — anyone can send X-User-Role: admin header and get full access
+        ✅ MD5 + global salt — two users with same password get same hash; needs per-user salt (bcrypt)
 18. ✅ implement a 404 page --> Marie
 19. ✅ Implement comments using websockets --> Tuva
 20. ✅ Show platform activity on homepage --> Chanya
-21. ⚠️ 4 admin pages --> Marie
+21. ✅ 4 admin pages --> Marie
         ✅ Dashboard, Users, Comments, TournamentCreate exist
-        ❌ Admin pages show full header + footer — should show only logo + admin nav, no footer
-        ❌ TournamentCreate doesn't redirect to the new tournament after submit
-        ❌ TournamentCreate missing eloMin, eloMax, buyIn fields
-        ❌ Security incidents not implemented — rate limit hits need logging to DB (IP, user agent, timestamp)
-        ❌ Dashboard doesn't show platform activity stats (same as homepage)
+        ✅ Admin pages show full header + footer — should show only logo + admin nav, no footer
+        ✅ TournamentCreate doesn't redirect to the new tournament after submit
+        ✅ TournamentCreate missing eloMin, eloMax, buyIn fields
+        ✅ Security incidents not implemented — rate limit hits need logging to DB (IP, user agent, timestamp)
+        ✅ Dashboard doesn't show platform activity stats (same as homepage)
 22. ✅ anonymous can no longer play just spectate --> Tuva
 23. ✅ Focus on match making switches focus from queue to "rooms" where player can join and wait for other players to join. --> Chanya
 25. ⚠️ verify email when register --> Marie
