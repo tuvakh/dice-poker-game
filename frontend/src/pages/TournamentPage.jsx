@@ -195,7 +195,7 @@ export default function TournamentPage() {
     return (
         <section className="tournament-detail">
             <Link to="/tournament" className="back-link" onClick={playClick}>
-                All tournaments
+                &#8592; All tournaments
             </Link>
             <h1>{tournament.title}</h1>
             <span className={`tournament-card__status tournament-card__status--${tournament.status}`}>

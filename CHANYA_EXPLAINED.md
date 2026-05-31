@@ -426,21 +426,3 @@ Three places display trophies:
 
 ---
 
-## Summary of Files I Own or Modified
-
-| File | What I did |
-|------|-----------|
-| `frontend/src/pages/Tournament.jsx` | Full page: tabs, search, sort, load more |
-| `frontend/src/pages/TournamentPage.jsx` | Full page: join/leave, admin controls, countdown, bracket, comments |
-| `frontend/src/components/TournamentCard.jsx` | Card with trophy image and game variant |
-| `frontend/src/components/dice-poker-die.js` | Slot-machine roll animation, die sounds with debounce |
-| `frontend/src/hooks/useSoundEffects.js` | Added playRoundEnd, wired sounds to WebSocket events in Game.jsx |
-| `frontend/src/pages/Home.jsx` | Activity stats, .catch(() => null) on getActivity |
-| `frontend/src/contexts/AppearanceContext.jsx` | Removed background music entirely |
-| `backend/project/services/tournament.service.js` | Points-based rounds, delete, cancel, populate fix |
-| `backend/project/controllers/tournament.controller.js` | Added delete and cancel handlers |
-| `backend/project/routes/tournament.routes.js` | Added delete and cancel routes |
-| `backend/project/validators/tournament.validator.js` | Added eloMin, eloMax, buyIn validation |
-| `backend/project/models/Tournament.js` | Added eloMin, eloMax, buyIn fields |
-| `backend/project/config/constants.js` | Added "cancelled" to TOURNAMENT_STATUS |
-| `backend/project/services/match.service.js` | Points-based tournament winner detection, trophy + coin award |
