@@ -372,6 +372,7 @@ export default function Game() {
                                 {user ? (
                                     <>
                                         <p>Waiting for other players to join...</p>
+                                        <p className="game__waiting-count">{match.players.length}/{match.maxPlayers ?? 2} players</p>
                                         {match.players.some(player => player?._id === user._id) && (
                                             <button onClick={handleLeave}>
                                                 {match.players.length === 1 ? 'Cancel game' : 'Leave game'}

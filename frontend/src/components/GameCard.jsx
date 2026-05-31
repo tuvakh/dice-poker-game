@@ -11,12 +11,14 @@ export default function GameCard({ match, index, variant, spectate }) {
 
     if (!match) return null;
 
-    const allPlayers = [
-        ...match.players
-    ];
+    const allPlayers = [...match.players];
+    const requiredPlayers = match.maxPlayers ?? 2;
+    const currentPlayers = allPlayers.length;
+    const remainingPlayers = Math.max(requiredPlayers - currentPlayers, 0);
 
     const isTopGames = variant === "topGames";
     const isRecentGames = variant === "recentGames";
+    const isWaitingGame = match.status === "waiting";
 
     return (
         // The whole card is clickable and navigates to the game detail page
@@ -35,7 +37,13 @@ export default function GameCard({ match, index, variant, spectate }) {
                 ))}
             </h3>
             {/* The call-to-action label changes depending on the context */}
-            <p className="game-card__fake-link">{isTopGames ? "Watch game" : isRecentGames ? "View game" : spectate ? "Spectate" : "Join game"}</p>
+            {isWaitingGame && !isTopGames && !isRecentGames ? (
+                <p className="game-card__waiting">
+                    <span className="game-card__waiting-count">{currentPlayers}/{requiredPlayers} players</span>
+                </p>
+            ) : (
+                <p className="game-card__fake-link">{isTopGames ? "Watch game" : isRecentGames ? "View game" : spectate ? "Spectate" : "Join game"}</p>
+            )}
         </div>
     )
 }
