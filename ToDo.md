@@ -51,3 +51,7 @@
 
 
 - ✅ exstra: maybe a back button when entering game? to go back to home page/leave? --> Tuva
+- when rolled 3 times the round should automatically end, you should have to click end roll.
+- add a border around profile picture incase someone has a transparent background on their profile picture.
+- be able to add a throphy on turnament creation, and show it on the tournament page.
+- limited time to bet.
