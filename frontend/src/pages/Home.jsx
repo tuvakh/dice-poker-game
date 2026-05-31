@@ -64,7 +64,8 @@ export default function Home() {
                     getAllMatches({ status: "waiting", limit: lobbyLimit }),
                     getAllMatches({ status: "ongoing", limit: 5 }),
                     getAllTournaments({ status: "upcoming", limit: 5 }),
-                    getActivity()
+                    // .catch(() => null) so a missing/failing activity endpoint doesn't crash the whole page
+                    getActivity().catch(() => null)
                 ]);
 
                 if (cancelled) return;
