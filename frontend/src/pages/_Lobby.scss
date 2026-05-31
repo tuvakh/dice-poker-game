@@ -1,0 +1,61 @@
+.lobby {
+    &__find {
+        display: flex;
+        flex-direction: column;
+        gap: var(--normal-space);
+        background-color: var(--box-color);
+        border-radius: var(--border-radius);
+        padding: var(--big-space);
+        margin-block-end: var(--big-space);
+    }
+
+    &__find-text {
+        h1 {
+            margin-block-end: var(--mini-space);
+        }
+    }
+
+    &__filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--medium-space);
+    }
+
+    &__filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: var(--mini-space);
+    }
+
+    &__filter-label {
+        font-weight: bold;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    &__chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--mini-space);
+    }
+
+    &__rooms-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-block-end: var(--mini-space);
+    }
+
+    &__create-link {
+        font-weight: bold;
+        color: var(--fake-link-color);
+        text-decoration: underline;
+    }
+
+    &__load-more {
+        display: block;
+        margin-block-start: var(--big-space);
+        margin-inline: auto;
+    }
+}

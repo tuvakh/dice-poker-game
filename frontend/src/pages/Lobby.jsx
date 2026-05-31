@@ -92,6 +92,7 @@ export default function Lobby() {
         setVisibleCount(6);
     }, [selectedRounds, selectedStraights, selectedSeconds]);
 
+
     function getSelectedCategory() {
         return categories.find(category => {
             if (selectedRounds && category.numberOfRounds !== Number(selectedRounds)) return false;
@@ -147,18 +148,18 @@ export default function Lobby() {
                 <p>Browse available games and jump in!</p>
             </Hero>
             <section>
-                <div className="queue-page__find">
-                    <div className="queue-page__find-text">
+                <div className="lobby__find">
+                    <div className="lobby__find-text">
                         <h1>Find a Match</h1>
                         <p>Pick your settings and we&apos;ll find a suitable game you can join — or create a new one if none exist.</p>
                     </div>
 
                     {categories.length === 0 ? <Spinner /> : (
                         <>
-                            <div className="queue-page__filters">
-                                <div className="queue-page__filter-group">
-                                    <span className="queue-page__filter-label">Rounds</span>
-                                    <div className="queue-page__chips">
+                            <div className="lobby__filters">
+                                <div className="lobby__filter-group">
+                                    <span className="lobby__filter-label">Rounds</span>
+                                    <div className="lobby__chips">
                                         {roundsOptions.map(round => (
                                             <Button
                                                 key={round}
@@ -172,17 +173,17 @@ export default function Lobby() {
                                     </div>
                                 </div>
 
-                                <div className="queue-page__filter-group">
-                                    <span className="queue-page__filter-label">Straights</span>
-                                    <div className="queue-page__chips">
+                                <div className="lobby__filter-group">
+                                    <span className="lobby__filter-label">Straights</span>
+                                    <div className="lobby__chips">
                                         <Button type="button" className={`btn--chip${selectedStraights === 'allowed' ? ' btn--chip--active' : ''}`} onClick={() => setSelectedStraights(selectedStraights === 'allowed' ? '' : 'allowed')}>Allowed</Button>
                                         <Button type="button" className={`btn--chip${selectedStraights === 'no' ? ' btn--chip--active' : ''}`} onClick={() => setSelectedStraights(selectedStraights === 'no' ? '' : 'no')}>No straights</Button>
                                     </div>
                                 </div>
 
-                                <div className="queue-page__filter-group">
-                                    <span className="queue-page__filter-label">Seconds</span>
-                                    <div className="queue-page__chips">
+                                <div className="lobby__filter-group">
+                                    <span className="lobby__filter-label">Seconds</span>
+                                    <div className="lobby__chips">
                                         {secondsOptions.map(seconds => (
                                             <Button
                                                 key={seconds}
@@ -208,9 +209,9 @@ export default function Lobby() {
                     )}
                 </div>
 
-                <div className="queue-page__rooms-header">
+                <div className="lobby__rooms-header">
                     <h2>Available games</h2>
-                    <Link to="/createGame" className="queue-page__create-link">+ Create a game</Link>
+                    <Link to="/createGame" className="lobby__create-link">+ Create a game</Link>
                 </div>
                 <p>Click a game to join and get started.</p>
                 <div className="cards-grid">
@@ -220,7 +221,7 @@ export default function Lobby() {
                     }
                 </div>
                 {visibleCount < filteredGames.length && (
-                    <Button type="button" onClick={() => setVisibleCount(prev => prev + 6)}>
+                    <Button type="button" className="lobby__load-more" onClick={() => setVisibleCount(prev => prev + 6)}>
                         Load more
                     </Button>
                 )}
