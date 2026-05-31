@@ -1,15 +1,12 @@
 // Ported from oblig1/components/dice-poker-board.js (class methods → standalone exports).
 // Used by the backend to evaluate and compare Spanish Poker Dice hands server-side.
 
-// Returns a numeric value for each face — used for sorting and tie-breaking.
-// A is highest (6), 7 is lowest (1).
+// Lookup table: each face maps to a numeric value for sorting and tie-breaking
+// A is highest (6), 7 is lowest (1)
+const FACE_VALUES = { 'A': 6, 'K': 5, 'Q': 4, 'J': 3, '8': 2, '7': 1 };
+
 export function faceValue(face) {
-    if (face === 'A') return 6;
-    if (face === 'K') return 5;
-    if (face === 'Q') return 4;
-    if (face === 'J') return 3;
-    if (face === '8') return 2;
-    return 1;
+    return FACE_VALUES[face];
 }
 
 // Returns hand type, rank, and tie-breakers for a set of 5 dice faces.
@@ -27,7 +24,10 @@ export function evaluateHand(faces, includeStraight = true) {
         return faceValue(faceB) - faceValue(faceA);
     });
 
+    // facesPattern is the sorted count array — e.g. [5] for Repóker, [4,1] for Póker, [3,2] for Full
     const facesPattern = entries.map((entry) => entry[1]);
+    // allDifferentFaces is true when all 5 dice show a different face (no pairs at all)
+    // This is required for a straight — you can't have a straight with a repeated face
     const allDifferentFaces = entries.length === 5;
 
     // The two valid straights in Spanish Poker Dice
@@ -39,14 +39,16 @@ export function evaluateHand(faces, includeStraight = true) {
     const sortedValuesDescending = [...faces].sort((faceA, faceB) => faceValue(faceB) - faceValue(faceA)).map((face) => faceValue(face));
 
     // Check each hand type from best to worst
+    // 5 of a kind
     if (facesPattern[0] === 5) {
-        return {
-            handType: 'Repóker',
-            rank: 1,
-            tie: [faceValue(entries[0][0])]
+        return { 
+            handType: 'Repóker', 
+            rank: 1, 
+            tie: [faceValue(entries[0][0])] 
         };
     }
 
+    // 4 of a kind
     if (facesPattern[0] === 4) {
         return {
             handType: 'Póker',
@@ -55,6 +57,7 @@ export function evaluateHand(faces, includeStraight = true) {
         };
     }
 
+    // 3 of a kind + a pair
     if (facesPattern[0] === 3 && facesPattern[1] === 2) {
         return {
             handType: 'Full',
@@ -63,6 +66,7 @@ export function evaluateHand(faces, includeStraight = true) {
         };
     }
 
+    // Straight (5 different faces in one of the two valid sequences)
     if (isStraight) {
         return {
             handType: 'Escalera',
@@ -71,6 +75,7 @@ export function evaluateHand(faces, includeStraight = true) {
         };
     }
 
+    // 3 of a kind, no pair
     if (facesPattern[0] === 3) {
         const tieBreakers = entries
             .slice(1)
@@ -84,6 +89,7 @@ export function evaluateHand(faces, includeStraight = true) {
         };
     }
 
+    // Two pairs
     if (facesPattern[0] === 2 && facesPattern[1] === 2) {
         const firstPair = faceValue(entries[0][0]);
         const secondPair = faceValue(entries[1][0]);
@@ -95,6 +101,7 @@ export function evaluateHand(faces, includeStraight = true) {
         };
     }
 
+    // One pair
     if (facesPattern[0] === 2) {
         const tieBreakers = entries
             .slice(1)
@@ -108,6 +115,7 @@ export function evaluateHand(faces, includeStraight = true) {
         };
     }
 
+    // No matches — highest card wins
     return { handType: 'Carta Alta', rank: 8, tie: sortedValuesDescending };
 }
 
@@ -127,4 +135,30 @@ export function compareHands(player1hand, player2hand) {
     }
 
     return 0; // draw
+}
+
+// Calculates ELO delta for each player based on final standings
+// Higher stack = win when comparing each pair of players
+export function calculateEloDeltas(standings, users, eloK = 32) {
+    const deltas = {};
+    // Start every player's delta at 0
+    standings.forEach(entry => { deltas[entry.userId] = 0; });
+
+    // Compare every pair of players exactly once (standings[i] vs standings[j] where j > i)
+    for (let i = 0; i < standings.length; i++) {
+        for (let j = i + 1; j < standings.length; j++) {
+            const userA = users.find(u => String(u._id) === standings[i].userId);
+            const userB = users.find(u => String(u._id) === standings[j].userId);
+            if (!userA || !userB) continue;
+
+            // Standard ELO expected score: probability that A beats B given their rating difference
+            const expected = 1 / (1 + Math.pow(10, (userB.eloRating - userA.eloRating) / 400));
+            // Actual result: 1 if A ended with more chips (won), 0.5 if tied
+            const actual = standings[i].stack === standings[j].stack ? 0.5 : 1;
+
+            deltas[standings[i].userId] += eloK * (actual - expected);
+            deltas[standings[j].userId] += eloK * (expected - actual);
+        }
+    }
+    return deltas;
 }
