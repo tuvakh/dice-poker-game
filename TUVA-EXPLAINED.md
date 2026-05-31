@@ -23,7 +23,7 @@ Web Components are framework-agnostic custom HTML elements. They manage their ow
 
 The board exposes methods like `addPlayer()`, `setDice()`, `setInteractive()`, `setHeld()`, `showResult()`, `clearResults()`, and `resetAllHeld()`. React calls these directly through the ref. The board fires two custom events back to React: `dp:roll-again` (when a player holds dice and wants to re-roll) and `dp:done-rolling` (when the player is done).
 
-The `handEvaluator.js` utility runs on the **backend** and evaluates Spanish Poker Dice hands. It was ported from the Oblig 1 board logic. It returns a hand type (five of a kind, four of a kind, full house, straight, three of a kind, two pair, one pair, bust), a rank (lower = better), and tiebreaker values. `compareHands()` compares two evaluated hands and returns 1, -1, or 0.
+The `handEvaluator.js` utility runs on the **backend** and evaluates Spanish Poker Dice hands. It was ported from the Oblig 1 board logic. It returns a hand type (Repóker, Póker, Full, Escalera, Trío, Doble Pareja, Pareja, Carta Alta), a rank (lower = better), and tiebreaker values. `compareHands()` compares two evaluated hands and returns 1, -1, or 0. `calculateEloDeltas()` is also in this file — it's called from `gameSocket.js` at game end.
 
 `GameCategory` is the model for game variants. Each variant is a combination of:
 - `numberOfRounds`: 3, 5, or 7
@@ -41,6 +41,7 @@ This gives 18 possible variants, all seeded into the database.
 **Files:**
 - `backend/project/webSockets/gameSocket.js`
 - `frontend/src/pages/Game.jsx`
+- `frontend/src/components/BettingControls.jsx`
 
 **What I did:**
 
@@ -51,7 +52,7 @@ The entire real-time game loop lives in `gameSocket.js`. It attaches a WebSocket
 2. Both players click Ready → server calls `startGame`, rolls dice, sends each player **only their own dice** via `game-started`.
 3. During rolling, the player sends `hold` messages (which dice to keep). The server re-rolls the non-held dice and sends back `roll-result`. A per-player countdown timer runs on the backend — if it expires, `autoCompleteRoll` fires and forces a roll with no holds.
 4. When all players are done rolling, `startBetting` is called.
-5. In betting, one player at a time acts: fold, match (check), or raise (bet more coins). The server tracks `currentBettor`, `bettorsActed`, `highestBet`, and `pot`. `advanceBetting` moves to the next non-folded player, or triggers `revealAndScore` when everyone has matched.
+5. In betting, one player at a time acts: fold, match (check), or raise (bet more coins). The server tracks `currentBettor`, `bettorsActed`, `highestBet`, and `pot`. `advanceBetting` moves to the next non-folded player, or triggers `revealAndScore` when everyone has matched. The betting UI is in `BettingControls.jsx` — it shows the fold/match/raise controls when it's the current player's turn, or a waiting message otherwise.
 6. `revealAndScore` evaluates all hands, finds the winner(s), splits the pot, and either starts the next round or calls `endGame`.
 7. `endGame` updates coins and ELO in the database and broadcasts `game-end` with final standings.
 
