@@ -11,8 +11,6 @@ import HomeDetails from "./home/HomeDetails.jsx";
 export default function Home() {
     const navigate = useNavigate();
     const { user } = useAuth();
-
-<<<<<<< HEAD
     const [lobbyGames, setLobbyGames] = useState([]);
     const [topGames, setTopGames] = useState([]);
     const [tournaments, setTournaments] = useState([]);
