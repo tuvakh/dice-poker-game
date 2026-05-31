@@ -25,7 +25,7 @@ export default function Game() {
     const { id } = useParams();
     const { user, updateUserData } = useAuth();
     const { preferences } = useAppearance();
-    const { playClick, playJoin, playRoll, playHold, playRoundEnd } = useSoundEffects();
+    const { playClick, playJoin, playHold, playRoundEnd } = useSoundEffects();
 
     // Match data fetched from the backend and comments loaded for the sidebar
     const [match, setMatch] = useState(null);
@@ -166,9 +166,8 @@ export default function Game() {
             }
         }
 
-        // Server re-rolled our non-held dice: play the dice sound and update our board
+        // Server re-rolled our non-held dice: update our board (die component plays its own sound)
         if (message.type === 'roll-result') {
-            playRoll();
             if (board) {
                 board.setDice(user?._id, message.yourDice);
             }

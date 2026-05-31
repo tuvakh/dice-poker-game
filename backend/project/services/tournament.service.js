@@ -13,7 +13,7 @@ export async function getAllTournaments({ page = 1, limit = 10, status }){
     if (status) filter.status = status;
 
     const tournamentList = await Tournament.find(filter)
-        .populate('trophy', 'title imageUrl')
+        .populate('trophy', 'title image')
         .populate('gameCategory', 'numberOfRounds gameRules timeController')
         .skip((page - 1) * limit)
         .limit(limit);

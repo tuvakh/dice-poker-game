@@ -1,4 +1,5 @@
 //Chanya
+// tournmanet will take rounds instead of every body playing at the same time.
 // Individual tournament detail page
 import { useState, useEffect, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router";
@@ -194,7 +195,7 @@ export default function TournamentPage() {
     return (
         <section className="tournament-detail">
             <Link to="/tournament" className="back-link" onClick={playClick}>
-                All tournaments
+                &#8592; All tournaments
             </Link>
             <h1>{tournament.title}</h1>
             <span className={`tournament-card__status tournament-card__status--${tournament.status}`}>
