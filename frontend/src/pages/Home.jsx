@@ -151,7 +151,9 @@ export default function Home() {
             <section className="home-details__section tournaments-preview">
                 <h2>Upcoming tournaments</h2>
                 <p>Sign up before they fill up!</p>
-                {tournaments.map(tournament => <TournamentCard key={tournament.tournamentId} tournament={tournament} />)}
+                <div class="cards-grid">
+                    {tournaments.map(tournament => <TournamentCard key={tournament.tournamentId} tournament={tournament} />)}
+                </div>
             </section>
         </>
     );
