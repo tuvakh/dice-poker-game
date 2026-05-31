@@ -1,4 +1,5 @@
-// This routes handles tournament creation, joining, and knockout round progression.
+// Chanya
+// This routes handles tournament creation, joining, and round progression.
 
 import express from "express";
 import tournamentController from "../controllers/tournament.controller.js";
@@ -13,11 +14,17 @@ tournamentApiRouter.post('/tournaments', requireAdmin, tournamentValidator.valid
 // Only registered users can be added to the participant list
 tournamentApiRouter.post('/tournaments/:tournamentId/join', requireUser, tournamentValidator.validateJoinTournament(), validate, tournamentController.joinTournament);
 
-// Only registered users can leave an upcoming tournament
+// Only registered users can leave — allowed at any point until finished/cancelled
 tournamentApiRouter.delete('/tournaments/:tournamentId/leave', requireUser, tournamentValidator.validateLeaveTournament(), validate, tournamentController.leaveTournament);
 
-// Remaining participants gets paired together in knockout round, and new matches are created
+// Remaining participants gets paired together for the next round (points-based — all players play every round)
 tournamentApiRouter.put('/tournaments/:tournamentId/knockoutRounds', requireAdmin, tournamentValidator.validateKnockoutRounds(), validate, tournamentController.knockoutRounds);
+
+// Admin delete — permanently removes a tournament
+tournamentApiRouter.delete('/tournaments/:tournamentId', requireAdmin, tournamentValidator.validateTournamentId(), validate, tournamentController.deleteTournament);
+
+// Admin cancel — marks tournament as cancelled
+tournamentApiRouter.put('/tournaments/:tournamentId/cancel', requireAdmin, tournamentValidator.validateTournamentId(), validate, tournamentController.cancelTournament);
 
 // This returns a public, paginated list filterable by status
 tournamentApiRouter.get('/tournaments', tournamentValidator.validateGetAllTournaments(), validate, tournamentController.getAllTournaments);

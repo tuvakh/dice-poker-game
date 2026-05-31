@@ -172,21 +172,43 @@ export async function recordMatch(matchId, matchData) {
             rounds: { $elemMatch: { $elemMatch: { matchId: match._id } } }
         });
 
-        if (tournament && tournament.status !== 'finished') {
-            // check if this was the last match (only 1 match in the latest round)
-            const lastRound = tournament.rounds[tournament.rounds.length - 1];
-            // if only 1 match in the last round, this is the final
-            // Then marks tournament as finished and award trophy
-            if (lastRound && lastRound.length === 1) {
-                // this is the final match - award trophy to winner
+        if (tournament && !['finished', 'cancelled'].includes(tournament.status)) {
+            // Points-based format: all participants play every round.
+            // Tournament ends when all rounds have been played AND every match in every round is finished.
+            const allMatchIds = tournament.rounds.flat().map(entry => entry.matchId);
+            const unfinishedCount = await Match.countDocuments({
+                _id: { $in: allMatchIds },
+                status: { $ne: 'finished' }
+            });
+            const allRoundsPlayed = tournament.rounds.length >= tournament.numberOfRounds;
+
+            if (unfinishedCount === 0 && allRoundsPlayed) {
+                // Count wins per participant across all rounds to find the overall winner
+                const allMatches = await Match.find({ _id: { $in: allMatchIds } });
+                const winCounts = {};
+                for (const m of allMatches) {
+                    if (m.winner) {
+                        const wId = m.winner.toString();
+                        winCounts[wId] = (winCounts[wId] || 0) + 1;
+                    }
+                }
+                // Sort by win count descending, pick the top player
+                const sorted = Object.entries(winCounts).sort((a, b) => b[1] - a[1]);
+                const winnerId = sorted[0]?.[0];
+
                 tournament.status = 'finished';
                 await tournament.save();
 
-                if (match.winner && tournament.trophy) {
+                if (winnerId && tournament.trophy) {
                     // $push adds the trophy to the winner's trophies array without overwriting existing trophies
-                    await User.findByIdAndUpdate(match.winner, {
+                    await User.findByIdAndUpdate(winnerId, {
                         $push: { trophies: tournament.trophy }
                     });
+                }
+                // Coin bonus for winning the tournament
+                if (winnerId) {
+                    const TOURNAMENT_WIN_BONUS = 500;
+                    await User.findByIdAndUpdate(winnerId, { $inc: { coins: TOURNAMENT_WIN_BONUS } });
                 }
             }
         }

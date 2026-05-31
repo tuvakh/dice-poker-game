@@ -1,3 +1,4 @@
+// Chanya
 // This model represents a tournament with participants, rounds, and a trophy.
 
 import mongoose from "mongoose";
@@ -68,6 +69,22 @@ const tournamentSchema = new mongoose.Schema({
     trophy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Trophy'
+    },
+    // eloMin is the minimum Elo rating required to join this tournament
+    eloMin: {
+        type: Number,
+        default: null
+    },
+    // eloMax is the maximum Elo rating allowed to join this tournament
+    eloMax: {
+        type: Number,
+        default: null
+    },
+    // buyIn is the coin cost to enter — winner takes all at the end
+    buyIn: {
+        type: Number,
+        min: 0,
+        default: 0
     },
     // rounds is an array of arrays
     // Each inner array represents one round, and contains the matches played in that round. 
