@@ -15,7 +15,7 @@ import { useAuth } from "../contexts/AuthContext.jsx";
 
 import { filterLobbyMatches } from "../hooks/useLobbyGames.js";
 
-import homeHero from "../assets/home-hero.png";
+import homeHero from "../assets/home-hero.webp";
 
 function sortByAverageElo(matches) {
     return matches

@@ -79,7 +79,11 @@ export function validateCreateTournament(){
             .optional()
             .isInt({ min: 0 })
             .withMessage("buyIn must be a non-negative integer")
-            .toInt()
+            .toInt(),
+        body("trophy")
+            .optional()
+            .isMongoId()
+            .withMessage("trophy must be a valid MongoDB ID")
     ]
 };
 

@@ -72,13 +72,15 @@ export default function Game() {
 
 
     // Fetches the latest match data from the backend
-    async function fetchMatch() {
+    // signal comes from usePolling's AbortController so cancelled requests don't update state
+    async function fetchMatch(signal) {
         try {
-            const data = await getMatch(id);
+            const data = await getMatch(id, signal);
             setMatch(data);
             matchRef.current = data;
-            setError(null); // clear error if a retry succeeds
-        } catch {
+            setError(null);
+        } catch (err) {
+            if (err?.name === "AbortError") return;
             setError("Failed to load game. Please try again.");
         }
     }
@@ -287,8 +289,8 @@ export default function Game() {
         }
     }
 
-    // Poll the match every 5 seconds to check if someone joined
-    usePolling(fetchMatch, 5000);
+    // Poll only while waiting — once WebSocket takes over for ongoing games, stop polling
+    usePolling(fetchMatch, 5000, match?.status !== "ongoing");
 
     // Auto-join the match once if the logged-in user isn't already a player
     useEffect(() => {

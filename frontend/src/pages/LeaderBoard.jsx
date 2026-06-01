@@ -8,7 +8,7 @@ import ProfileImage from "../components/ProfileImage.jsx";
 import { getRankings } from "../api/leaderboards.js";
 import { getAllGameCategories } from "../api/gameCategories.js";
 
-import heroImage from "../assets/home-hero.png";
+import heroImage from "../assets/home-hero.webp";
 import "./_LeaderBoard.scss";
 
 const SORT_OPTIONS = [

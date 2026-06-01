@@ -54,10 +54,10 @@
 
 - when rolled 3 times the round should automatically end, you should have to click end roll.
 - add a border around profile picture incase someone has a transparent background on their profile picture.
-- be able to add a throphy on turnament creation, and show it on the tournament page.
-- limited time to bet.
+- ✅ be able to add a throphy on turnament creation, and show it on the tournament page - chanya 
+- limited time to bet. 
 - Error messages on light mode has bad readability
-- Should automatically logout, when we reseed the database and the user don’t exist anymore
+- ✅ Should automatically logout, when we reseed the database and the user don’t exist anymore - chanya 
 - When watching a game you shouldn’t see the buttons
-- Confirmation message when leaving game
+- ✅ Confirmation message when leaving game - chanya 
 - Test everything to see if both functionality and styling works (both light and dark mode) 

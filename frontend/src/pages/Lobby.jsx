@@ -9,7 +9,7 @@ import GameCard from "../components/GameCard.jsx";
 import Spinner from "../components/Spinner.jsx";
 import Button from "../components/Button.jsx";
 
-import lobbyHero from "../assets/lobby-hero.png"
+import lobbyHero from "../assets/lobby-hero.webp"
 
 import { filterLobbyMatches } from "../hooks/useLobbyGames.js";
 import { usePolling } from "../hooks/usePolling.js";
@@ -33,11 +33,14 @@ export default function Lobby() {
 
     const [visibleCount, setVisibleCount] = useState(6);
 
-    // This fetch 100 games at once so it has enough to filter down from
-    function fetchGames() {
-        getAllMatches({ status: "waiting", limit: 30 })
+    // Fetches waiting games — signal from usePolling cancels the request on cleanup
+    function fetchGames(signal) {
+        getAllMatches({ status: "waiting", limit: 30 }, signal)
             .then(data => setLobbyGames(data.matchList))
-            .catch(() => setFetchError("Failed to load games. Please try again."))
+            .catch(err => {
+                if (err?.name === "AbortError") return;
+                setFetchError("Failed to load games. Please try again.");
+            })
             .finally(() => setLoading(false));
     }
 

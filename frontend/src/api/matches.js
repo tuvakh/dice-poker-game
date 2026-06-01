@@ -1,8 +1,8 @@
 import { BASE_URL, handleResponse, getAuthHeaders } from "./config.js";
 
 // Fetches a list of matches with optional filters
-export async function getAllMatches({ status, page, limit, userId, gameCategoryId } = {}) {
-    // URLSearchParams builds the query string cleanly without manual string concatenation
+// signal is an AbortSignal passed from usePolling so the request is cancelled on cleanup
+export async function getAllMatches({ status, page, limit, userId, gameCategoryId } = {}, signal) {
     const params = new URLSearchParams();
     if (status) params.append("status", status);
     if (page) params.append("page", page);
@@ -10,13 +10,14 @@ export async function getAllMatches({ status, page, limit, userId, gameCategoryI
     if (userId) params.append("userId", userId);
     if (gameCategoryId) params.append("gameCategoryId", gameCategoryId);
 
-    const res = await fetch(`${BASE_URL}/matches?${params}`);
+    const res = await fetch(`${BASE_URL}/matches?${params}`, { signal });
     return handleResponse(res);
 }
 
 // Fetches a single match by its matchId
-export async function getMatch(id) {
-    const res = await fetch(`${BASE_URL}/matches/${id}`);
+// signal is an AbortSignal passed from usePolling so the request is cancelled on cleanup
+export async function getMatch(id, signal) {
+    const res = await fetch(`${BASE_URL}/matches/${id}`, { signal });
     return handleResponse(res);
 }
 

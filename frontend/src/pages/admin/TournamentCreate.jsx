@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { createTournament } from "../../api/tournaments.js";
 import { getAllGameCategories } from "../../api/gameCategories.js";
+import { getAllTrophies, createTrophy } from "../../api/trophies.js";
 import Spinner from "../../components/Spinner.jsx";
+import "./_TournamentCreate.scss";
 
 export default function AdminTournamentCreate(){
     const [title, setTitle] = useState("");
@@ -11,21 +13,32 @@ export default function AdminTournamentCreate(){
     const [numberOfRounds, setNumberOfRounds] = useState(3);
     const [gameCategory, setGameCategory] = useState("");
     const [gameCategories, setGameCategories] = useState([]);
+    const [trophies, setTrophies] = useState([]);
+    const [trophy, setTrophy] = useState("");
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [message, setMessage] = useState("");
     const [error, setError] = useState("");
 
+    const [newTrophyTitle, setNewTrophyTitle] = useState("");
+    const [newTrophyFile, setNewTrophyFile] = useState(null);
+    const [newTrophyPreview, setNewTrophyPreview] = useState(null);
+    const [uploadingTrophy, setUploadingTrophy] = useState(false);
+    const [uploadMessage, setUploadMessage] = useState("");
+
     useEffect(() => {
         let cancelled = false;
-        getAllGameCategories()
-            .then(result => {
+        Promise.all([
+            getAllGameCategories(),
+            getAllTrophies().catch(() => [])
+        ]).then(([catResult, trophyResult]) => {
                 if (!cancelled) {
-                    const categories = Array.isArray(result)
-                        ? result
-                        : (result.gameCategories || result.categoryList || []);
+                    const categories = Array.isArray(catResult)
+                        ? catResult
+                        : (catResult.gameCategories || catResult.categoryList || []);
                     setGameCategories(categories);
                     setGameCategory(categories[0]?._id || "");
+                    setTrophies(Array.isArray(trophyResult) ? trophyResult : []);
                 }
             })
             .catch(err => {
@@ -50,7 +63,8 @@ export default function AdminTournamentCreate(){
                 date,
                 breaks: Number(breaks),
                 numberOfRounds: Number(numberOfRounds),
-                gameCategory
+                gameCategory,
+                ...(trophy && { trophy })
             });
             setMessage(`Tournament created: ${created.title || title}`);
             setTitle("");
@@ -58,10 +72,38 @@ export default function AdminTournamentCreate(){
             setDate("");
             setBreaks(0);
             setNumberOfRounds(3);
+            setTrophy("");
         } catch (err) {
             setError(err.message);
         } finally {
             setSubmitting(false);
+        }
+    }
+
+    function handleTrophyFileChange(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        setNewTrophyFile(file);
+        setNewTrophyPreview(URL.createObjectURL(file));
+    }
+
+    async function handleTrophyUpload(e) {
+        e.preventDefault();
+        if (!newTrophyFile || !newTrophyTitle.trim()) return;
+        setUploadingTrophy(true);
+        setUploadMessage("");
+        try {
+            const created = await createTrophy({ title: newTrophyTitle.trim(), image: newTrophyFile });
+            setTrophies(prev => [...prev, created]);
+            setTrophy(created._id);
+            setNewTrophyTitle("");
+            setNewTrophyFile(null);
+            setNewTrophyPreview(null);
+            setUploadMessage(`Trophy "${created.title}" uploaded and selected!`);
+        } catch (err) {
+            setUploadMessage(`Upload failed: ${err.message}`);
+        } finally {
+            setUploadingTrophy(false);
         }
     }
 
@@ -75,39 +117,76 @@ export default function AdminTournamentCreate(){
             {message && <p className="status status--success">{message}</p>}
             {error && <p className="status status--error">{error}</p>}
 
-            <form onSubmit={handleSubmit} className="admin__form">
-                <label>
-                    Title
-                    <input aria-label="Tournament title" value={title} onChange={e => setTitle(e.target.value)} required />
-                </label>
+            <form onSubmit={handleSubmit} className="tournament-create-form">
+                <div className="tournament-create-form__field">
+                    <label className="tournament-create-form__label" htmlFor="tc-title">Title</label>
+                    <input
+                        id="tc-title"
+                        className="tournament-create-form__input"
+                        value={title}
+                        onChange={e => setTitle(e.target.value)}
+                        required
+                    />
+                </div>
 
-                <label>
-                    Description
-                    <textarea aria-label="Tournament description" value={description} onChange={e => setDescription(e.target.value)} required />
-                </label>
+                <div className="tournament-create-form__field">
+                    <label className="tournament-create-form__label" htmlFor="tc-description">Description</label>
+                    <textarea
+                        id="tc-description"
+                        className="tournament-create-form__textarea"
+                        value={description}
+                        onChange={e => setDescription(e.target.value)}
+                        required
+                    />
+                </div>
 
-                <label>
-                    Date
-                    <input aria-label="Tournament date" type="datetime-local" value={date} onChange={e => setDate(e.target.value)} required />
-                </label>
+                <div className="tournament-create-form__field">
+                    <label className="tournament-create-form__label" htmlFor="tc-date">Date</label>
+                    <input
+                        id="tc-date"
+                        className="tournament-create-form__input"
+                        type="datetime-local"
+                        value={date}
+                        onChange={e => setDate(e.target.value)}
+                        required
+                    />
+                </div>
 
-                <label>
-                    Breaks
-                    <input aria-label="Tournament breaks" type="number" min="0" value={breaks} onChange={e => setBreaks(e.target.value)} />
-                </label>
+                <div className="tournament-create-form__field">
+                    <label className="tournament-create-form__label" htmlFor="tc-breaks">Breaks (minutes)</label>
+                    <input
+                        id="tc-breaks"
+                        className="tournament-create-form__input"
+                        type="number"
+                        min="0"
+                        value={breaks}
+                        onChange={e => setBreaks(e.target.value)}
+                    />
+                </div>
 
-                <label>
-                    Number of Rounds
-                    <select aria-label="Number of rounds" value={numberOfRounds} onChange={e => setNumberOfRounds(e.target.value)}>
+                <div className="tournament-create-form__field">
+                    <label className="tournament-create-form__label" htmlFor="tc-rounds">Number of Rounds</label>
+                    <select
+                        id="tc-rounds"
+                        className="tournament-create-form__select"
+                        value={numberOfRounds}
+                        onChange={e => setNumberOfRounds(e.target.value)}
+                    >
                         <option value={3}>3</option>
                         <option value={5}>5</option>
                         <option value={7}>7</option>
                     </select>
-                </label>
+                </div>
 
-                <label>
-                    Game Category
-                    <select aria-label="Game category" value={gameCategory} onChange={e => setGameCategory(e.target.value)} required>
+                <div className="tournament-create-form__field">
+                    <label className="tournament-create-form__label" htmlFor="tc-category">Game Category</label>
+                    <select
+                        id="tc-category"
+                        className="tournament-create-form__select"
+                        value={gameCategory}
+                        onChange={e => setGameCategory(e.target.value)}
+                        required
+                    >
                         {(gameCategories || []).length === 0 ? (
                             <option value="">No categories available</option>
                         ) : (
@@ -118,9 +197,73 @@ export default function AdminTournamentCreate(){
                             ))
                         )}
                     </select>
-                </label>
+                </div>
 
-                <button className="btn btn--primary" type="submit" disabled={submitting}>
+                <div className="tournament-create-form__field">
+                    <span className="tournament-create-form__label">Trophy (optional)</span>
+                    <div className="trophy-picker">
+                        <button
+                            type="button"
+                            className={`trophy-option trophy-option--none${trophy === "" ? " trophy-option--selected" : ""}`}
+                            onClick={() => setTrophy("")}
+                        >
+                            <span className="trophy-option__icon">🚫</span>
+                            <span className="trophy-option__title">No trophy</span>
+                        </button>
+                        {trophies.map(t => (
+                            <button
+                                type="button"
+                                key={t._id}
+                                className={`trophy-option${trophy === t._id ? " trophy-option--selected" : ""}`}
+                                onClick={() => setTrophy(t._id)}
+                            >
+                                <img
+                                    className="trophy-option__img"
+                                    src={`/${t.image}`}
+                                    alt={t.title}
+                                    onError={e => { e.target.replaceWith(Object.assign(document.createElement("span"), { className: "trophy-option__icon", textContent: "🏆" })); }}
+                                />
+                                <span className="trophy-option__title">{t.title}</span>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="trophy-upload">
+                    <h3 className="trophy-upload__heading">Upload Trophy</h3>
+                    <form className="trophy-upload__form" onSubmit={handleTrophyUpload}>
+                        <input
+                            className="tournament-create-form__input"
+                            type="text"
+                            placeholder="Trophy title"
+                            value={newTrophyTitle}
+                            onChange={e => setNewTrophyTitle(e.target.value)}
+                            required
+                        />
+                        <label className="trophy-upload__file-label">
+                            {newTrophyPreview
+                                ? <img className="trophy-upload__preview" src={newTrophyPreview} alt="preview" />
+                                : <span className="trophy-upload__placeholder">Choose image</span>
+                            }
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleTrophyFileChange}
+                                style={{ display: "none" }}
+                            />
+                        </label>
+                        <button
+                            className="tournament-create-form__submit"
+                            type="submit"
+                            disabled={uploadingTrophy || !newTrophyFile || !newTrophyTitle.trim()}
+                        >
+                            {uploadingTrophy ? "Uploading..." : "Upload & select"}
+                        </button>
+                    </form>
+                    {uploadMessage && <p className="trophy-upload__msg">{uploadMessage}</p>}
+                </div>
+
+                <button className="tournament-create-form__submit" type="submit" disabled={submitting}>
                     {submitting ? "Creating..." : "Create Tournament"}
                 </button>
             </form>

@@ -1,5 +1,5 @@
 import Hero from "../components/Hero.jsx";
-import rulesHero from "../assets/rules-hero.png"
+import rulesHero from "../assets/rules-hero.webp"
 
 // The about Game page explains the rules and how to play Spanish Poker Dice
 export default function AboutGame (){

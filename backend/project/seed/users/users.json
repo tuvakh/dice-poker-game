@@ -174,5 +174,13 @@
         "age": 21,
         "eloRating": 5000,
         "role": "admin"
+    },
+    {
+        "username": "asianmaster",
+        "email": "asianmaster@test.com",
+        "password": "Asianmaster1!",
+        "age": 22,
+        "eloRating": 1500,
+        "role": "admin"
     }
 ]
