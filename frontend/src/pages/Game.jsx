@@ -261,12 +261,6 @@ export default function Game() {
             if (message.currentBettor === user?._id) startBetTimer();
         }
 
-
-        // It's now a different player's turn to bet
-        if (message.type === 'next-bettor') {
-            setBettingState(prev => ({ ...prev, currentBettor: message.currentBettor, yourStack: message.stacks?.[user?._id] ?? prev.yourStack }));
-        }
-
         // Someone placed a bet: update the pot and highest bet
         if (message.type === 'next-bettor') {
             setBettingState(prev => ({ ...prev, currentBettor: message.currentBettor, yourStack: message.stacks?.[user?._id] ?? prev.yourStack }));
@@ -275,7 +269,6 @@ export default function Game() {
             } else {
                 clearInterval(betTimerRef.current);
                 setBetTimeLeft(null);
-                setBetTimedOut(false);
             }
         }
 
