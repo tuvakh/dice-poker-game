@@ -58,9 +58,9 @@ export default function AdminComments(){
                 </table>
 
                 <div className="pagination" style={{ marginTop: 12 }}>
-                    <button className="btn" disabled={!data || data.page === 1} onClick={() => setPage(p => Math.max(1, p - 1))}>Prev</button>
+                    <button className="btn" disabled={!data || data.page === 1} onClick={() => setPage(prev => Math.max(1, prev - 1))}>Prev</button>
                     <span style={{ margin: '0 8px' }}>Page {data?.page || 1} of {data?.totalPages || 1}</span>
-                    <button className="btn" disabled={!data || data.page === data.totalPages} onClick={() => setPage(p => Math.min(data.totalPages || 1, p + 1))}>Next</button>
+                    <button className="btn" disabled={!data || data.page === data.totalPages} onClick={() => setPage(prev => Math.min(data.totalPages || 1, prev + 1))}>Next</button>
                 </div>
             </section>
         </div>

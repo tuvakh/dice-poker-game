@@ -79,7 +79,7 @@ export default function TournamentPage() {
         if (!latestRound) return;
 
         // Check all matches in the latest round are finished
-        const allDone = latestRound.every(m => m?.status === 'finished');
+        const allDone = latestRound.every(match => match?.status === 'finished');
         const roundsLeft = (tournament.numberOfRounds ?? 0) - rounds.length;
 
         if (!allDone || roundsLeft <= 0) {
@@ -88,8 +88,8 @@ export default function TournamentPage() {
         }
 
         // Find the most recent endedAt across all matches in the latest round
-        const latestEndedAt = latestRound.reduce((maxTime, m) => {
-            const t = m?.endedAt ? new Date(m.endedAt).getTime() : 0;
+        const latestEndedAt = latestRound.reduce((maxTime, match) => {
+            const t = match?.endedAt ? new Date(match.endedAt).getTime() : 0;
             return t > maxTime ? t : maxTime;
         }, 0);
 
@@ -140,7 +140,7 @@ export default function TournamentPage() {
             setJoined(false);
             // Optimistic update: remove the user from the local participants list
             setTournament(prev => prev
-                ? { ...prev, participants: prev.participants.filter(p => (p._id ?? p)?.toString() !== user._id?.toString()) }
+                ? { ...prev, participants: prev.participants.filter(participant => (participant._id ?? participant)?.toString() !== user._id?.toString()) }
                 : prev
             );
         } catch (err) {
@@ -188,7 +188,7 @@ export default function TournamentPage() {
     // alreadyIn checks the fetched data so returning visitors who were already registered see the right UI
     // joined is set when the user joins in this browser session (optimistic)
     const alreadyIn = user && tournament.participants?.some(
-        p => (p._id ?? p)?.toString() === user._id?.toString()
+        participant => (participant._id ?? participant)?.toString() === user._id?.toString()
     );
 
     // Players can leave as long as the tournament has not finished or been cancelled
@@ -342,9 +342,9 @@ export default function TournamentPage() {
                 <p>No participants yet — be the first!</p>
             ) : (
                 <ul className="tournament-detail__players">
-                    {tournament.participants.map(p => (
-                        <li key={p._id ?? p} className="tournament-detail__player-item">
-                            {p.username ?? p}
+                    {tournament.participants.map(participant => (
+                        <li key={participant._id ?? participant} className="tournament-detail__player-item">
+                            {participant.username ?? participant}
                         </li>
                     ))}
                 </ul>

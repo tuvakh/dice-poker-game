@@ -23,7 +23,7 @@ function sortByAverageElo(matches) {
             ...match,
             avgElo: match.players.reduce((sum, player) => sum + (player.eloRating ?? 0), 0) / (match.players.length || 1)
         }))
-        .sort((a, b) => b.avgElo - a.avgElo);
+        .sort((matchA, matchB) => matchB.avgElo - matchA.avgElo);
 }
 
 function getIdleDelaySetter(setReady) {

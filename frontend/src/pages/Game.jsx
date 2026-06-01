@@ -420,7 +420,7 @@ export default function Game() {
 
     const displayPot = bettingState?.pot ?? match?.coinWager ?? 0;
     const isPreGame = match?.status === 'ongoing' && gamePhase === null && !roundResult && !forfeitBy;
-    const sortedStandings = standings ? [...standings].sort((a, b) => b.stack - a.stack) : [];
+    const sortedStandings = standings ? [...standings].sort((standingA, standingB) => standingB.stack - standingA.stack) : [];
     const topStack = sortedStandings[0]?.stack;
     const isTie = sortedStandings.filter(entry => entry.stack === topStack).length > 1;
     const isWinner = sortedStandings[0]?.userId === user?._id;
@@ -473,7 +473,7 @@ export default function Game() {
                                 {user ? (
                                     <>
                                         <p>Waiting for {(match.maxPlayers ?? 2) - match.players.length} more opponents....</p>
-                                        {match.players.some(p => p?._id === user._id) && (
+                                        {match.players.some(player => player?._id === user._id) && (
                                             <Button onClick={handleLeave}>
                                                 {match.players.length === 1 ? 'Cancel game' : 'Leave game'}
                                             </Button>
@@ -531,7 +531,7 @@ export default function Game() {
 
                                         <ol className="game__standings">
                                             {sortedStandings.map((entry, i) => {
-                                                const playerName = match.players.find(p => p?._id === entry.userId)?.username ?? 'Unknown';
+                                                const playerName = match.players.find(player => player?._id === entry.userId)?.username ?? 'Unknown';
                                                 const isMe = entry.userId === user?._id;
                                                 const coinDisplay = entry.stack >= 0
                                                     ? `+ ${entry.stack} coin${entry.stack !== 1 ? 's' : ''}`
@@ -570,7 +570,7 @@ export default function Game() {
                                 </p>
                             )}
                             <div className="game__roll-buttons">
-                                {user && match.players.some(p => p?._id === user._id) && (
+                                {user && match.players.some(player => player?._id === user._id) && (
                                     <>
                                         <Button variant="plain" disabled={!canRoll} onClick={() => boardRef.current?.handleRollAgain()}>Roll</Button>
                                         <Button variant="plain" disabled={!canRoll} onClick={() => boardRef.current?.handleDoneRolling()}>Done rolling</Button>
@@ -592,13 +592,13 @@ export default function Game() {
                                 betTimeLeft={betTimeLeft}
                                 betTimedOut={betTimedOut}
                             />
-                            {user && match.players.some(p => p?._id === user._id) && (
+                            {user && match.players.some(player => player?._id === user._id) && (
                                 <Button variant="plain" onClick={() => setShowLeaveConfirm(true)}>Leave game</Button>
                             )}
                         </div>
                     )}
 
-                    {match.status === 'ongoing' && gamePhase === null && !isPreGame && !forfeitBy && user && match.players.some(p => p?._id === user._id) && (
+                    {match.status === 'ongoing' && gamePhase === null && !isPreGame && !forfeitBy && user && match.players.some(player => player?._id === user._id) && (
                         <Button variant="plain" className="game__leave-btn" onClick={() => setShowLeaveConfirm(true)}>Leave game</Button>
                     )}
                 </div>

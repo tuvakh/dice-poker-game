@@ -210,20 +210,20 @@ export default function AdminTournamentCreate(){
                             <span className="trophy-option__icon">🚫</span>
                             <span className="trophy-option__title">No trophy</span>
                         </button>
-                        {trophies.map(t => (
+                        {trophies.map(trophy => (
                             <button
                                 type="button"
-                                key={t._id}
-                                className={`trophy-option${trophy === t._id ? " trophy-option--selected" : ""}`}
-                                onClick={() => setTrophy(t._id)}
+                                key={trophy._id}
+                                className={`trophy-option${trophy === trophy._id ? " trophy-option--selected" : ""}`}
+                                onClick={() => setTrophy(trophy._id)}
                             >
                                 <img
                                     className="trophy-option__img"
-                                    src={`/${t.image}`}
-                                    alt={t.title}
+                                    src={`/${trophy.image}`}
+                                    alt={trophy.title}
                                     onError={e => { e.target.replaceWith(Object.assign(document.createElement("span"), { className: "trophy-option__icon", textContent: "🏆" })); }}
                                 />
-                                <span className="trophy-option__title">{t.title}</span>
+                                <span className="trophy-option__title">{trophy.title}</span>
                             </button>
                         ))}
                     </div>
