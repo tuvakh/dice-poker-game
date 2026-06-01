@@ -20,7 +20,12 @@ class DicePokerBoard extends HTMLElement {
         // Renders the board shell once. Players and their dice are added later via addPlayer()
         this.shadowRoot.innerHTML = `
         <style>
-            :host { display: block; padding: 1rem; width: 100%; }
+            :host {
+                display: block; 
+                padding: 1rem; 
+                padding-block-start: 2.5rem; 
+                width: 100%; 
+            }
 
             .players {
                 display: flex;

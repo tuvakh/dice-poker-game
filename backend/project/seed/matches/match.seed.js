@@ -141,12 +141,17 @@ export default async function matchSeed(users, categories) {
                 { userId: users[4]._id, delta: -25 }
             ]
         }).save(),
-                // Ongoing games — currently being played, shown on homepage
+        // Ongoing games — currently being played, shown on homepage
         new Match({ players: [users[0]._id, users[1]._id],  gameCategory: categories[0]._id,  status: "ongoing", startedAt: "2026-05-29T10:00:00.000Z" }).save(),
         new Match({ players: [users[2]._id, users[3]._id],  gameCategory: categories[5]._id,  status: "ongoing", startedAt: "2026-05-29T11:00:00.000Z" }).save(),
         new Match({ players: [users[4]._id, users[5]._id],  gameCategory: categories[10]._id, status: "ongoing", startedAt: "2026-05-29T12:00:00.000Z" }).save(),
         new Match({ players: [users[6]._id, users[7]._id],  gameCategory: categories[3]._id,  status: "ongoing", startedAt: "2026-05-29T13:00:00.000Z" }).save(),
         new Match({ players: [users[8]._id, users[9]._id],  gameCategory: categories[8]._id,  status: "ongoing", startedAt: "2026-05-29T14:00:00.000Z" }).save(),
+        new Match({ players: [users[10]._id, users[11]._id], gameCategory: categories[2]._id,  status: "ongoing", startedAt: "2026-05-30T08:00:00.000Z" }).save(),
+        new Match({ players: [users[12]._id, users[13]._id], gameCategory: categories[7]._id,  status: "ongoing", startedAt: "2026-05-30T09:00:00.000Z" }).save(),
+        new Match({ players: [users[14]._id, users[15]._id], gameCategory: categories[11]._id, status: "ongoing", startedAt: "2026-05-30T10:00:00.000Z" }).save(),
+        new Match({ players: [users[16]._id, users[17]._id], gameCategory: categories[4]._id,  status: "ongoing", startedAt: "2026-05-30T11:00:00.000Z" }).save(),
+        new Match({ players: [users[18]._id, users[19]._id], gameCategory: categories[9]._id,  status: "ongoing", startedAt: "2026-05-30T12:00:00.000Z" }).save(),
         // Waiting games — each user appears in at most one waiting match
         new Match({ players: [users[10]._id], gameCategory: categories[1]._id,  status: "waiting", startedAt: "2026-04-13T08:00:00.000Z" }).save(),
         new Match({ players: [users[11]._id], gameCategory: categories[2]._id,  status: "waiting", startedAt: "2026-04-13T09:00:00.000Z" }).save(),
