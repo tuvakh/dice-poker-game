@@ -61,6 +61,60 @@
         height: 80px;
         object-fit: contain;
     }
+
+    &__standings {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: var(--small-space);
+        margin-block: var(--small-space);
+        max-width: 480px;
+    }
+
+    &__standings-row {
+        display: flex;
+        align-items: center;
+        gap: var(--normal-space);
+        background-color: var(--box-color);
+        border-radius: var(--border-radius);
+        padding: var(--small-space) var(--normal-space);
+
+        &--leader {
+            background-color: var(--secondary-color);
+            font-weight: 700;
+        }
+    }
+
+    &__standings-rank {
+        font-size: 0.8rem;
+        opacity: 0.6;
+        min-width: 28px;
+    }
+
+    &__standings-name {
+        flex: 1;
+    }
+
+    &__standings-wins {
+        font-size: 0.85rem;
+        opacity: 0.8;
+    }
+
+    &__admin {
+        display: flex;
+        gap: var(--small-space);
+        flex-wrap: wrap;
+        margin-block: var(--medium-space);
+    }
+
+    &__countdown {
+        background-color: var(--box-color);
+        border-radius: var(--border-radius);
+        padding: var(--normal-space);
+        margin-block: var(--small-space);
+        font-weight: 600;
+        text-align: center;
+    }
 }
 
 .bracket {
