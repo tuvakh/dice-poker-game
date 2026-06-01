@@ -47,14 +47,13 @@ const limiter = rateLimit({
     }
 });
 
-app.use(cors({ origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'] }));
-app.use(limiter);
-// This parse incoming JSON request bodies so controllers can access req.body
-app.use(express.json());
 app.use(cors({ 
     origin: ["http://localhost:5173", "http://localhost:5174", "http://localhost:5175"],
     credentials: true // Allow cookies to be sent with requests
 }));
+app.use(limiter);
+// This parse incoming JSON request bodies so controllers can access req.body
+app.use(express.json());
 
 // This parses cookies from incoming requests
 app.use(cookieParser());

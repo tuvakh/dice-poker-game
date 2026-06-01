@@ -76,22 +76,18 @@ export function AppearanceProvider({ children }) {
     function updatePreferences(newPrefs) {
         setPreferences(prev => {
             const updated = { ...prev, ...newPrefs };
-            // Save to localStorage straight away so the setting survives a page refresh
             localStorage.setItem("preferences", JSON.stringify(updated));
             return updated;
         });
 
-        // Only save to the backend if the user is logged in
         if (user) {
-            // Wait 500ms before saving to the backend
-            // If the user keeps changing the setting with the slider, it cancel the previous timer and start a new one
-            // This way it only send one API call when they stop, not one for every tiny movement
+            const latest = { ...preferences, ...newPrefs };
+            updateUserData({ preferences: latest });
+
             clearTimeout(saveTimeout.current);
             saveTimeout.current = setTimeout(async () => {
-                // We read from localStorage here instead of state because React state might not have updated yet by the time this runs
-                const latest = JSON.parse(localStorage.getItem("preferences"));
-                await updateUser(user.userId, { preferences: latest });
-                updateUserData({ preferences: latest });
+                const stored = JSON.parse(localStorage.getItem("preferences"));
+                await updateUser(user.userId, { preferences: stored });
             }, 500);
         }
     }
