@@ -19,11 +19,11 @@
         ✅ Game variant not shown — .populate('gameCategory') also missing
         ✅ eloMin, eloMax, buyIn — schema fields don't exist yet
         ❌ standings section for ongoing tournaments
-        ❌ admin edit buttons on page
-        ❌ backend endpoints for edit
+        ✅ admin edit buttons on page -- Chanya
+        ✅ backend endpoints for edit -- Chanya
         ✅ Leave at any point is BROKEN — service throws if status !== "upcoming" (opposite of requirement)
         ❌ auto-redirect players to their game
-        ❌ countdown to next round
+        ✅ countdown to next round -- Chanya
         ✅ Tournament format is KNOCKOUT not round-based points — all players should play every round, winner by total points accumulated
         ❌ extra coin bonus for winning a tournament
 13. ✅ Filtering on lobby page --> Marie
@@ -47,17 +47,17 @@
         ✅ Dashboard doesn't show platform activity stats (same as homepage)
 22. ✅ anonymous can no longer play just spectate --> Tuva
 23. ✅ Focus on match making switches focus from queue to "rooms" where player can join and wait for other players to join. --> Chanya
-25. ✅ verify email when register --> Marie
+24. ✅ verify email when register --> Marie
 
 
 - ✅ exstra: maybe a back button when entering game? to go back to home page/leave? --> Tuva
 
-- when rolled 3 times the round should automatically end, you should have to click end roll.
-- add a border around profile picture incase someone has a transparent background on their profile picture.
-- ✅ be able to add a throphy on turnament creation, and show it on the tournament page - chanya 
-- limited time to bet. 
-- Error messages on light mode has bad readability
-- ✅ Should automatically logout, when we reseed the database and the user don’t exist anymore - chanya 
-- When watching a game you shouldn’t see the buttons
-- ✅ Confirmation message when leaving game - chanya 
-- Test everything to see if both functionality and styling works (both light and dark mode) 
+- ❌ when rolled 3 times the round should automatically end, you should have to click end roll.
+- ❌ add a border around profile picture incase someone has a transparent background on their profile picture.
+- ✅ be able to add a throphy on turnament creation, and show it on the tournament page - chanya
+- ❌ limited time to bet.
+- ❌ Error messages on light mode has bad readability
+- ✅ Should automatically logout, when we reseed the database and the user don't exist anymore - chanya
+- ❌ When watching a game you shouldn't see the buttons
+- ✅ Confirmation message when leaving game - chanya
+- ❌ Test everything to see if both functionality and styling works (both light and dark mode)
