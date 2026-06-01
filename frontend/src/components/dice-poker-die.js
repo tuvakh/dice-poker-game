@@ -103,6 +103,7 @@ class DicePokerDie extends HTMLElement {
                 .die{
                     background-color: var(--die-bg-color);
                     border-radius: var(--border-radius);
+                    border: 2px solid var(--button-border-color);
                     aspect-ratio: 1 / 1;
                     width: clamp(45px, 7vw, 75px);
                     display: flex;
