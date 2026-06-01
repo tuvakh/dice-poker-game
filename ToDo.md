@@ -25,7 +25,14 @@
         ❌ auto-redirect players to their game
         ❌ countdown to next round
         ✅ Tournament format is KNOCKOUT not round-based points — all players should play every round, winner by total points accumulated
-        ❌ extra coin bonus for winning a tournament
+
+        ❌ Users can only join a tournament before it starts.
+        ❌ Users can leave a tournament at any point.
+        ❌ Players (the users that have joined the tournament) are automatically re-directed from the tournament page to a game page and back (upon game completion). Other users are instead shown the list of on-going games in the tournament. They click on any game and view it.
+        ❌ The tournament page shows a countdown till the next round of games starts.
+        ❌ Only one type of tournaments has to be implemented[^1], random-pairing round-based tournaments: a tournament has a fixed number of rounds (the rounds here are a different concept from the in-game rounds[^2]) and players are assigned into games randomly. The process is repeated for each round. 
+        ❌ The ranking and tournament winner are determined based on the number of points obtained in it.
+Players may be given some extra points (see the point on points below) for winning a tournament.
 13. ✅ Filtering on lobby page --> Marie
 14. ✅ Leaving game before it starts --Tuva
 15. ✅ In game money(gambelinggg), needs to be shown on player page. --> Marie
