@@ -141,7 +141,7 @@ export default async function matchSeed(users, categories) {
                 { userId: users[4]._id, delta: -25 }
             ]
         }).save(),
-                // Ongoing games — currently being played, shown on homepage
+        // Ongoing games — currently being played, shown on homepage
         new Match({ players: [users[0]._id, users[1]._id],  gameCategory: categories[0]._id,  status: "ongoing", startedAt: "2026-05-29T10:00:00.000Z" }).save(),
         new Match({ players: [users[2]._id, users[3]._id],  gameCategory: categories[5]._id,  status: "ongoing", startedAt: "2026-05-29T11:00:00.000Z" }).save(),
         new Match({ players: [users[4]._id, users[5]._id],  gameCategory: categories[10]._id, status: "ongoing", startedAt: "2026-05-29T12:00:00.000Z" }).save(),

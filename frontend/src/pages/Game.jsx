@@ -311,6 +311,7 @@ export default function Game() {
     // The cleanup (return) closes the socket when the component unmounts or status changes
     useEffect(() => {
         if (!match || match.status !== 'ongoing') return;
+        if (!user || !match.players.some(player => String(player?._id ?? player) === String(user._id))) return;
 
         // Refresh coin balance immediately when entering an ongoing wager game
         if (match.coinWager > 0 && user) {
@@ -467,7 +468,7 @@ export default function Game() {
                                             >
                                                 YES!
                                             </Button>
-                                            <Button onClick={handleLeave}>Leave game</Button>
+                                            <Button variant="plain" onClick={handleLeave}>Leave game</Button>
                                         </div>
                                         {readySent && (
                                             <p className="game__ready-waiting">Waiting for opponents to be ready...</p>
