@@ -31,6 +31,7 @@ export default function TournamentPage() {
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [showCancelConfirm, setShowCancelConfirm] = useState(false);
     const wsRef = useRef(null);
+    const redirectedRef = useRef(false); // prevents redirect loop when navigating back from game
     const [comments, setComments] = useState([]);
 
     // countdown state: seconds remaining until the next round is expected to start
@@ -113,6 +114,27 @@ export default function TournamentPage() {
         return () => clearInterval(interval);
     }, [tournament]);
 
+    // Auto-redirect participants to their ongoing match in the latest round.
+    // redirectedRef prevents redirecting again when the user navigates back after the game.
+    useEffect(() => {
+        if (!tournament || !user || tournament.status !== 'ongoing') return;
+        if (redirectedRef.current) return;
+        const rounds = tournament.rounds ?? [];
+        if (rounds.length === 0) return;
+        const latestRound = rounds[rounds.length - 1];
+        for (const match of latestRound) {
+            if (!match || match.status !== 'ongoing') continue;
+            const players = match.players ?? [];
+            const isPlayer = players.some(pl => (pl._id ?? pl)?.toString() === user._id?.toString());
+            if (isPlayer && match.matchId) {
+                redirectedRef.current = true;
+                // Pass tournamentId in state so Game.jsx can show "Back to tournament"
+                navigate(`/game/${match.matchId}`, { state: { tournamentId: tournament.tournamentId } });
+                return;
+            }
+        }
+    }, [tournament, user, navigate]);
+
     async function handleJoin() {
         if (!user) return;
         setJoining(true);
@@ -184,6 +206,25 @@ export default function TournamentPage() {
         : "TBA";
 
     const participantCount = tournament.participants?.length ?? 0;
+
+    // Build a win-count table from the standings data returned by the backend.
+    // standings = [{ round: N, winners: [userObj, ...] }, ...]
+    // Each winner entry means that player won their match in that round.
+    const winMap = {};
+    for (const roundData of (tournament.standings ?? [])) {
+        for (const winner of (roundData.winners ?? [])) {
+            const wId = (winner._id ?? winner)?.toString();
+            if (!wId) continue;
+            if (!winMap[wId]) winMap[wId] = { username: winner.username ?? '?', wins: 0 };
+            winMap[wId].wins++;
+        }
+    }
+    // Include all participants so players with 0 wins still appear
+    for (const p of (tournament.participants ?? [])) {
+        const pId = (p._id ?? p)?.toString();
+        if (pId && !winMap[pId]) winMap[pId] = { username: p.username ?? '?', wins: 0 };
+    }
+    const standingsList = Object.values(winMap).sort((a, b) => b.wins - a.wins);
 
     // alreadyIn checks the fetched data so returning visitors who were already registered see the right UI
     // joined is set when the user joins in this browser session (optimistic)
@@ -364,6 +405,22 @@ export default function TournamentPage() {
                         </li>
                     ))}
                 </ul>
+            )}
+
+            {/* Standings: shown for ongoing and finished tournaments once at least one round has been played */}
+            {["ongoing", "finished"].includes(tournament.status) && standingsList.length > 0 && (
+                <>
+                    <h2>Standings</h2>
+                    <ol className="tournament-detail__standings">
+                        {standingsList.map((entry, i) => (
+                            <li key={i} className={`tournament-detail__standings-row${i === 0 ? " tournament-detail__standings-row--leader" : ""}`}>
+                                <span className="tournament-detail__standings-rank">#{i + 1}</span>
+                                <span className="tournament-detail__standings-name">{entry.username}</span>
+                                <span className="tournament-detail__standings-wins">{entry.wins} win{entry.wins !== 1 ? "s" : ""}</span>
+                            </li>
+                        ))}
+                    </ol>
+                </>
             )}
 
             {/* Bracket: rounds is a 2D array where rounds[roundIndex][matchIndex] holds a match.
