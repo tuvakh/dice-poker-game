@@ -152,7 +152,9 @@ export default function Game() {
         // A player disconnected mid-game: show a notice so the remaining player knows
         if (message.type === 'player-disconnected') {
             setPlayerLeftNotice(message.userId);
+            boardRef.current?.showResult(message.userId, '⚠️ Left — turn is automatic', false);
         }
+
 
         // A new round started: start the countdown timer and initialise the board
         if (message.type === 'game-started') {
@@ -476,14 +478,6 @@ export default function Game() {
                                     </div>
                                 )}
                                 <dice-poker-board ref={boardRef}></dice-poker-board>
-                                {user && match.players.some(player => player?._id === user._id) && (
-                                    <button onClick={() => setShowLeaveConfirm(true)}>Leave game</button>
-                                )}
-                                {playerLeftNotice && (
-                                    <p className="game__player-left">
-                                        {match.players.find(p => p?._id === playerLeftNotice)?.username ?? 'A player'} left — their turn is automatic
-                                    </p>
-                                )}
                             </>
                         )}
 
@@ -546,7 +540,7 @@ export default function Game() {
                                     <>
                                         <Button variant="plain" disabled={!canRoll} onClick={() => boardRef.current?.handleRollAgain()}>Roll</Button>
                                         <Button variant="plain" disabled={!canRoll} onClick={() => boardRef.current?.handleDoneRolling()}>Done rolling</Button>
-                                        <Button variant="plain" onClick={handleLeave}>Leave game</Button>
+                                        <Button variant="plain" onClick={() => setShowLeaveConfirm(true)}>Leave game</Button>
                                     </>
                                 )}
                             </div>
@@ -563,13 +557,13 @@ export default function Game() {
                                 onBet={sendBet}
                             />
                             {user && match.players.some(p => p?._id === user._id) && (
-                                <Button variant="plain" onClick={handleLeave}>Leave game</Button>
+                                <Button variant="plain" onClick={() => setShowLeaveConfirm(true)}>Leave game</Button>
                             )}
                         </div>
                     )}
 
                     {match.status === 'ongoing' && gamePhase === null && !isPreGame && !forfeitBy && user && match.players.some(p => p?._id === user._id) && (
-                        <Button variant="plain" className="game__leave-btn" onClick={handleLeave}>Leave game</Button>
+                        <Button variant="plain" className="game__leave-btn" onClick={() => setShowLeaveConfirm(true)}>Leave game</Button>
                     )}
                 </div>
 
