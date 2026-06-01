@@ -21,7 +21,7 @@ export default function AdminUsers(){
             <header>
                 <h1>User Administration</h1>
                 <div style={{ marginTop: 8 }}>
-                    <input aria-label="Search username" placeholder="Search username" value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />
+                    <input aria-label="Search username" placeholder="Search username" value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} />
                 </div>
             </header>
 
@@ -39,31 +39,25 @@ export default function AdminUsers(){
                         </tr>
                     </thead>
                     <tbody>
-                        {(data?.userList || []).map(u => (
-                            <tr key={u.userId}>
-                                <td>{u.username}</td>
-                                <td>{u.email}</td>
+                        {(data?.userList || []).map(userItem => (
+                            <tr key={userItem.userId}>
+                                <td>{userItem.username}</td>
+                                <td>{userItem.email}</td>
                                 <td>
-                                    <select defaultValue={u.role} onChange={async (e) => {
-                                        await changeRole(u.userId, e.target.value);
+                                    <select defaultValue={userItem.role} onChange={async (event) => {
+                                        await changeRole(userItem.userId, event.target.value);
                                         window.location.reload();
                                     }}>
                                         <option value="user">user</option>
                                         <option value="admin">admin</option>
                                     </select>
                                 </td>
-                                <td>{u.banned ? 'Yes' : 'No'}</td>
+                                <td>{userItem.banned ? 'Yes' : 'No'}</td>
                                 <td>
-                                    {u.banned ? (
-                                        <button className="btn" onClick={() => setConfirmAction({
-                                            message: `Unban ${u.username}?`,
-                                            onConfirm: async () => { await unbanUser(u.userId); window.location.reload(); }
-                                        })}>Unban</button>
+                                    {userItem.banned ? (
+                                        <button className="btn" onClick={async () => { await unbanUser(userItem.userId); window.location.reload(); }}>Unban</button>
                                     ) : (
-                                        <button className="btn btn--danger" onClick={() => setConfirmAction({
-                                            message: `Ban ${u.username}? They will be locked out of the platform.`,
-                                            onConfirm: async () => { await banUser(u.userId); window.location.reload(); }
-                                        })}>Ban</button>
+                                        <button className="btn btn--danger" onClick={async () => { await banUser(userItem.userId); window.location.reload(); }}>Ban</button>
                                     )}
                                 </td>
                             </tr>
@@ -72,9 +66,9 @@ export default function AdminUsers(){
                 </table>
 
                 <div className="pagination" style={{ marginTop: 12 }}>
-                    <button className="btn" disabled={!data || data.page === 1} onClick={() => setPage(p => Math.max(1, p - 1))}>Prev</button>
+                    <button className="btn" disabled={!data || data.page === 1} onClick={() => setPage(prev => Math.max(1, prev - 1))}>Prev</button>
                     <span style={{ margin: '0 8px' }}>Page {data?.page || 1} of {data?.totalPages || 1}</span>
-                    <button className="btn" disabled={!data || data.page === data.totalPages} onClick={() => setPage(p => Math.min(data.totalPages || 1, p + 1))}>Next</button>
+                    <button className="btn" disabled={!data || data.page === data.totalPages} onClick={() => setPage(prev => Math.min(data.totalPages || 1, prev + 1))}>Next</button>
                 </div>
             </section>
 

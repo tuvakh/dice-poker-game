@@ -59,12 +59,19 @@ Players may be given some extra points (see the point on points below) for winni
 
 - ✅ exstra: maybe a back button when entering game? to go back to home page/leave? --> Tuva
 
-- ❌ when rolled 3 times the round should automatically end, you should have to click end roll.
-- ❌ add a border around profile picture incase someone has a transparent background on their profile picture.
-- ✅ be able to add a throphy on turnament creation, and show it on the tournament page - chanya
-- ❌ limited time to bet.
-- ❌ Error messages on light mode has bad readability
-- ✅ Should automatically logout, when we reseed the database and the user don't exist anymore - chanya
-- ❌ When watching a game you shouldn't see the buttons
-- ✅ Confirmation message when leaving game - chanya
-- ❌ Test everything to see if both functionality and styling works (both light and dark mode)
+- ✅ when rolled 3 times the round should automatically end, you should have to click end roll.
+- ✅ be able to add a throphy on turnament creation, and show it on the tournament page - chanya 
+- ✅ limited time to bet. 
+- Error messages on light mode has bad readability
+- ✅ Should automatically logout, when we reseed the database and the user don’t exist anymore - chanya 
+- ✅ When watching a game you shouldn’t see the buttons
+- ✅ Confirmation message when leaving game - chanya 
+
+- Test everything to see if both functionality and styling works (both light and dark mode)
+
+
+Tuva styling:
+- Legg til border rundt profilbildet tilfelle noen har gjennomsiktig bakgrunn
+- Farge på tekst på darkmode/lightmode. Teksten forsvinner på hvitt game board 
+- Endre gameboard fargene
+- Nav bar
