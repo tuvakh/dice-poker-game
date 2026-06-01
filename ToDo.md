@@ -18,14 +18,14 @@
         ✅ Trophy won't show — getTournament never calls .populate('trophy')
         ✅ Game variant not shown — .populate('gameCategory') also missing
         ✅ eloMin, eloMax, buyIn — schema fields don't exist yet
-        ✅ No standings section for ongoing tournaments
-        ✅ No admin delete/cancel/edit buttons on page
-        ✅ No backend endpoints for delete/cancel/edit
+        ❌ standings section for ongoing tournaments
+        ❌ admin edit buttons on page
+        ❌ backend endpoints for edit
         ✅ Leave at any point is BROKEN — service throws if status !== "upcoming" (opposite of requirement)
-        ✅ No auto-redirect players to their game
-        ✅ No countdown to next round
+        ❌ auto-redirect players to their game
+        ❌ countdown to next round
         ✅ Tournament format is KNOCKOUT not round-based points — all players should play every round, winner by total points accumulated
-        ✅ No extra coin bonus for winning a tournament
+        ❌ extra coin bonus for winning a tournament
 13. ✅ Filtering on lobby page --> Marie
 14. ✅ Leaving game before it starts --Tuva
 15. ✅ In game money(gambelinggg), needs to be shown on player page. --> Marie
