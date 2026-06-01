@@ -54,9 +54,10 @@ class DicePokerBoard extends HTMLElement {
             .player-name {
                 font-weight: bold;
                 font-size: 1rem;
-                margin-bottom: 0.75rem;
+                margin-block:var(--small-space);
                 text-align: center;
             }
+
 
             .dice {
                 display: flex;

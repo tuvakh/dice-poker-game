@@ -446,9 +446,13 @@ export default function Game() {
                         </div>
                     )}
 
-                    <div className={`game__timer-wrapper${timeLeft !== null && timeLeft <= 5 ? ' game__timer-wrapper--urgent' : ''}`}>
-                        {gamePhase === 'rolling' && timeLeft !== null && `⏱ ${timeLeft}s`}
-                    </div>
+                    {!isPreGame && match.status !== 'waiting' && match.gameCategory && gamePhase !== 'ended' && gamePhase !== 'cancelled' && (
+                        <div className="game__info-bar game__info-bar--standalone">
+                            <span>{match.gameCategory.timeController}s · {match.gameCategory.numberOfRounds} rounds · {match.gameCategory.gameRules === 'straights_allowed' ? 'Straights allowed' : 'No straights'}</span>
+                            <strong>Pot: {displayPot} {displayPot === 1 ? 'coin' : 'coins'}</strong>
+                        </div>
+                    )}
+
                     <div className="game__game-board" style={{ backgroundColor: preferences.boardColor }}>
                         {/* Info bar inside the box only when waiting */}
                         {(match.status === 'waiting' || isPreGame) && match.gameCategory && (
