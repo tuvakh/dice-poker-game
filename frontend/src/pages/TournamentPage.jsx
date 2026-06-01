@@ -28,6 +28,8 @@ export default function TournamentPage() {
     const [leaving, setLeaving] = useState(false);
     const [leaveError, setLeaveError] = useState(null);
     const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [showCancelConfirm, setShowCancelConfirm] = useState(false);
     const wsRef = useRef(null);
     const [comments, setComments] = useState([]);
 
@@ -152,7 +154,6 @@ export default function TournamentPage() {
 
     // Admin: permanently delete the tournament and go back to the list
     async function handleDelete() {
-        if (!window.confirm("Delete this tournament permanently?")) return;
         try {
             await deleteTournament(id);
             navigate('/tournament');
@@ -163,7 +164,6 @@ export default function TournamentPage() {
 
     // Admin: mark the tournament as cancelled so players know it will not run
     async function handleCancel() {
-        if (!window.confirm("Cancel this tournament?")) return;
         try {
             const updated = await cancelTournament(id);
             setTournament(prev => ({ ...prev, status: updated.status }));
@@ -241,9 +241,24 @@ export default function TournamentPage() {
             {/* Admin controls: delete and cancel are only shown to admin users */}
             {user?.role === 'admin' && !["finished", "cancelled"].includes(tournament.status) && (
                 <div className="tournament-detail__admin">
-                    <Button onClick={handleCancel} variant="danger">Cancel tournament</Button>
-                    <Button onClick={handleDelete} variant="danger">Delete tournament</Button>
+                    <Button onClick={() => setShowCancelConfirm(true)} variant="danger">Cancel tournament</Button>
+                    <Button onClick={() => setShowDeleteConfirm(true)} variant="danger">Delete tournament</Button>
                 </div>
+            )}
+
+            {showCancelConfirm && (
+                <ConfirmDialog
+                    message="Cancel this tournament? Players will be notified it won't run."
+                    onConfirm={() => { setShowCancelConfirm(false); handleCancel(); }}
+                    onCancel={() => setShowCancelConfirm(false)}
+                />
+            )}
+            {showDeleteConfirm && (
+                <ConfirmDialog
+                    message="Permanently delete this tournament? This cannot be undone."
+                    onConfirm={() => { setShowDeleteConfirm(false); handleDelete(); }}
+                    onCancel={() => setShowDeleteConfirm(false)}
+                />
             )}
 
             {/* Tournament info grid: shows key details at a glance */}

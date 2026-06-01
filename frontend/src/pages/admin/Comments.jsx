@@ -3,10 +3,12 @@ import { getAllComments, deleteComment } from "../../api/comments.js";
 import { useFetch } from "../../hooks/useFetch.js";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue.js";
 import Spinner from "../../components/Spinner.jsx";
+import ConfirmDialog from "../../components/ConfirmDialog.jsx";
 
 export default function AdminComments(){
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState("");
+    const [confirmDelete, setConfirmDelete] = useState(null); // commentId to delete
     const limit = 10;
     const debouncedSearch = useDebouncedValue(search, 250);
 
@@ -34,6 +36,7 @@ export default function AdminComments(){
                 <table className="admin__users">
                     <thead>
                         <tr>
+                            <th>Date</th>
                             <th>Comment</th>
                             <th>Target</th>
                             <th>Author</th>
@@ -41,16 +44,23 @@ export default function AdminComments(){
                         </tr>
                     </thead>
                     <tbody>
-                        {(data?.commentList || []).map(comment => (
+                        {[...(data?.commentList || [])]
+                            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                            .map(comment => (
                             <tr key={comment.commentId}>
+                                <td style={{ whiteSpace: "nowrap", color: "#666", fontSize: "0.82rem" }}>
+                                    {comment.createdAt
+                                        ? new Date(comment.createdAt).toLocaleString("en-GB", {
+                                            day: "2-digit", month: "short", year: "numeric",
+                                            hour: "2-digit", minute: "2-digit", second: "2-digit"
+                                          })
+                                        : "—"}
+                                </td>
                                 <td>{comment.comment}</td>
                                 <td>{comment.targetType}</td>
                                 <td>{comment.userId?.username || "Unknown"}</td>
                                 <td>
-                                    <button className="btn btn--danger" onClick={async () => {
-                                        await deleteComment(comment.commentId);
-                                        window.location.reload();
-                                    }}>Delete</button>
+                                    <button className="btn btn--danger" onClick={() => setConfirmDelete(comment.commentId)}>Delete</button>
                                 </td>
                             </tr>
                         ))}
@@ -63,6 +73,14 @@ export default function AdminComments(){
                     <button className="btn" disabled={!data || data.page === data.totalPages} onClick={() => setPage(p => Math.min(data.totalPages || 1, p + 1))}>Next</button>
                 </div>
             </section>
+
+            {confirmDelete && (
+                <ConfirmDialog
+                    message="Delete this comment? This cannot be undone."
+                    onConfirm={async () => { setConfirmDelete(null); await deleteComment(confirmDelete); window.location.reload(); }}
+                    onCancel={() => setConfirmDelete(null)}
+                />
+            )}
         </div>
     );
 }
