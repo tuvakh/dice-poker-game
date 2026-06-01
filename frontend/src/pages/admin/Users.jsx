@@ -3,10 +3,12 @@ import { getUsers, banUser, unbanUser, changeRole } from "../../api/adminUsers.j
 import { useFetch } from "../../hooks/useFetch.js";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue.js";
 import Spinner from "../../components/Spinner.jsx";
+import ConfirmDialog from "../../components/ConfirmDialog.jsx";
 
 export default function AdminUsers(){
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState("");
+    const [confirmAction, setConfirmAction] = useState(null); // { message, onConfirm }
     const limit = 10;
     const debouncedSearch = useDebouncedValue(search, 250);
 
@@ -69,6 +71,14 @@ export default function AdminUsers(){
                     <button className="btn" disabled={!data || data.page === data.totalPages} onClick={() => setPage(prev => Math.min(data.totalPages || 1, prev + 1))}>Next</button>
                 </div>
             </section>
+
+            {confirmAction && (
+                <ConfirmDialog
+                    message={confirmAction.message}
+                    onConfirm={() => { setConfirmAction(null); confirmAction.onConfirm(); }}
+                    onCancel={() => setConfirmAction(null)}
+                />
+            )}
         </div>
     );
 }

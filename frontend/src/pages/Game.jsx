@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate, Link } from "react-router";
+import { useParams, useNavigate, useLocation, Link } from "react-router";
 
 import { getMatch, leaveMatch, joinMatch } from "../api/matches.js";
 import { getAllComments } from "../api/comments.js";
@@ -24,8 +24,11 @@ import '../components/dice-poker-die.js';
 // The individual game page shows players, game board, and comments sidebar
 export default function Game() {
     const navigate = useNavigate();
+    const location = useLocation();
     const { id } = useParams();
     const { user, updateUserData } = useAuth();
+    // tournamentId is passed via navigation state when coming from a tournament page
+    const tournamentId = location.state?.tournamentId ?? null;
     const { preferences } = useAppearance();
     const { playClick, playJoin, playHold, playRoundEnd } = useSoundEffects();
 
@@ -547,6 +550,9 @@ export default function Game() {
                                     </>
                                 ) : (
                                     gamePhase === 'cancelled' && <p>Not all players were ready in time.</p>
+                                )}
+                                {tournamentId && (
+                                    <Button onClick={() => navigate(`/tournament/${tournamentId}`)}>Back to tournament</Button>
                                 )}
                                 <Button onClick={() => navigate('/')}>Back to homepage</Button>
                             </div>
