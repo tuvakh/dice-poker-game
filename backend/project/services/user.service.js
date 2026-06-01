@@ -277,7 +277,7 @@ export async function loginUser(username, password) {
     if (user.banned) throw new CustomError('This account has been banned. Time to reflect on your choices!', 403, 'FORBIDDEN');
 
     // checkPassword hashes the input with the user's salt and compares it to the stored hash
-    const correctPassword = checkPassword(password, user.password, user.passwordSalt);
+    const correctPassword = await checkPassword(password, user.password);
 
     if (!correctPassword) {
         throw new CustomError("Nope, that's not the right password. Try again!", 401, 'UNAUTHORIZED');
@@ -295,7 +295,7 @@ export async function loginUser(username, password) {
 export async function updateUser(userId, updateObj) {
     // Hash password before update if provided, since findOneAndUpdate bypasses the pre-save hook
     if (updateObj.password) {
-        updateObj.password = hashPassword(updateObj.password);
+        updateObj.password = await hashPassword(updateObj.password);
     }
 
     const user = await User.findOneAndUpdate(

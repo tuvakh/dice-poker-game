@@ -208,6 +208,13 @@ export async function refreshToken(req, res, next) {
     }
 }
 
+// Clears the access and refresh token cookies, ending the user's session
+export async function logoutUser(req, res) {
+    res.clearCookie('accessToken');
+    res.clearCookie('refreshToken');
+    res.status(200).json({ message: 'Logged out' });
+}
+
 // This exports the functions as a default objects, so routes can import them in one line
 export default {
 	getAllUsers,
@@ -221,5 +228,6 @@ export default {
     verifyEmail,
     forgotPassword,
     resetPassword,
-    refreshToken
+    refreshToken,
+    logoutUser
 };

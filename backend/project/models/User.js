@@ -1,7 +1,7 @@
 // This model represents a registered user on the platform.
 
 import mongoose from "mongoose";
-import { hashPassword, generateSalt } from "../utils/hash.js";
+import { hashPassword } from "../utils/hash.js";
 
 import {
     MIN_USERNAME_LENGTH,
@@ -40,12 +40,6 @@ const userSchema = new mongoose.Schema({
         trim: true,
         required: true
     },
-    // Per-user salt used for password hashing (random hex string generated on account creation)
-    passwordSalt: {
-        type: String,
-        required: true
-    },
-
      emailVerified: {
         type: Boolean,
         default: false,
@@ -157,19 +151,13 @@ const userSchema = new mongoose.Schema({
 });
 // The pre("validate") hook runs before each save.
 // It generates a userId if one doesn't exist yet
-// It generates a per-user passwordSalt if one doesn't exist (for new users)
 // and it hashes the password if it has been modified, to avoid storing plaintext passwords
-userSchema.pre("validate", function(){
+userSchema.pre('validate', async function () {
     if (!this.userId) {
-        this.userId = Math.round(Math.random() * Number.MAX_SAFE_INTEGER);
+        this.userId = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
     }
-    // Generate per-user salt on account creation (new users only)
-    if (!this.passwordSalt) {
-        this.passwordSalt = generateSalt();
-    }
-    // isModified("password") prevents double-hashing if the user updates other fields
-    if(this.isModified("password")){
-        this.password = hashPassword(this.password, this.passwordSalt);
+    if (this.isModified('password')) {
+        this.password = await hashPassword(this.password);
     }
 });
 
