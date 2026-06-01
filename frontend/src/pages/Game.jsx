@@ -17,6 +17,7 @@ import BettingControls from "../components/BettingControls.jsx";
 import CommentList from "../components/CommentList";
 import CommentForm from "../components/CommentForm";
 import PlayerInfo from "../components/PlayerInfo";
+import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import '../components/dice-poker-board.js';
 import '../components/dice-poker-die.js';
 
@@ -60,6 +61,7 @@ export default function Game() {
     const [standings, setStandings] = useState(null);
     const [forfeitBy, setForfeitBy] = useState(null);
     const [playerLeftNotice, setPlayerLeftNotice] = useState(null);
+    const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
 
     const [readyTimeLeft, setReadyTimeLeft] = useState(null);
     const [timedOut, setTimedOut] = useState(false);
@@ -473,6 +475,9 @@ export default function Game() {
                                     </div>
                                 )}
                                 <dice-poker-board ref={boardRef}></dice-poker-board>
+                                {user && match.players.some(player => player?._id === user._id) && (
+                                    <button onClick={() => setShowLeaveConfirm(true)}>Leave game</button>
+                                )}
                                 {playerLeftNotice && (
                                     <p className="game__player-left">
                                         {match.players.find(p => p?._id === playerLeftNotice)?.username ?? 'A player'} left — their turn is automatic
@@ -581,6 +586,17 @@ export default function Game() {
                     }
                 </aside>
             </div>
+
+            {/* Leave game confirmation popup */}
+            {showLeaveConfirm && (
+                <ConfirmDialog
+                    message={match?.status === 'ongoing'
+                        ? "Leaving an ongoing game counts as a forfeit. Are you sure?"
+                        : "Are you sure you want to leave this game?"}
+                    onConfirm={() => { setShowLeaveConfirm(false); handleLeave(); }}
+                    onCancel={() => setShowLeaveConfirm(false)}
+                />
+            )}
         </>
     );
 }
