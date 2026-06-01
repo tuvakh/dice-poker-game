@@ -70,6 +70,9 @@ export default function Game() {
     const readyTimerRef = useRef(null);
     const [rollCount, setRollCount] = useState(0);
 
+    const [betTimeLeft, setBetTimeLeft] = useState(null);
+    const betTimerRef = useRef(null);
+
 
     // Fetches the latest match data from the backend
     // signal comes from usePolling's AbortController so cancelled requests don't update state
@@ -104,8 +107,11 @@ export default function Game() {
 
     // Sends a betting action (fold / match / bet) to the server
     function sendBet(action, amount = 0) {
+        clearInterval(betTimerRef.current);
+        setBetTimeLeft(null);
         wsRef.current?.send(JSON.stringify({ type: 'bet', action, amount }));
     }
+
 
     // Closes the WebSocket if the game is ongoing (triggers forfeit), or calls the REST leave endpoint if still waiting
     const handleLeave = async () => {
@@ -123,6 +129,20 @@ export default function Game() {
         }
     };
 
+    function startBetTimer() {
+        clearInterval(betTimerRef.current);
+        setBetTimeLeft(10);
+        let countdown = 10;
+        betTimerRef.current = setInterval(() => {
+            countdown -= 1;
+            setBetTimeLeft(countdown);
+            if (countdown <= 0) {
+                clearInterval(betTimerRef.current);
+                sendBet('match');
+            }
+        }, 1000);
+    }
+
     // Routes incoming WebSocket messages to the right board action
     function handleServerMessage(message) {
         const board = boardRef.current;
@@ -133,7 +153,6 @@ export default function Game() {
             setReadyTimeLeft(null);
             setGamePhase('cancelled');
         }
-
 
         // All required players have joined: show the Ready button
         if (message.type === 'all-joined') {
@@ -154,9 +173,8 @@ export default function Game() {
         // A player disconnected mid-game: show a notice so the remaining player knows
         if (message.type === 'player-disconnected') {
             setPlayerLeftNotice(message.userId);
-            boardRef.current?.showResult(message.userId, '⚠️ Left — turn is automatic', false);
+            boardRef.current?.showPlayerLeft(message.userId);
         }
-
 
         // A new round started: start the countdown timer and initialise the board
         if (message.type === 'game-started') {
@@ -238,7 +256,9 @@ export default function Game() {
             clearInterval(timerRef.current);
             setTimeLeft(null);
             setBettingState({ currentBettor: message.currentBettor, pot: message.pot, highestBet: 0, yourStack: message.stacks?.[user?._id] ?? 0 });
+            if (message.currentBettor === user?._id) startBetTimer();
         }
+
 
         // It's now a different player's turn to bet
         if (message.type === 'next-bettor') {
@@ -246,8 +266,14 @@ export default function Game() {
         }
 
         // Someone placed a bet: update the pot and highest bet
-        if (message.type === 'player-bet') {
-            setBettingState(prev => ({ ...prev, pot: message.pot, highestBet: Math.max(prev.highestBet, message.amount) }));
+        if (message.type === 'next-bettor') {
+            setBettingState(prev => ({ ...prev, currentBettor: message.currentBettor, yourStack: message.stacks?.[user?._id] ?? prev.yourStack }));
+            if (message.currentBettor === user?._id) {
+                startBetTimer();
+            } else {
+                clearInterval(betTimerRef.current);
+                setBetTimeLeft(null);
+            }
         }
 
         // Someone matched the current bet: update the pot
@@ -257,6 +283,8 @@ export default function Game() {
 
         // Round finished: play the end sound, reveal all dice and show hand results
         if (message.type === 'round-end') {
+            clearInterval(betTimerRef.current);
+            setBetTimeLeft(null);
             setRoundResult(message.winners.includes(user?._id) ? 'won' : 'lost');
             setCanRoll(false);
             setGamePhase(null);
@@ -421,6 +449,10 @@ export default function Game() {
                         </div>
                     )}
 
+                    <div className={`game__timer-wrapper${(timeLeft !== null && timeLeft <= 5) || (betTimeLeft !== null && betTimeLeft <= 5) ? ' game__timer-wrapper--urgent' : ''}`}>
+                        {gamePhase === 'rolling' && timeLeft !== null && `⏱ ${timeLeft}s`}
+                        {gamePhase === 'betting' && betTimeLeft !== null && `⏱ ${betTimeLeft}s`}
+                    </div>
                     <div className="game__game-board" style={{ backgroundColor: preferences.boardColor }}>
                         {/* Info bar inside the box only when waiting */}
                         {(match.status === 'waiting' || isPreGame) && match.gameCategory && (

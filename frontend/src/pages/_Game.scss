@@ -128,12 +128,11 @@
         font-size: 1rem;
     }
 
-
-    &__timer {
-        position: absolute;
-        top: var(--big-space);
-        width: 100%;
-        text-align: center;
+    &__timer-wrapper {
+        height: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         font-size: 1.4rem;
         font-weight: bold;
     }
