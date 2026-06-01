@@ -72,7 +72,7 @@ export default function Game() {
 
     const [betTimeLeft, setBetTimeLeft] = useState(null);
     const betTimerRef = useRef(null);
-
+    const [betTimedOut, setBetTimedOut] = useState(false);
 
     // Fetches the latest match data from the backend
     // signal comes from usePolling's AbortController so cancelled requests don't update state
@@ -132,12 +132,14 @@ export default function Game() {
     function startBetTimer() {
         clearInterval(betTimerRef.current);
         setBetTimeLeft(10);
+        setBetTimedOut(false);
         let countdown = 10;
         betTimerRef.current = setInterval(() => {
             countdown -= 1;
             setBetTimeLeft(countdown);
             if (countdown <= 0) {
                 clearInterval(betTimerRef.current);
+                setBetTimedOut(true);
                 sendBet('match');
             }
         }, 1000);
@@ -204,7 +206,7 @@ export default function Game() {
 
                 // message.players is the server's authoritative list — loop it to add each player to the board
                 message.players.forEach(playerId => {
-                    const playerData = currentPlayers.find(player => player?._id === playerId);
+                    const playerData = currentPlayers.find(player => String(player?._id ?? player) === String(playerId));
                     board.addPlayer(playerId, playerData?.username ?? playerId);
                     if (playerId !== user?._id) {
                         board.setDice(playerId, ['?', '?', '?', '?', '?']);
@@ -259,12 +261,6 @@ export default function Game() {
             if (message.currentBettor === user?._id) startBetTimer();
         }
 
-
-        // It's now a different player's turn to bet
-        if (message.type === 'next-bettor') {
-            setBettingState(prev => ({ ...prev, currentBettor: message.currentBettor, yourStack: message.stacks?.[user?._id] ?? prev.yourStack }));
-        }
-
         // Someone placed a bet: update the pot and highest bet
         if (message.type === 'next-bettor') {
             setBettingState(prev => ({ ...prev, currentBettor: message.currentBettor, yourStack: message.stacks?.[user?._id] ?? prev.yourStack }));
@@ -288,6 +284,7 @@ export default function Game() {
             setRoundResult(message.winners.includes(user?._id) ? 'won' : 'lost');
             setCanRoll(false);
             setGamePhase(null);
+            setBetTimedOut(false);
 
             if (board) {
                 for (const [userId, faces] of Object.entries(message.reveal)) {
@@ -537,7 +534,7 @@ export default function Game() {
                                                     : `- ${Math.abs(entry.stack)} coin${Math.abs(entry.stack) !== 1 ? 's' : ''}`;
                                                 return (
                                                     <li key={entry.userId} className={isMe ? 'game__standings-me' : ''}>
-                                                        {i + 1}. {i === 0 && '🎉 '}{playerName} {coinDisplay}
+                                                        {i + 1}. {entry.stack === topStack && '🎉 '}{playerName} {coinDisplay}
                                                     </li>
                                                 );
                                             })}
@@ -589,6 +586,7 @@ export default function Game() {
                                 coinWager={match.coinWager}
                                 onBet={sendBet}
                                 betTimeLeft={betTimeLeft}
+                                betTimedOut={betTimedOut}
                             />
                             {user && match.players.some(p => p?._id === user._id) && (
                                 <Button variant="plain" onClick={() => setShowLeaveConfirm(true)}>Leave game</Button>
