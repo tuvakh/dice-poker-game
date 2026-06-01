@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import Button from "./Button.jsx";
 
 // Displays the betting UI for the current player's turn, or a waiting message otherwise
-export default function BettingControls({ bettingState, userId, coinWager, onBet, betTimeLeft }) {
+export default function BettingControls({ bettingState, userId, coinWager, onBet, betTimeLeft, betTimedOut }) {
     // Keeps the bet input pre-filled at one above the current highest bet whenever it changes
     const [betAmount, setBetAmount] = useState(bettingState.highestBet + 1);
 
@@ -12,7 +12,13 @@ export default function BettingControls({ bettingState, userId, coinWager, onBet
 
     // Not this player's turn — show a waiting message instead of the betting controls
     if (bettingState.currentBettor !== userId) {
-        return <p className="game__ready-waiting">Waiting for opponent to bet...</p>;
+        return (
+            <p className="game__ready-waiting">
+                {betTimedOut
+                    ? "Too slow! Waiting for opponent to bet..."
+                    : "Waiting for opponent to bet..."}
+            </p>
+        );
     }
 
     return (
