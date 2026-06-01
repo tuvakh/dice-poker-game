@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import "./_ConfirmDialog.scss";
 
@@ -5,6 +6,12 @@ import "./_ConfirmDialog.scss";
 // Rendered via a Portal directly onto document.body so the fixed overlay
 // is never clipped by a parent element with overflow:hidden or position:relative.
 export default function ConfirmDialog({ message, onConfirm, onCancel }) {
+    // Lock body scroll while the dialog is open, restore it when it closes
+    useEffect(() => {
+        document.body.style.overflow = "hidden";
+        return () => { document.body.style.overflow = ""; };
+    }, []);
+
     return createPortal(
         <div className="confirm-dialog__overlay" onClick={onCancel}>
             {/* stopPropagation stops a click inside the box from closing it */}
