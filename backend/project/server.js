@@ -1,44 +1,54 @@
 // This is an entry point for the API
 // It sets up Express, middleware, routes, and starts the server.
 
-import express from "express";
-import http from "http";
-import cors from "cors";
+import mongoose from 'mongoose';
+import express from 'express';
+import http from 'http';
+import cors from 'cors';
 import cookieParser from "cookie-parser";
-import { fileURLToPath } from "url";
-import attachWebSocket from "./webSockets/gameSocket.js";
+import { fileURLToPath } from 'url';
+import attachWebSocket from './webSockets/gameSocket.js';
 
-import { connectDB } from "./config/db.config.js";
-import { setUserRole } from "./middleware/role.js";
-import userApiRouter from "./routes/user.routes.js";
-import gameCategoryApiRouter from "./routes/gameCategory.routes.js";
-import matchApiRouter from "./routes/match.routes.js";
-import tournamentApiRouter from "./routes/tournament.routes.js";
-import commentApiRouter from "./routes/comment.routes.js";
-import adminApiRouter from "./routes/admin.routes.js";
-import leaderboardApiRouter from "./routes/leaderboard.routes.js";
-import activityApiRouter from "./routes/activity.routes.js";
-import rateLimit from "express-rate-limit";
-import trophyApiRouter from "./routes/trophy.routes.js";
-import { errorHandler } from "./middleware/error.js";
-import { grantWeeklyCoinsBatch } from "./services/scheduler.js";
-
+import { connectDB } from './config/db.config.js';
+import { setUserRole } from './middleware/role.js';
+import userApiRouter from './routes/user.routes.js';
+import gameCategoryApiRouter from './routes/gameCategory.routes.js';
+import matchApiRouter from './routes/match.routes.js';
+import tournamentApiRouter from './routes/tournament.routes.js';
+import commentApiRouter from './routes/comment.routes.js';
+import adminApiRouter from './routes/admin.routes.js';
+import leaderboardApiRouter from './routes/leaderboard.routes.js';
+import activityApiRouter from './routes/activity.routes.js';
+import rateLimit from 'express-rate-limit';
+import trophyApiRouter from './routes/trophy.routes.js';
+import { errorHandler } from './middleware/error.js';
+import { grantWeeklyCoinsBatch } from './services/scheduler.js';
+import { Security } from './models/Security.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const server = http.createServer(app);  // Express handles HTTP requests
+const server = http.createServer(app); // Express handles HTTP requests
 
 // This limits each IP to 100 requests per 15 minutes to prevent abuse
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 500,
-    skip: (req) => process.env.NODE_ENV !== 'production',
-    message: { error: "TOO_MANY_REQUESTS", message: "Too many requests, please try again later" }
+    handler: async (req, res) => {
+        try {
+            await Security.create({
+                type: 'rate-limit',
+                ip: req.ip,
+                userAgent: req.headers['user-agent']
+            });
+        } catch (err) {
+            console.error('Failed to log security incident:', err);
+        }
+        res.status(429).json({ error: 'TOO_MANY_REQUESTS', message: 'Too many requests, please try again later' });
+    }
 });
 
-
+app.use(cors({ origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'] }));
 app.use(limiter);
-
 // This parse incoming JSON request bodies so controllers can access req.body
 app.use(express.json());
 app.use(cors({ 
@@ -81,7 +91,6 @@ connectDB()
     })
     // if the DB connection fails, log the error and exit
     // The server should not start without a database
-    .catch(err => {
+    .catch((err) => {
         console.error('Failed to connect to MongoDB:', err);
     });
-

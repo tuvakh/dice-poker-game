@@ -1,5 +1,6 @@
 import { User } from "../models/User.js";
 import { Match } from "../models/Match.js";
+import { Security } from "../models/Security.js";
 
 export async function getStats() {
     // Total users
@@ -16,11 +17,17 @@ export async function getStats() {
     // Pending reports - not implemented; return 0 for now
     const pendingReports = 0;
 
+    const recentIncidents = await Security.find()
+    .sort({ timestamp: -1 })
+    .limit(20)
+    .lean();
+
     return {
         totalUsers,
         activeMatches24h,
         newSignups7d,
-        pendingReports
+        pendingReports,
+        recentIncidents
     };
 }
 

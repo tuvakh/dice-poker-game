@@ -18,9 +18,8 @@ const defaults = {
 export function AppearanceProvider({ children }) {
     const { user, updateUserData } = useAuth();
 
-    // useRef stores the debounce timer
-    // I used ref instead of state because changing the timer shouldn't cause the component to re-render
     const saveTimeout = useRef(null);
+    const globalAcRef = useRef(null);
 
     // Try to load saved preferences from localStorage when the app first opens
     // If it's the users first visit (nothing saved), use the defaults above
@@ -29,11 +28,38 @@ export function AppearanceProvider({ children }) {
         return saved ? JSON.parse(saved) : defaults;
     });
 
-    // Whenever the theme changes, apply it to the <html> element
-    // My CSS uses [data-theme="dark"] to switch colors, so this is what triggers that
     useEffect(() => {
         document.documentElement.setAttribute("data-theme", preferences.theme);
     }, [preferences.theme]);
+
+    // Global click sound for any raw <button> that isn't already handled by the Button component
+    // Button component marks itself with data-sound-handled so this skips it (no double sound)
+    useEffect(() => {
+        function handleGlobalClick(e) {
+            const btn = e.target.closest("button");
+            if (!btn || btn.dataset.soundHandled !== undefined) return;
+            if (!JSON.parse(localStorage.getItem("preferences") || "{}").soundEnabled) return;
+            try {
+                if (!globalAcRef.current) {
+                    globalAcRef.current = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                const ac = globalAcRef.current;
+                if (ac.state === "suspended") ac.resume();
+                const osc = ac.createOscillator();
+                const gain = ac.createGain();
+                osc.connect(gain);
+                gain.connect(ac.destination);
+                osc.frequency.setValueAtTime(440, ac.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(220, ac.currentTime + 0.08);
+                gain.gain.setValueAtTime(0.18, ac.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.08);
+                osc.start(ac.currentTime);
+                osc.stop(ac.currentTime + 0.08);
+            } catch { /* AudioContext blocked — ignore */ }
+        }
+        document.addEventListener("click", handleGlobalClick);
+        return () => document.removeEventListener("click", handleGlobalClick);
+    }, []);
 
     // When a user logs in, load their saved preferences from the backend
     // and merge them on top of whatever is currently in localStorage

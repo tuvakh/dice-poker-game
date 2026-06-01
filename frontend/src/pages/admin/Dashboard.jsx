@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { getAdminStats } from "../../api/admin.js";
 import Spinner from "../../components/Spinner.jsx";
 
-export default function AdminDashboard(){
+export default function AdminDashboard() {
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -46,6 +46,31 @@ export default function AdminDashboard(){
                 </div>
             </section>
 
+            {stats.recentIncidents?.length > 0 && (
+                <section className="admin__incidents">
+                    <h2>Security Incidents</h2>
+                    <table className="admin__users">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>IP</th>
+                                <th>User Agent</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {stats.recentIncidents.map((incident, index) => (
+                                <tr key={index}>
+                                    <td>{incident.type}</td>
+                                    <td>{incident.ip}</td>
+                                    <td>{incident.userAgent}</td>
+                                    <td>{new Date(incident.timestamp).toLocaleString()}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </section>
+            )}
         </div>
     );
 }

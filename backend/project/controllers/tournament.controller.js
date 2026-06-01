@@ -76,6 +76,17 @@ export async function knockoutRounds(req, res, next){
     }
 }
 
+// Updates editable fields of a tournament (admin only)
+export async function updateTournament(req, res, next){
+    try {
+        const { tournamentId, ...updates } = matchedData(req);
+        const result = await tournamentServices.updateTournament(tournamentId, updates);
+        res.status(200).json(result);
+    } catch (error) {
+        next(error);
+    }
+}
+
 // Permanently removes a tournament from the database (admin only)
 export async function deleteTournament(req, res, next){
     try {
@@ -102,6 +113,7 @@ export default {
     getAllTournaments,
     getTournament,
     createTournament,
+    updateTournament,
     joinTournament,
     leaveTournament,
     knockoutRounds,

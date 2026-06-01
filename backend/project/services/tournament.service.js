@@ -166,6 +166,21 @@ export async function knockoutRounds(tournamentId){
     return tournament;
 }
 
+// Updates editable fields of a tournament (admin only)
+// Only the fields that are provided in the update object are changed
+export async function updateTournament(tournamentId, updates){
+    const tournament = await Tournament.findOne({ tournamentId });
+    if(!tournament){
+        throw new CustomError(`A tournament with id ${tournamentId} doesn't exist.`, 404, "NOT_FOUND");
+    }
+    const allowed = ["title", "description", "date", "breaks", "numberOfRounds", "gameCategory", "eloMin", "eloMax", "buyIn", "trophy"];
+    for (const key of allowed) {
+        if (updates[key] !== undefined) tournament[key] = updates[key];
+    }
+    await tournament.save();
+    return tournament;
+}
+
 // Permanently removes a tournament from the database (admin only)
 export async function deleteTournament(tournamentId){
     const tournament = await Tournament.findOneAndDelete({ tournamentId });

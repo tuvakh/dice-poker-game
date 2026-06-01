@@ -119,7 +119,7 @@
 }
 
 .btn--primary {
-  background: var(--primary-color, #1e60ff);
+  background: var(--button-color, #D35A92);
   color: white;
   border: none;
   padding: 8px 12px;
@@ -133,6 +133,118 @@
   padding: 8px 12px;
   border-radius: 6px;
   cursor: pointer;
+}
+
+.admin__form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 560px;
+}
+
+.admin__form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.admin__form label input,
+.admin__form label textarea,
+.admin__form label select {
+  font-family: inherit;
+  font-size: 0.9rem;
+  padding: 8px 10px;
+  border: 1.5px solid var(--secondary-color);
+  border-radius: 6px;
+  background: #fff;
+  color: #222;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.admin__form label input:focus,
+.admin__form label textarea:focus,
+.admin__form label select:focus {
+  outline: 2px solid var(--button-color);
+  border-color: transparent;
+}
+
+.admin__form label textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.admin__form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin__form-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/* Trophy badge picker */
+.trophy-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.trophy-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border: 2px solid var(--secondary-color);
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+  color: #222;
+  font-family: inherit;
+  font-size: 0.78rem;
+  min-width: 80px;
+  max-width: 110px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.trophy-option:hover {
+  border-color: var(--button-color);
+}
+
+.trophy-option--selected {
+  border-color: var(--button-color);
+  box-shadow: 0 0 0 3px rgba(211, 90, 146, 0.25);
+}
+
+.trophy-option--none {
+  opacity: 0.65;
+}
+
+.trophy-option--none.trophy-option--selected {
+  opacity: 1;
+}
+
+.trophy-option__img {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.trophy-option__icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.trophy-option__title {
+  text-align: center;
+  word-break: break-word;
+  line-height: 1.2;
 }
 
 @media (max-width: 800px) {

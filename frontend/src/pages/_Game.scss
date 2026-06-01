@@ -15,14 +15,11 @@
     display: grid;
     flex: 1;
     grid-template-columns: 1fr 0.25fr;
-    grid-template-areas:
-        "left right";
+    grid-template-areas: "left right";
 
     @media (max-width: 768px) {
         grid-template-columns: 1fr;
-        grid-template-areas:
-            "left"
-            "right";
+        grid-template-areas: "left""right";
     }
 
     &__main {
@@ -30,12 +27,15 @@
         display: flex;
         align-items: center;
         flex-direction: column;
-        margin-block: var(--big-space);
+        padding-block: var(--big-space);
     }
 
     &__players {
         display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
         gap: var(--big-space);
+        margin-block: var(--mini-space) var(--normal-space);
     }
 
     &__game-board {
@@ -44,82 +44,206 @@
         align-items: center;
         justify-content: center;
         width: clamp(300px, 70%, 900px);
-        min-height: 45vh;
-        margin-block-start: var(--normal-space);
+        min-height: 65vh;
         padding: var(--big-space);
-        border: 3px solid var(--secondary-color);
         border-radius: var(--border-radius);
         position: relative;
     }
 
-    &__timer {
+    &__info-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        font-size: 0.9rem;
+        margin-block-end: var(--normal-space);
+
+        &--standalone {
+            width: clamp(300px, 70%, 900px);
+        }
+    }
+
+    &__waiting-overlay {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: var(--normal-space);
         font-size: 1.4rem;
         font-weight: bold;
-        color: var(--button-color);
-        margin-block-end: var(--small-space);
+        text-align: center;
     }
 
     &__ready-overlay {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: var(--mini-space);
+        position: relative;
+
+        .game__ready-waiting {
+            position: absolute;
+            bottom: var(--normal-space);
+            white-space: nowrap;
+        }
+    }
+
+    &__ready-timer {
+        font-size: 1.2rem;
+        font-weight: bold;
+        width: 3rem;
+        height: 3rem;
+        border-radius: 50%;
+        background: white;
+        color: #333;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    &__ready-title {
+        font-size: 2.5rem;
+        font-weight: 900;
+        letter-spacing: 0.05em;
+        margin: 0;
+    }
+
+    &__ready-buttons {
+        display: flex;
+        gap: var(--normal-space);
+    }
+
+    &__ready-yes--confirmed {
+        background-color: #2a6644;
+        color: white;
+        border-color: #2a6644;
+    }
+
+    &__ready-waiting {
+        font-weight: bold;
+        font-size: 1rem;
+    }
+
+    &__timer-wrapper {
+        height: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+        font-weight: bold;
+    }
+
+    &__roll-controls {
         display: flex;
         flex-direction: column;
         align-items: center;
         gap: var(--normal-space);
-        font-size: 1.2rem;
+        margin-block-start: var(--normal-space);
+    }
+
+    &__roll-buttons {
+        display: flex;
+        gap: var(--normal-space);
+    }
+
+
+    &__bet-controls {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--normal-space);
+        width: clamp(300px, 70%, 900px);
+        margin-block-start: var(--normal-space);
+    }
+
+    &__bet-actions {
+        display: flex;
+        align-items: center;
+        gap: var(--normal-space);
+    }
+
+    &__bet-input {
+        border: none;
+        border-bottom: 2px solid var(--button-border-color);
+        background: transparent;
+        width: 80px;
+        font-size: 1rem;
+        padding: 0.2rem 0.4rem;
+        outline: none;
+        color: inherit;
+    }
+
+    &__bet-timer {
+        font-weight: bold;
+        font-size: 1rem;
+
+        &--urgent {
+            color: #c0392b;
+        }
+    }
+
+    &__player-left {
+        color: #c0392b;
+        font-weight: bold;
+        font-size: 0.9rem;
+        margin-block-start: var(--mini-space);
+        text-align: center;
+    }
+
+    &__round-result {
+        font-weight: bold;
+        font-size: 1.1rem;
+        margin-block-start: var(--normal-space);
+        text-align: center;
+
+        &--won {
+            color: #2a8c4a;
+        }
+
+        &--lost {
+            color: #c0392b;
+        }
     }
 
     &__ended {
+        flex: 1;
         display: flex;
         flex-direction: column;
         align-items: center;
+        justify-content: center;
         gap: var(--normal-space);
         text-align: center;
+    }
+
+    &__ended-title {
+        font-size: 2.5rem;
+        font-weight: 900;
+        letter-spacing: 0.05em;
+        margin: 0;
     }
 
     &__standings {
         list-style: none;
         padding: 0;
         font-size: 1.1rem;
+        text-align: left;
 
         li {
             padding: var(--mini-space) 0;
         }
     }
 
-    &__betting {
-        width: clamp(300px, 70%, 900px);
-        margin-block-start: var(--small-space);
-        padding: var(--normal-space);
-        background-color: var(--box-color);
-        border-radius: var(--border-radius);
-        display: flex;
-        align-items: center;
-        gap: var(--big-space);
-    }
-
-    &__pot {
+    &__standings-me {
         font-weight: bold;
-        font-size: 1.1rem;
     }
 
-    &__bet-actions {
-        display: flex;
-        align-items: center;
-        gap: var(--small-space);
-        flex-wrap: wrap;
+    &__leave-btn {
+        margin-block-start: var(--normal-space);
     }
 
-    &__bet-input {
-        display: flex;
-        gap: var(--mini-space);
-
-        input {
-            width: 80px;
-            padding: var(--mini-space);
-            border-radius: var(--border-radius);
-            border: 1px solid var(--secondary-color);
-        }
-    }
-    
     &__comments {
         grid-area: right;
         padding: var(--normal-space);
@@ -135,22 +259,5 @@
         input {
             padding: var(--mini-space);
         }
-    }
-
-    &__waiting-overlay {
-        font-size: 1.8rem;
-        color: var(--secondary-color);
-        font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
-    }
-
-    &__waiting-count {
-        font-size: 1.2rem;
-        font-weight: 600;
-        color: var(--text-color);
-        font-family: inherit;
-    }
-
-    &__variant {
-        margin-block-start: var(--small-space);
     }
 }

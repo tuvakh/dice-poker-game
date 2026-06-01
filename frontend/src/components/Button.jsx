@@ -10,7 +10,7 @@ export default function Button({ children, variant="primary", onClick, type="but
     }
 
     return (
-        <button className={`button button--${variant} ${className}`} onClick={handleClick} type={type} disabled={disabled}>
+        <button data-sound-handled className={`button button--${variant} ${className}`} onClick={handleClick} type={type} disabled={disabled}>
             {children}
         </button>
     )

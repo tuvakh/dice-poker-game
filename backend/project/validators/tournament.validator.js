@@ -79,7 +79,11 @@ export function validateCreateTournament(){
             .optional()
             .isInt({ min: 0 })
             .withMessage("buyIn must be a non-negative integer")
-            .toInt()
+            .toInt(),
+        body("trophy")
+            .optional()
+            .isMongoId()
+            .withMessage("trophy must be a valid MongoDB ID")
     ]
 };
 
@@ -122,6 +126,26 @@ export function validateKnockoutRounds(){
     ];
 }
 
+// All fields are optional so the admin can patch only what changed
+export function validateUpdateTournament(){
+    return [
+        param("tournamentId")
+            .isInt({ min: 1 })
+            .withMessage("Tournament IDs are supposed to be integers larger than 0")
+            .toInt(),
+        body("title").optional().notEmpty().withMessage("Title cannot be empty"),
+        body("description").optional().notEmpty().withMessage("Description cannot be empty"),
+        body("date").optional().notEmpty().withMessage("Date cannot be empty"),
+        body("breaks").optional().isInt({ min: 0 }).withMessage("breaks must be a non-negative integer").toInt(),
+        body("numberOfRounds").optional().isInt({ min: 1 }).withMessage("numberOfRounds must be a positive integer").toInt(),
+        body("gameCategory").optional().isMongoId().withMessage("gameCategory must be a valid MongoDB ID"),
+        body("eloMin").optional().isInt({ min: 0 }).withMessage("eloMin must be a non-negative integer").toInt(),
+        body("eloMax").optional().isInt({ min: 0 }).withMessage("eloMax must be a non-negative integer").toInt(),
+        body("buyIn").optional().isInt({ min: 0 }).withMessage("buyIn must be a non-negative integer").toInt(),
+        body("trophy").optional().isMongoId().withMessage("trophy must be a valid MongoDB ID")
+    ];
+}
+
 export default {
     validateTournamentId,
     // validateGetTournament reuses validateTournamentId since only the ID is needed to fetch a tournament
@@ -130,5 +154,6 @@ export default {
     validateCreateTournament,
     validateJoinTournament,
     validateLeaveTournament,
-    validateKnockoutRounds
+    validateKnockoutRounds,
+    validateUpdateTournament
 };

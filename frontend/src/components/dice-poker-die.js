@@ -2,6 +2,62 @@
 // The face value is now set externally by the server via setAttribute('face', value).
 // roll() only triggers the shake animation — it no longer generates a random face.
 
+// One shared AudioContext for all die sounds — created lazily on first user interaction
+// because browsers block audio until the user has clicked or pressed something.
+let _audioCtx = null;
+function getAudioCtx() {
+    if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (_audioCtx.state === 'suspended') _audioCtx.resume();
+    return _audioCtx;
+}
+
+// Checks the soundEnabled flag stored in localStorage by AppearanceContext
+function isSoundEnabled() {
+    try {
+        return JSON.parse(localStorage.getItem('preferences') || '{}').soundEnabled !== false;
+    } catch { return true; }
+}
+
+// Debounce timestamp — all 5 dice roll at once so we only want one sound per roll event.
+// If playDieRollSound is called again within 200ms, it does nothing.
+let _lastRollSound = 0;
+
+// Soft triangle-wave "tik" — triangle is gentler than sine and sounds like a light tap.
+// Only one sound fires per roll event thanks to the debounce above.
+function playDieRollSound() {
+    if (!isSoundEnabled()) return;
+    const now = Date.now();
+    if (now - _lastRollSound < 200) return;
+    _lastRollSound = now;
+    const ac = getAudioCtx();
+    const osc = ac.createOscillator();
+    const gain = ac.createGain();
+    osc.connect(gain);
+    gain.connect(ac.destination);
+    osc.type = 'triangle';
+    osc.frequency.value = 1000;
+    gain.gain.setValueAtTime(0.08, ac.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.1);
+    osc.start(ac.currentTime);
+    osc.stop(ac.currentTime + 0.1);
+}
+
+// Higher-pitched sine blip — distinguishable from the roll sound so hold feels different.
+function playDieHoldSound() {
+    if (!isSoundEnabled()) return;
+    const ac = getAudioCtx();
+    const osc = ac.createOscillator();
+    const gain = ac.createGain();
+    osc.connect(gain);
+    gain.connect(ac.destination);
+    osc.type = 'sine';
+    osc.frequency.value = 1400;
+    gain.gain.setValueAtTime(0.07, ac.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.06);
+    osc.start(ac.currentTime);
+    osc.stop(ac.currentTime + 0.06);
+}
+
 class DicePokerDie extends HTMLElement {
     // Tells the browser which attributes to watch — changes fire attributeChangedCallback
     static get observedAttributes() {
@@ -47,6 +103,7 @@ class DicePokerDie extends HTMLElement {
                 .die{
                     background-color: var(--die-bg-color);
                     border-radius: var(--border-radius);
+                    border: 2px solid var(--button-border-color);
                     aspect-ratio: 1 / 1;
                     width: clamp(45px, 7vw, 75px);
                     display: flex;
@@ -135,10 +192,11 @@ class DicePokerDie extends HTMLElement {
             : 'var(--die-face-color-black)';
     }
 
-    // Toggles held state and notifies the board so it can send the update to the server
+    // Toggles held state, plays a soft tap sound, and notifies the board so it can send the update to the server
     toggleHeld() {
         if (this._face === '?') return;
 
+        playDieHoldSound();
         this.held = !this._held;
 
         this.dispatchEvent(
@@ -154,15 +212,45 @@ class DicePokerDie extends HTMLElement {
         );
     }
 
-    // Triggers the shake animation — the 350ms matches the @keyframes rollShake duration
+    // Triggers a slot-machine spin animation: the face cycles through random values before
+    // landing on the real result. This is similar to the oblig 1 roll animation.
+    // _face and the attribute are never changed during the spin — only the displayed text
+    // is updated directly so there are no side effects on the game state.
+    // Held dice are skipped — they don't move so they shouldn't make noise or spin.
     roll() {
         if (this.getAttribute('held') === 'true') return;
 
+        playDieRollSound();
         this.setAttribute('rolling', 'true');
 
-        setTimeout(() => {
-            this.removeAttribute('rolling');
-        }, 350);
+        // Spanish poker dice faces — the same values the server can send
+        const FACES = ['A', 'K', 'Q', 'J', '10', '9'];
+
+        // Save the real final face so we can snap back to it after the spin
+        const finalFace = this._face;
+
+        // Cycle through random faces every 50ms for 300ms, then reveal the real value
+        let elapsed = 0;
+        const spinInterval = setInterval(() => {
+            elapsed += 50;
+            if (elapsed >= 300) {
+                clearInterval(spinInterval);
+                // Snap back to the real face and restore correct colour
+                if (this.refs.faceEl) this.updateUI();
+            } else {
+                // Show a random face during the spin without touching _face or the attribute
+                const randomFace = FACES[Math.floor(Math.random() * FACES.length)];
+                if (this.refs.faceEl) {
+                    this.refs.faceEl.textContent = randomFace;
+                    const isRed = randomFace === 'A' || randomFace === 'K' || randomFace === '8';
+                    this.refs.faceEl.style.color = isRed
+                        ? 'var(--die-face-color-red)'
+                        : 'var(--die-face-color-black)';
+                }
+            }
+        }, 50);
+
+        setTimeout(() => this.removeAttribute('rolling'), 350);
     }
 }
 

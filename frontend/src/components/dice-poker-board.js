@@ -20,40 +20,48 @@ class DicePokerBoard extends HTMLElement {
         // Renders the board shell once. Players and their dice are added later via addPlayer()
         this.shadowRoot.innerHTML = `
         <style>
-            :host { display: block; padding: 1rem; width: 100%; }
+            :host {
+                display: block; 
+                padding: 1rem; 
+                width: 100%; 
+            }
 
             .players {
                 display: flex;
+                flex-direction: row;
                 flex-wrap: wrap;
                 gap: 1.5rem;
                 justify-content: center;
+                width: 100%;
             }
 
             .player {
-                background-color: rgba(0,0,0,0.06);
                 border-radius: 0.8rem;
                 padding: 1rem;
-                min-width: 180px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .player-left-notice {
+                margin-top: 0.6rem;
+                font-weight: bold;
+                text-align: center;
+                font-size: 0.95rem;
+                color: #c0392b;
             }
 
             .player-name {
                 font-weight: bold;
                 font-size: 1rem;
-                margin-bottom: 0.75rem;
+                margin-block:var(--small-space);
                 text-align: center;
             }
+
 
             .dice {
                 display: flex;
                 gap: 0.4rem;
-                flex-wrap: wrap;
-                justify-content: center;
-            }
-
-            .controls {
-                margin-top: 1.5rem;
-                display: flex;
-                gap: 0.75rem;
                 justify-content: center;
             }
 
@@ -91,15 +99,7 @@ class DicePokerBoard extends HTMLElement {
         </style>
 
         <div class="players" id="players"></div>
-        <div class="controls">
-            <button id="btn-roll" disabled>Roll Again</button>
-            <button id="btn-done" disabled>Done Rolling</button>
-        </div>
         `;
-
-        // Wire up the two action buttons
-        this.shadowRoot.getElementById('btn-roll').addEventListener('click', () => this.handleRollAgain());
-        this.shadowRoot.getElementById('btn-done').addEventListener('click', () => this.handleDoneRolling());
 
         // Block hold-toggle events from opponents' dice
         // capture:true intercepts before the die reacts
@@ -150,15 +150,13 @@ class DicePokerBoard extends HTMLElement {
 
     // Updates each die's face
     // resetHeld:true is passed at round start to unhold all dice
-    setDice(userId, faces, resetHeld = false) {
+    setDice(userId, faces, animate = false) {
         const dice = this.diceElements[userId];
         if (!dice) return;
 
         faces.forEach((face, i) => {
             dice[i].setAttribute('face', face);
-            if (resetHeld) dice[i].setAttribute('held', 'false');
-            // roll() triggers the shake animation — the face was already set above
-            dice[i].roll();
+            if (animate) dice[i].roll();
         });
     }
 
@@ -181,12 +179,6 @@ class DicePokerBoard extends HTMLElement {
                 });
             }
         }
-
-        // Enable or disable the Roll Again / Done Rolling buttons
-        const btnRoll = this.shadowRoot.getElementById('btn-roll');
-        const btnDone = this.shadowRoot.getElementById('btn-done');
-        if (btnRoll) btnRoll.disabled = !canInteract;
-        if (btnDone) btnDone.disabled = !canInteract;
     }
 
     // Marks an opponent's dice as held visually
@@ -224,7 +216,21 @@ class DicePokerBoard extends HTMLElement {
 
     // Removes all hand result labels — called at the start of a new round
     clearResults() {
-        this.shadowRoot.querySelectorAll('.hand-result').forEach((result) => result.remove());
+        this.shadowRoot.querySelectorAll('.hand-result, .player-left-notice').forEach((el) => el.remove());
+    }
+
+    showPlayerLeft(userId) {
+        const section = this.shadowRoot.querySelector(`[data-user-id="${userId}"]`);
+        if (!section) return;
+
+        let noticeEl = section.querySelector('.player-left-notice');
+        if (!noticeEl) {
+            noticeEl = document.createElement('p');
+            noticeEl.className = 'player-left-notice';
+            section.querySelector('.player').appendChild(noticeEl);
+        }
+
+        noticeEl.textContent = '⚠️ This user left. Their turn is now automatic';
     }
 
     // Reads which dice are held and fires dp:roll-again

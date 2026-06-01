@@ -10,6 +10,12 @@ export async function createTrophy(trophyData){
     return newTrophy;
 }
 
+// Returns all trophies so the admin tournament creation form can show a dropdown
+export async function getAllTrophies(){
+    return await Trophy.find({});
+}
+
 export default {
-    createTrophy
+    createTrophy,
+    getAllTrophies
 };

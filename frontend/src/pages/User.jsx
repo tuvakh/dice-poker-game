@@ -107,7 +107,7 @@ export default function User() {
             // If the user just edited their own profile, also update the header avatar
             // Use in-memory preview for instant feedback, but rely on the server-stored image
             if (user?.userId === profile.userId) {
-                updateUserData({ profileImage: profileImagePreview || updated.profileImage, coins: updated.coins });
+                updateUserData({ profileImage: updated.profileImage, coins: updated.coins });
             }
 
             setSaveSuccess(true);

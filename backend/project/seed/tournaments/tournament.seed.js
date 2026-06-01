@@ -34,12 +34,28 @@ export default async function seedTournaments(users, categories, trophies) {
             participants: [users[4]._id, users[5]._id, users[6]._id, users[7]._id],
             status: "upcoming",
             trophy: trophies[1]._id
+        }).save(),
+        // Demo tournament: starts today so it can be played immediately.
+        // Admin clicks "Start Next Round" on the tournament page to kick off matches.
+        // Uses the straights variant with a 30-second timer (categories[6]).
+        // eloMin/eloMax are unset so any player can join.
+        new Tournament({
+            title: "Demo Open — Play Now!",
+            description: "A live demo tournament you can join and play today. Sign in, click 'Start Next Round' as admin to create matches, then jump straight into your game from the bracket.",
+            date: new Date(Date.now() + 30 * 1000),
+            breaks: 5,
+            numberOfRounds: 3,
+            gameCategory: categories[6]._id,
+            participants: [users[22]._id, users[0]._id, users[1]._id, users[2]._id, users[3]._id, users[4]._id],
+            status: "upcoming",
+            trophy: trophies[2]._id
         }).save()
     ]);
 
     // update trophies with real tournament IDs
     await Trophy.findByIdAndUpdate(trophies[0]._id, { tournamentId: tournaments[0]._id });
     await Trophy.findByIdAndUpdate(trophies[1]._id, { tournamentId: tournaments[1]._id });
+    await Trophy.findByIdAndUpdate(trophies[2]._id, { tournamentId: tournaments[2]._id });
     console.log("Updated trophies with tournament IDs");
 
     console.log("Inserted all tournaments");

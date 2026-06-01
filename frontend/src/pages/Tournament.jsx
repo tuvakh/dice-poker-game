@@ -9,7 +9,7 @@ import Spinner from "../components/Spinner.jsx";
 import Button from "../components/Button.jsx"; 
 
 // TODO: replace with a dedicated tournament hero image
-import tournamentHero from "../assets/lobby-hero.png";
+import tournamentHero from "../assets/lobby-hero.webp";
 
 const STATUS_TABS = [
     { value: "",         label: "All" },

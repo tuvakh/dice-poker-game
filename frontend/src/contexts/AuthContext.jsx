@@ -44,9 +44,11 @@ export function AuthProvider({ children }) {
                     handleBan("Your account has been banned. Time to reflect on your choices!");
                 }
             } catch (error) {
-                // If we can't fetch the user, they might be deleted or there's network error
-                // Don't logout, just ignore it
-                console.error("Ban check failed:", error);
+                // If the server says the user doesn't exist (404), log them out automatically.
+                // This happens when the database is reseeded and the old user ID is gone.
+                if (error?.message?.toLowerCase().includes("not found") || error?.status === 404) {
+                    if (isMounted) logout();
+                }
             }
         };
 

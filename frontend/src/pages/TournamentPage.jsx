@@ -3,7 +3,7 @@
 // Individual tournament detail page
 import { useState, useEffect, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router";
-import { getTournament, joinTournament, leaveTournament, deleteTournament, cancelTournament } from "../api/tournaments.js";
+import { getTournament, joinTournament, leaveTournament, deleteTournament, cancelTournament, startRound } from "../api/tournaments.js";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import { useSoundEffects } from "../hooks/useSoundEffects.js";
 import { getAllComments } from "../api/comments.js";
@@ -12,6 +12,7 @@ import CommentList from "../components/CommentList.jsx";
 import CommentForm from "../components/CommentForm.jsx";
 import Spinner from "../components/Spinner.jsx";
 import Button from "../components/Button.jsx";
+import ConfirmDialog from "../components/ConfirmDialog.jsx";
 
 export default function TournamentPage() {
     const { id } = useParams();
@@ -26,13 +27,19 @@ export default function TournamentPage() {
     const [joined, setJoined] = useState(false);
     const [leaving, setLeaving] = useState(false);
     const [leaveError, setLeaveError] = useState(null);
+    const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [showCancelConfirm, setShowCancelConfirm] = useState(false);
     const wsRef = useRef(null);
+    const redirectedRef = useRef(false); // prevents redirect loop when navigating back from game
+    const autoStartedRef = useRef(false);     // prevents duplicate first-round auto-start
+    const nextRoundFiredRef = useRef(false);  // prevents duplicate next-round auto-start
     const [comments, setComments] = useState([]);
 
     // countdown state: seconds remaining until the next round is expected to start
     const [countdownSecs, setCountdownSecs] = useState(null);
 
-    // Fetches tournament data when the page loads or the URL id changes
+    // Fetches tournament data when the page loads or the URL id changes 
     useEffect(() => {
         setLoading(true);
         setError(null);
@@ -77,7 +84,7 @@ export default function TournamentPage() {
         if (!latestRound) return;
 
         // Check all matches in the latest round are finished
-        const allDone = latestRound.every(m => m?.status === 'finished');
+        const allDone = latestRound.every(match => match?.status === 'finished');
         const roundsLeft = (tournament.numberOfRounds ?? 0) - rounds.length;
 
         if (!allDone || roundsLeft <= 0) {
@@ -86,8 +93,8 @@ export default function TournamentPage() {
         }
 
         // Find the most recent endedAt across all matches in the latest round
-        const latestEndedAt = latestRound.reduce((maxTime, m) => {
-            const t = m?.endedAt ? new Date(m.endedAt).getTime() : 0;
+        const latestEndedAt = latestRound.reduce((maxTime, match) => {
+            const t = match?.endedAt ? new Date(match.endedAt).getTime() : 0;
             return t > maxTime ? t : maxTime;
         }, 0);
 
@@ -99,15 +106,80 @@ export default function TournamentPage() {
         // Next round expected at: last match end + break minutes
         const nextRoundAt = latestEndedAt + (tournament.breaks ?? 0) * 60 * 1000;
 
-        // Tick every second and update the displayed countdown
+        // Tick every second and update the displayed countdown.
+        // When it reaches zero, auto-start the next round.
         const tick = () => {
             const remaining = Math.max(0, Math.floor((nextRoundAt - Date.now()) / 1000));
             setCountdownSecs(remaining);
+            if (remaining === 0 && !nextRoundFiredRef.current) {
+                nextRoundFiredRef.current = true;
+                startRound(id)
+                    .then(updated => setTournament(updated))
+                    .catch(() => {
+                        getTournament(id).then(updated => setTournament(updated)).catch(() => {});
+                    });
+            }
         };
         tick();
         const interval = setInterval(tick, 1000);
-        return () => clearInterval(interval);
+        // Reset nextRoundFiredRef on cleanup so the FOLLOWING round's break can also auto-start
+        return () => {
+            clearInterval(interval);
+            nextRoundFiredRef.current = false;
+        };
     }, [tournament]);
+
+    // Auto-start: when the tournament date arrives and there are enough players, kick off the first round.
+    // Any logged-in user viewing the page can trigger this — the backend rejects duplicates gracefully.
+    useEffect(() => {
+        if (!tournament || !user) return;
+        if (tournament.status !== 'upcoming') return;
+        if ((tournament.participants?.length ?? 0) < 2) return;
+        if (autoStartedRef.current) return;
+
+        const target = tournament.date ? new Date(tournament.date).getTime() : null;
+        if (!target) return;
+
+        const fire = () => {
+            autoStartedRef.current = true;
+            startRound(id)
+                .then(updated => setTournament(updated))
+                .catch(() => {
+                    // If another user already started it, just re-fetch the latest state
+                    getTournament(id).then(updated => setTournament(updated)).catch(() => {});
+                });
+        };
+
+        const remaining = target - Date.now();
+        if (remaining <= 0) {
+            fire();
+        } else {
+            const timer = setTimeout(fire, remaining);
+            return () => clearTimeout(timer);
+        }
+    }, [tournament?.tournamentId, tournament?.status, tournament?.participants?.length, user, id]);
+
+    // Auto-redirect participants to their ongoing match in the latest round.
+    // redirectedRef prevents redirecting again when the user navigates back after the game.
+    //SO this puts users in a game when it starts
+    useEffect(() => {
+        if (!tournament || !user || tournament.status !== 'ongoing') return;
+        if (redirectedRef.current) return;
+        const rounds = tournament.rounds ?? [];
+        if (rounds.length === 0) return;
+        const latestRound = rounds[rounds.length - 1];
+        for (const match of latestRound) {
+            if (!match || match.status !== 'ongoing') continue;
+            const players = match.players ?? [];
+            const isPlayer = players.some(pl => (pl._id ?? pl)?.toString() === user._id?.toString());
+            if (isPlayer && match.matchId) {
+                redirectedRef.current = true;
+                // Pass tournamentId in state so Game.jsx can show "Back to tournament"
+                navigate(`/game/${match.matchId}`, { state: { tournamentId: tournament.tournamentId } });
+                return;
+            }
+        }
+    }, [tournament, user, navigate]);
 
     async function handleJoin() {
         if (!user) return;
@@ -115,13 +187,12 @@ export default function TournamentPage() {
         setJoinError(null);
         try {
             await joinTournament(id, user._id);
-            setJoined(true);
             playJoin();
-            // Optimistic update: add the user to the local participants list without re-fetching
-            setTournament(prev => prev
-                ? { ...prev, participants: [...(prev.participants ?? []), { _id: user._id, username: user.username }] }
-                : prev
-            );
+            // Re-fetch so the participants list matches exactly what the DB returns,
+            // ensuring alreadyIn computes correctly on this render and after refresh.
+            const updated = await getTournament(id);
+            setTournament(updated);
+            setJoined(true);
         } catch (err) {
             setJoinError(err.message ?? "Could not join tournament.");
         } finally {
@@ -138,7 +209,7 @@ export default function TournamentPage() {
             setJoined(false);
             // Optimistic update: remove the user from the local participants list
             setTournament(prev => prev
-                ? { ...prev, participants: prev.participants.filter(p => (p._id ?? p)?.toString() !== user._id?.toString()) }
+                ? { ...prev, participants: prev.participants.filter(participant => (participant._id ?? participant)?.toString() !== user._id?.toString()) }
                 : prev
             );
         } catch (err) {
@@ -150,7 +221,6 @@ export default function TournamentPage() {
 
     // Admin: permanently delete the tournament and go back to the list
     async function handleDelete() {
-        if (!window.confirm("Delete this tournament permanently?")) return;
         try {
             await deleteTournament(id);
             navigate('/tournament');
@@ -159,9 +229,18 @@ export default function TournamentPage() {
         }
     }
 
+    // Admin: starts the next round, creating matches for all participants
+    async function handleStartRound() {
+        try {
+            const updated = await startRound(id);
+            setTournament(updated);
+        } catch (err) {
+            setError(err.message ?? "Could not start next round.");
+        }
+    }
+
     // Admin: mark the tournament as cancelled so players know it will not run
     async function handleCancel() {
-        if (!window.confirm("Cancel this tournament?")) return;
         try {
             const updated = await cancelTournament(id);
             setTournament(prev => ({ ...prev, status: updated.status }));
@@ -183,10 +262,31 @@ export default function TournamentPage() {
 
     const participantCount = tournament.participants?.length ?? 0;
 
+    // Build a win-count table from the standings data returned by the backend.
+    // standings = [{ round: N, winners: [userObj, ...] }, ...]
+    // Each winner entry means that player won their match in that round.
+    const winMap = {};
+    for (const roundData of (tournament.standings ?? [])) {
+        for (const winner of (roundData.winners ?? [])) {
+            const wId = (winner._id ?? winner)?.toString();
+            if (!wId) continue;
+            if (!winMap[wId]) winMap[wId] = { username: winner.username ?? '?', wins: 0 };
+            winMap[wId].wins++;
+        }
+    }
+    // Include all participants so players with 0 wins still appear
+    for (const p of (tournament.participants ?? [])) {
+        const pId = (p._id ?? p)?.toString();
+        if (pId && !winMap[pId]) winMap[pId] = { username: p.username ?? '?', wins: 0 };
+    }
+    const standingsList = Object.values(winMap).sort((a, b) => b.wins - a.wins);
+
     // alreadyIn checks the fetched data so returning visitors who were already registered see the right UI
     // joined is set when the user joins in this browser session (optimistic)
-    const alreadyIn = user && tournament.participants?.some(
-        p => (p._id ?? p)?.toString() === user._id?.toString()
+    // Username comparison is used because participants are populated objects with plain string usernames,
+    // while _id ObjectId serialisation can vary across Mongoose versions causing string mismatches.
+    const alreadyIn = user && tournament.participants?.some(p =>
+        p.username && p.username === user.username
     );
 
     // Players can leave as long as the tournament has not finished or been cancelled
@@ -195,7 +295,7 @@ export default function TournamentPage() {
     return (
         <section className="tournament-detail">
             <Link to="/tournament" className="back-link" onClick={playClick}>
-                All tournaments
+                &#8592; All tournaments
             </Link>
             <h1>{tournament.title}</h1>
             <span className={`tournament-card__status tournament-card__status--${tournament.status}`}>
@@ -219,7 +319,7 @@ export default function TournamentPage() {
             {canLeave && (
                 <div className="tournament-detail__join-area">
                     <p className="status status--success">You&apos;re registered!</p>
-                    <Button onClick={handleLeave} disabled={leaving} variant="danger">
+                    <Button onClick={() => setShowLeaveConfirm(true)} disabled={leaving} variant="danger">
                         {leaving ? "Leaving..." : "Leave Tournament"}
                     </Button>
                 </div>
@@ -227,12 +327,37 @@ export default function TournamentPage() {
             {joinError && <p className="status status--error">{joinError}</p>}
             {leaveError && <p className="status status--error">{leaveError}</p>}
 
+            {/* Leave confirmation popup */}
+            {showLeaveConfirm && (
+                <ConfirmDialog
+                    message="Are you sure you want to leave this tournament?"
+                    onConfirm={() => { setShowLeaveConfirm(false); handleLeave(); }}
+                    onCancel={() => setShowLeaveConfirm(false)}
+                />
+            )}
+
             {/* Admin controls: delete and cancel are only shown to admin users */}
             {user?.role === 'admin' && !["finished", "cancelled"].includes(tournament.status) && (
                 <div className="tournament-detail__admin">
-                    <Button onClick={handleCancel} variant="danger">Cancel tournament</Button>
-                    <Button onClick={handleDelete} variant="danger">Delete tournament</Button>
+                    <Button onClick={() => navigate(`/admin/tournaments/${tournament.tournamentId}/edit`)}>Edit tournament</Button>
+                    <Button onClick={() => setShowCancelConfirm(true)} variant="danger">Cancel tournament</Button>
+                    <Button onClick={() => setShowDeleteConfirm(true)} variant="danger">Delete tournament</Button>
                 </div>
+            )}
+
+            {showCancelConfirm && (
+                <ConfirmDialog
+                    message="Cancel this tournament? Players will be notified it won't run."
+                    onConfirm={() => { setShowCancelConfirm(false); handleCancel(); }}
+                    onCancel={() => setShowCancelConfirm(false)}
+                />
+            )}
+            {showDeleteConfirm && (
+                <ConfirmDialog
+                    message="Permanently delete this tournament? This cannot be undone."
+                    onConfirm={() => { setShowDeleteConfirm(false); handleDelete(); }}
+                    onCancel={() => setShowDeleteConfirm(false)}
+                />
             )}
 
             {/* Tournament info grid: shows key details at a glance */}
@@ -319,7 +444,7 @@ export default function TournamentPage() {
                     <p>
                         {countdownSecs > 0
                             ? `Next round in ${Math.floor(countdownSecs / 60)}m ${countdownSecs % 60}s`
-                            : "Next round starting soon — waiting for the admin to begin."
+                            : "Next round starting…"
                         }
                     </p>
                 </div>
@@ -331,12 +456,28 @@ export default function TournamentPage() {
                 <p>No participants yet — be the first!</p>
             ) : (
                 <ul className="tournament-detail__players">
-                    {tournament.participants.map(p => (
-                        <li key={p._id ?? p} className="tournament-detail__player-item">
-                            {p.username ?? p}
+                    {tournament.participants.map(participant => (
+                        <li key={participant._id ?? participant} className="tournament-detail__player-item">
+                            {participant.username ?? participant}
                         </li>
                     ))}
                 </ul>
+            )}
+
+            {/* Standings: shown for ongoing and finished tournaments once at least one round has been played */}
+            {["ongoing", "finished"].includes(tournament.status) && standingsList.length > 0 && (
+                <>
+                    <h2>Standings</h2>
+                    <ol className="tournament-detail__standings">
+                        {standingsList.map((entry, i) => (
+                            <li key={i} className={`tournament-detail__standings-row${i === 0 ? " tournament-detail__standings-row--leader" : ""}`}>
+                                <span className="tournament-detail__standings-rank">#{i + 1}</span>
+                                <span className="tournament-detail__standings-name">{entry.username}</span>
+                                <span className="tournament-detail__standings-wins">{entry.wins} win{entry.wins !== 1 ? "s" : ""}</span>
+                            </li>
+                        ))}
+                    </ol>
+                </>
             )}
 
             {/* Bracket: rounds is a 2D array where rounds[roundIndex][matchIndex] holds a match.

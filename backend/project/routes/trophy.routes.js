@@ -9,6 +9,8 @@ import { upload } from "../middleware/upload.js";
 
 const trophyApiRouter = express.Router();
 
+// Public list — used by the admin form to pick a trophy when creating a tournament
+trophyApiRouter.get("/trophies", trophyController.getAllTrophies);
 // Only admins can create trophies
 trophyApiRouter.post("/trophies", requireAdmin, upload.single("image"), trophyValidator.validateCreateTrophy(), validate, trophyController.createTrophy);
 

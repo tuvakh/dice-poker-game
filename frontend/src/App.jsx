@@ -23,7 +23,7 @@ const AboutUs = lazy(() => import("./pages/AboutUs"));
 const AboutGame = lazy(() => import("./pages/AboutGame.jsx"));
 const Privacy = lazy(() => import("./pages/Privacy.jsx"));
 const Terms = lazy(() => import("./pages/Terms.jsx"));
-const NotFound = lazy(() => import("./pages/404.jsx"));
+const NotFound = lazy(() => import("./pages/Error404.jsx"));
 const VerifyEmail = lazy(() => import("./pages/VerifyEmail.jsx"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword.jsx"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword.jsx"));
@@ -31,6 +31,7 @@ const AdminDashboard = lazy(() => import("./pages/admin/Dashboard.jsx"));
 const AdminUsers = lazy(() => import("./pages/admin/Users.jsx"));
 const AdminComments = lazy(() => import("./pages/admin/Comments.jsx"));
 const AdminTournamentCreate = lazy(() => import("./pages/admin/TournamentCreate.jsx"));
+const AdminTournamentEdit = lazy(() => import("./pages/admin/TournamentEdit.jsx"));
 
 // Main application component with routing configuration
 function AppContent() {
@@ -68,6 +69,7 @@ function AppContent() {
                 <Route path="users" element={<AdminUsers />} />
                 <Route path="comments" element={<AdminComments />} />
                 <Route path="tournaments/create" element={<AdminTournamentCreate />} />
+                <Route path="tournaments/:id/edit" element={<AdminTournamentEdit />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Route>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 
 import Hero from "../components/Hero.jsx";
@@ -12,9 +12,10 @@ import { getAllMatches } from "../api/matches.js";
 import { getAllTournaments } from "../api/tournaments.js";
 import { useAppearance } from "../contexts/AppearanceContext.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
+
 import { filterLobbyMatches } from "../hooks/useLobbyGames.js";
 
-import homeHero from "../assets/home-hero.png";
+import homeHero from "../assets/home-hero.webp";
 
 function sortByAverageElo(matches) {
     return matches
@@ -22,7 +23,7 @@ function sortByAverageElo(matches) {
             ...match,
             avgElo: match.players.reduce((sum, player) => sum + (player.eloRating ?? 0), 0) / (match.players.length || 1)
         }))
-        .sort((a, b) => b.avgElo - a.avgElo);
+        .sort((matchA, matchB) => matchB.avgElo - matchA.avgElo);
 }
 
 function getIdleDelaySetter(setReady) {
@@ -59,12 +60,10 @@ export default function Home() {
 
         async function load() {
             try {
-                const lobbyLimit = preferences.lobbyCount;
                 const [waitingData, ongoingData, tournamentData, activityData] = await Promise.all([
-                    getAllMatches({ status: "waiting", limit: lobbyLimit }),
+                    getAllMatches({ status: "waiting", limit: preferences.lobbyCount }),
                     getAllMatches({ status: "ongoing", limit: 5 }),
                     getAllTournaments({ status: "upcoming", limit: 5 }),
-                    // .catch(() => null) so a missing/failing activity endpoint doesn't crash the whole page
                     getActivity().catch(() => null)
                 ]);
 
@@ -91,10 +90,7 @@ export default function Home() {
         }
 
         load();
-
-        return () => {
-            cancelled = true;
-        };
+        return () => { cancelled = true; };
     }, [ready, preferences.lobbyCount]);
 
     if (!ready) return null;
@@ -135,7 +131,6 @@ export default function Home() {
             <section className="home-details__section">
                 <h2>Games available for joining</h2>
                 <p>Pick a game and jump straight in, there are currently {filteredGames.length} available!</p>
-
                 <div className="cards-grid">
                     {filteredGames.map((match) => <GameCard key={match.matchId} match={match} />)}
                 </div>
@@ -152,7 +147,7 @@ export default function Home() {
             <section className="home-details__section tournaments-preview">
                 <h2>Upcoming tournaments</h2>
                 <p>Sign up before they fill up!</p>
-                <div class="cards-grid">
+                <div className="cards-grid">
                     {tournaments.map(tournament => <TournamentCard key={tournament.tournamentId} tournament={tournament} />)}
                 </div>
             </section>

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate, Link } from "react-router";
+import { useParams, useNavigate, useLocation, Link } from "react-router";
 
 import { getMatch, leaveMatch, joinMatch } from "../api/matches.js";
 import { getAllComments } from "../api/comments.js";
@@ -9,23 +9,28 @@ import { usePolling } from "../hooks/usePolling.js";
 
 import { useAuth } from "../contexts/AuthContext.jsx";
 import { useAppearance } from "../contexts/AppearanceContext.jsx";
-import { useSoundEffects } from "../hooks/useSoundEffects.js"; 
+import { useSoundEffects } from "../hooks/useSoundEffects.js";
 
+import Button from "../components/Button.jsx";
 import Spinner from "../components/Spinner.jsx";
 import BettingControls from "../components/BettingControls.jsx";
 import CommentList from "../components/CommentList";
 import CommentForm from "../components/CommentForm";
 import PlayerInfo from "../components/PlayerInfo";
+import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import '../components/dice-poker-board.js';
 import '../components/dice-poker-die.js';
 
 // The individual game page shows players, game board, and comments sidebar
 export default function Game() {
     const navigate = useNavigate();
+    const location = useLocation();
     const { id } = useParams();
     const { user, updateUserData } = useAuth();
+    // tournamentId is passed via navigation state when coming from a tournament page
+    const tournamentId = location.state?.tournamentId ?? null;
     const { preferences } = useAppearance();
-    const { playClick, playJoin, playRoll, playHold, playRoundEnd } = useSoundEffects();
+    const { playClick, playJoin, playHold, playRoundEnd } = useSoundEffects();
 
     // Match data fetched from the backend and comments loaded for the sidebar
     const [match, setMatch] = useState(null);
@@ -59,15 +64,29 @@ export default function Game() {
     const [standings, setStandings] = useState(null);
     const [forfeitBy, setForfeitBy] = useState(null);
     const [playerLeftNotice, setPlayerLeftNotice] = useState(null);
+    const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+
+    const [readyTimeLeft, setReadyTimeLeft] = useState(null);
+    const [timedOut, setTimedOut] = useState(false);
+    const [canRoll, setCanRoll] = useState(false);
+    const [roundResult, setRoundResult] = useState(null);
+    const readyTimerRef = useRef(null);
+    const [rollCount, setRollCount] = useState(0);
+
+    const [betTimeLeft, setBetTimeLeft] = useState(null);
+    const betTimerRef = useRef(null);
+    const [betTimedOut, setBetTimedOut] = useState(false);
 
     // Fetches the latest match data from the backend
-    async function fetchMatch() {
+    // signal comes from usePolling's AbortController so cancelled requests don't update state
+    async function fetchMatch(signal) {
         try {
-            const data = await getMatch(id);
+            const data = await getMatch(id, signal);
             setMatch(data);
             matchRef.current = data;
-            setError(null); // clear error if a retry succeeds
-        } catch {
+            setError(null);
+        } catch (err) {
+            if (err?.name === "AbortError") return;
             setError("Failed to load game. Please try again.");
         }
     }
@@ -91,8 +110,11 @@ export default function Game() {
 
     // Sends a betting action (fold / match / bet) to the server
     function sendBet(action, amount = 0) {
+        clearInterval(betTimerRef.current);
+        setBetTimeLeft(null);
         wsRef.current?.send(JSON.stringify({ type: 'bet', action, amount }));
     }
+
 
     // Closes the WebSocket if the game is ongoing (triggers forfeit), or calls the REST leave endpoint if still waiting
     const handleLeave = async () => {
@@ -110,28 +132,63 @@ export default function Game() {
         }
     };
 
+    function startBetTimer() {
+        clearInterval(betTimerRef.current);
+        setBetTimeLeft(10);
+        setBetTimedOut(false);
+        let countdown = 10;
+        betTimerRef.current = setInterval(() => {
+            countdown -= 1;
+            setBetTimeLeft(countdown);
+            if (countdown <= 0) {
+                clearInterval(betTimerRef.current);
+                setBetTimedOut(true);
+                sendBet('match');
+            }
+        }, 1000);
+    }
+
     // Routes incoming WebSocket messages to the right board action
     function handleServerMessage(message) {
         const board = boardRef.current;
 
         // Someone didn't click ready in time: cancel the game
         if (message.type === 'ready-timeout') {
+            clearInterval(readyTimerRef.current);
+            setReadyTimeLeft(null);
             setGamePhase('cancelled');
         }
 
         // All required players have joined: show the Ready button
         if (message.type === 'all-joined') {
             setGamePhase('ready');
-            playJoin(); // Chanya
+            setReadyTimeLeft(30);
+            readyTimerRef.current = setInterval(() => {
+                setReadyTimeLeft(prev => {
+                    if (prev <= 1) {
+                        clearInterval(readyTimerRef.current);
+                        setGamePhase('cancelled');
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
         }
 
         // A player disconnected mid-game: show a notice so the remaining player knows
         if (message.type === 'player-disconnected') {
             setPlayerLeftNotice(message.userId);
+            boardRef.current?.showPlayerLeft(message.userId);
         }
 
         // A new round started: start the countdown timer and initialise the board
         if (message.type === 'game-started') {
+            clearInterval(readyTimerRef.current);
+            setReadyTimeLeft(null);
+            setRoundResult(null);
+            setCanRoll(true);
+            setRollCount(0);
+            setTimedOut(false);
             setGamePhase('rolling');
             playClick(); // Chanya
             clearInterval(timerRef.current);
@@ -140,6 +197,7 @@ export default function Game() {
                 setTimeLeft(prev => {
                     if (prev <= 1) {
                         clearInterval(timerRef.current);
+                        setTimedOut(true);
                         return 0;
                     }
                     return prev - 1;
@@ -151,27 +209,33 @@ export default function Game() {
 
                 // message.players is the server's authoritative list — loop it to add each player to the board
                 message.players.forEach(playerId => {
-                    const playerData = currentPlayers.find(player => player?._id === playerId);
+                    const playerData = currentPlayers.find(player => String(player?._id ?? player) === String(playerId));
                     board.addPlayer(playerId, playerData?.username ?? playerId);
                     if (playerId !== user?._id) {
-                        board.setDice(playerId, ['?', '?', '?', '?', '?'], true);
+                        board.setDice(playerId, ['?', '?', '?', '?', '?']);
                     }
                 });
 
                 board.currentUserId = user?._id;
-                board.setDice(user?._id, message.yourDice, true);
+                board.setDice(user?._id, message.yourDice);
                 board.setInteractive(user?._id, true);
                 board.clearResults();
                 board.resetAllHeld();
             }
         }
 
-        // Server re-rolled our non-held dice: play the dice sound and update our board
+        // Server re-rolled our non-held dice: update our board (die component plays its own sound)
         if (message.type === 'roll-result') {
-            playRoll();
             if (board) {
-                board.setDice(user?._id, message.yourDice);
+                board.setDice(user?._id, message.yourDice, true);
             }
+            setRollCount(prev => {
+                if (prev + 1 >= 3) {
+                    boardRef.current?.handleDoneRolling();
+                    return prev + 1;
+                }
+                return prev + 1;
+            });
         }
 
         // Another player re-rolled: show which of their dice are held (not the actual faces)
@@ -187,6 +251,7 @@ export default function Game() {
                 boardRef.current?.setInteractive(user._id, false);
                 clearInterval(timerRef.current);
                 setTimeLeft(null);
+                setCanRoll(false);
             }
         }
 
@@ -196,16 +261,18 @@ export default function Game() {
             clearInterval(timerRef.current);
             setTimeLeft(null);
             setBettingState({ currentBettor: message.currentBettor, pot: message.pot, highestBet: 0, yourStack: message.stacks?.[user?._id] ?? 0 });
-        }
-
-        // It's now a different player's turn to bet
-        if (message.type === 'next-bettor') {
-            setBettingState(prev => ({ ...prev, currentBettor: message.currentBettor, yourStack: message.stacks?.[user?._id] ?? prev.yourStack }));
+            if (message.currentBettor === user?._id) startBetTimer();
         }
 
         // Someone placed a bet: update the pot and highest bet
-        if (message.type === 'player-bet') {
-            setBettingState(prev => ({ ...prev, pot: message.pot, highestBet: Math.max(prev.highestBet, message.amount) }));
+        if (message.type === 'next-bettor') {
+            setBettingState(prev => ({ ...prev, currentBettor: message.currentBettor, yourStack: message.stacks?.[user?._id] ?? prev.yourStack }));
+            if (message.currentBettor === user?._id) {
+                startBetTimer();
+            } else {
+                clearInterval(betTimerRef.current);
+                setBetTimeLeft(null);
+            }
         }
 
         // Someone matched the current bet: update the pot
@@ -215,8 +282,12 @@ export default function Game() {
 
         // Round finished: play the end sound, reveal all dice and show hand results
         if (message.type === 'round-end') {
-            playRoundEnd();
+            clearInterval(betTimerRef.current);
+            setBetTimeLeft(null);
+            setRoundResult(message.winners.includes(user?._id) ? 'won' : 'lost');
+            setCanRoll(false);
             setGamePhase(null);
+            setBetTimedOut(false);
 
             if (board) {
                 for (const [userId, faces] of Object.entries(message.reveal)) {
@@ -248,8 +319,8 @@ export default function Game() {
         }
     }
 
-    // Poll the match every 5 seconds to check if someone joined
-    usePolling(fetchMatch, 5000);
+    // Poll only while waiting — once WebSocket takes over for ongoing games, stop polling
+    usePolling(fetchMatch, 5000, match?.status !== "ongoing");
 
     // Auto-join the match once if the logged-in user isn't already a player
     useEffect(() => {
@@ -272,6 +343,7 @@ export default function Game() {
     // The cleanup (return) closes the socket when the component unmounts or status changes
     useEffect(() => {
         if (!match || match.status !== 'ongoing') return;
+        if (!user || !match.players.some(player => String(player?._id ?? player) === String(user._id))) return;
 
         // Refresh coin balance immediately when entering an ongoing wager game
         if (match.coinWager > 0 && user) {
@@ -349,6 +421,13 @@ export default function Game() {
         };
     }, []);
 
+    const displayPot = bettingState?.pot ?? match?.coinWager ?? 0;
+    const isPreGame = match?.status === 'ongoing' && gamePhase === null && !roundResult && !forfeitBy;
+    const sortedStandings = standings ? [...standings].sort((standingA, standingB) => standingB.stack - standingA.stack) : [];
+    const topStack = sortedStandings[0]?.stack;
+    const isTie = sortedStandings.filter(entry => entry.stack === topStack).length > 1;
+    const isWinner = sortedStandings[0]?.userId === user?._id;
+
     if (error) return <p className="status status--error">{error}</p>;
     if (!match) return <Spinner />;
 
@@ -361,22 +440,46 @@ export default function Game() {
             )}
             <div className="game">
                 <div className="game__main">
-                    <div className="game__players">
-                        {match.players.filter(Boolean).map(player => (
-                            <PlayerInfo key={player._id} user={player} showImage />
-                        ))}
-                    </div>
+                    {/* Player cards only shown while waiting */}
+                    {(match.status === 'waiting' || gamePhase === 'ready' || isPreGame) && (
+                        <div className="game__players">
+                            {match.players.filter(Boolean).map(player =>
+                                <PlayerInfo key={player._id} user={player} showImage inline />
+                            )}
+                        </div>
+                    )}
+
+                    {!isPreGame && match.status !== 'waiting' && match.gameCategory && gamePhase !== 'ended' && gamePhase !== 'cancelled' && (
+                        <div className="game__info-bar game__info-bar--standalone">
+                            <span>{match.gameCategory.timeController}s · {match.gameCategory.numberOfRounds} rounds · {match.gameCategory.gameRules === 'straights_allowed' ? 'Straights allowed' : 'No straights'}</span>
+                            <strong>Pot: {displayPot} {displayPot === 1 ? 'coin' : 'coins'}</strong>
+                        </div>
+                    )}
+
                     <div className="game__game-board" style={{ backgroundColor: preferences.boardColor }}>
-                        {match.status === "waiting" && (
+                        {/* Info bar inside the box only when waiting */}
+                        {(match.status === 'waiting' || isPreGame) && match.gameCategory && (
+                            <div className="game__info-bar">
+                                <span>{match.gameCategory.timeController}s · {match.gameCategory.numberOfRounds} rounds · {match.gameCategory.gameRules === 'straights_allowed' ? 'Straights allowed' : 'No straights'}</span>
+                                <strong>Pot: {displayPot} {displayPot === 1 ? 'coin' : 'coins'}</strong>
+                            </div>
+                        )}
+
+                        {isPreGame && (
+                            <div className="game__waiting-overlay">
+                                <p>Starting game...</p>
+                            </div>
+                        )}
+
+                        {match.status === 'waiting' && (
                             <div className="game__waiting-overlay">
                                 {user ? (
                                     <>
-                                        <p>Waiting for other players to join...</p>
-                                        <p className="game__waiting-count">{match.players.length}/{match.maxPlayers ?? 2} players</p>
+                                        <p>Waiting for {(match.maxPlayers ?? 2) - match.players.length} more opponents....</p>
                                         {match.players.some(player => player?._id === user._id) && (
-                                            <button onClick={handleLeave}>
+                                            <Button onClick={handleLeave}>
                                                 {match.players.length === 1 ? 'Cancel game' : 'Leave game'}
-                                            </button>
+                                            </Button>
                                         )}
                                     </>
                                 ) : (
@@ -385,83 +488,127 @@ export default function Game() {
                             </div>
                         )}
 
-                        {match.status === "ongoing" && gamePhase !== 'ended' && !forfeitBy && (
+                        {match.status === 'ongoing' && gamePhase !== 'ended' && !forfeitBy && (
                             <>
-
                                 {gamePhase === 'rolling' && timeLeft !== null && (
                                     <p className="game__timer">⏱ {timeLeft}s</p>
                                 )}
                                 {gamePhase === 'ready' && (
                                     <div className="game__ready-overlay">
-                                        {readySent
-                                            ? <p>Waiting for opponent...</p>
-                                            : <button onClick={handleReady}>Ready</button>
-                                        }
+                                        {readyTimeLeft !== null && (
+                                            <span className="game__ready-timer">{readyTimeLeft}s</span>
+                                        )}
+                                        <h2 className="game__ready-title">READY?</h2>
+                                        <div className="game__ready-buttons">
+                                            <Button
+                                                className={`game__ready-yes${readySent ? ' game__ready-yes--confirmed' : ''}`}
+                                                onClick={handleReady}
+                                                disabled={readySent}
+                                            >
+                                                YES!
+                                            </Button>
+                                            <Button variant="plain" onClick={handleLeave}>Leave game</Button>
+                                        </div>
+                                        {readySent && (
+                                            <p className="game__ready-waiting">Waiting for opponents to be ready...</p>
+                                        )}
                                     </div>
                                 )}
                                 <dice-poker-board ref={boardRef}></dice-poker-board>
-                                {user && match.players.some(player => player?._id === user._id) && (
-                                    <button onClick={handleLeave}>Leave game</button>
-                                )}
-                                {playerLeftNotice && (
-                                    <p className="status status--error">
-                                        {match.players.find(player => player?._id === playerLeftNotice)?.username ?? 'Opponent'} left — their moves are now automatic
-                                    </p>
-                                )}
-
                             </>
                         )}
 
-
-                        {match.status === "finished" && !gamePhase && (
+                        {match.status === 'finished' && !gamePhase && (
                             <div className="game__ended">
                                 <h2>Game over</h2>
-                                {match.outcome && <p>Result: {match.outcome}</p>}
                             </div>
                         )}
 
                         {(gamePhase === 'ended' || gamePhase === 'cancelled' || forfeitBy) && (
                             <div className="game__ended">
-                                <h2>Game over</h2>
-                                {gamePhase === 'cancelled' && <p>Not all players were ready in time.</p>}
-                                {forfeitBy && (
-                                    <p>{match.players.find(player => player?._id === forfeitBy)?.username ?? 'Opponent'} left the game</p>
+                                {standings ? (
+                                    <>
+                                        <h2 className="game__ended-title">
+                                            {isTie ? "IT'S A TIE!" : isWinner ? 'YOU WON!' : 'YOU LOST!'}
+                                        </h2>
+
+                                        <ol className="game__standings">
+                                            {sortedStandings.map((entry, i) => {
+                                                const playerName = match.players.find(player => player?._id === entry.userId)?.username ?? 'Unknown';
+                                                const isMe = entry.userId === user?._id;
+                                                const coinDisplay = entry.stack >= 0
+                                                    ? `+ ${entry.stack} coin${entry.stack !== 1 ? 's' : ''}`
+                                                    : `- ${Math.abs(entry.stack)} coin${Math.abs(entry.stack) !== 1 ? 's' : ''}`;
+                                                return (
+                                                    <li key={entry.userId} className={isMe ? 'game__standings-me' : ''}>
+                                                        {i + 1}. {entry.stack === topStack && '🎉 '}{playerName} {coinDisplay}
+                                                    </li>
+                                                );
+                                            })}
+
+                                        </ol>
+                                    </>
+                                ) : (
+                                    gamePhase === 'cancelled' && <p>Not all players were ready in time.</p>
                                 )}
-                                {standings && (
-                                    <ol className="game__standings">
-                                        {standings.map((entry, i) => {
-                                            const playerName = match.players.find(matchPlayer => matchPlayer?._id === entry.userId)?.username;
-                                            return (
-                                                <li key={entry.userId}>
-                                                    {i === 0 && '🏆 '}{playerName} — {entry.stack} coins
-                                                </li>
-                                            );
-                                        })}
-                                    </ol>
+                                {tournamentId && (
+                                    <Button onClick={() => navigate(`/tournament/${tournamentId}`)}>Back to tournament</Button>
                                 )}
-                                <button onClick={() => navigate('/')}>Back to home</button>
+                                <Button onClick={() => navigate('/')}>Back to homepage</Button>
                             </div>
                         )}
                     </div>
 
+                    {roundResult && gamePhase !== 'ended' && (
+                        <p className={`game__round-result game__round-result--${roundResult}`}>
+                            You {roundResult} this round!
+                        </p>
+                    )}
+
+                    {gamePhase === 'rolling' && (
+                        <div className="game__roll-controls">
+                            {!canRoll && (
+                                <p className="game__ready-waiting">
+                                    {timedOut
+                                        ? "You've used up the time limit. Waiting for opponents to finish..."
+                                        : "Waiting for opponents to finish..."
+                                    }
+                                </p>
+                            )}
+                            <div className="game__roll-buttons">
+                                {user && match.players.some(player => player?._id === user._id) && (
+                                    <>
+                                        <Button variant="plain" disabled={!canRoll} onClick={() => boardRef.current?.handleRollAgain()}>Roll</Button>
+                                        <Button variant="plain" disabled={!canRoll} onClick={() => boardRef.current?.handleDoneRolling()}>Done rolling</Button>
+                                        <Button variant="plain" onClick={() => setShowLeaveConfirm(true)}>Leave game</Button>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+
                     {gamePhase === 'betting' && bettingState && !forfeitBy && (
-                        <div className="game__betting">
-                            <p className="game__pot">Pot: {bettingState.pot} coins</p>
+                        <div className="game__bet-controls">
                             <BettingControls
                                 bettingState={bettingState}
                                 userId={user?._id}
                                 coinWager={match.coinWager}
                                 onBet={sendBet}
+                                betTimeLeft={betTimeLeft}
+                                betTimedOut={betTimedOut}
                             />
+                            {user && match.players.some(player => player?._id === user._id) && (
+                                <Button variant="plain" onClick={() => setShowLeaveConfirm(true)}>Leave game</Button>
+                            )}
                         </div>
                     )}
 
-                    {match.gameCategory && (
-                        <p className="game__variant">
-                            Best of {match.gameCategory.numberOfRounds} · {match.gameCategory.gameRules} · {match.gameCategory.timeController}s total time
-                        </p>
+                    {match.status === 'ongoing' && gamePhase === null && !isPreGame && !forfeitBy && user && match.players.some(player => player?._id === user._id) && (
+                        <Button variant="plain" className="game__leave-btn" onClick={() => setShowLeaveConfirm(true)}>Leave game</Button>
                     )}
                 </div>
+
                 <aside className="game__comments">
                     <CommentList comments={comments} />
                     {user
@@ -475,7 +622,18 @@ export default function Game() {
                         </>
                     }
                 </aside>
-            </div >
+            </div>
+
+            {/* Leave game confirmation popup */}
+            {showLeaveConfirm && (
+                <ConfirmDialog
+                    message={match?.status === 'ongoing'
+                        ? "Leaving an ongoing game counts as a forfeit. Are you sure?"
+                        : "Are you sure you want to leave this game?"}
+                    onConfirm={() => { setShowLeaveConfirm(false); handleLeave(); }}
+                    onCancel={() => setShowLeaveConfirm(false)}
+                />
+            )}
         </>
     );
 }
