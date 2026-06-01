@@ -34,13 +34,12 @@ const userSchema = new mongoose.Schema({
         unique: true,
         required: true
     },
-    // The password is stored as an MD5 hash
+    // The password is stored as an MD5 hash with per-user salt
     password: {
         type: String,
         trim: true,
         required: true
     },
-
      emailVerified: {
         type: Boolean,
         default: false,
@@ -120,6 +119,12 @@ const userSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    // refreshToken stores the hashed refresh token for session management
+    // Used to issue new access tokens without requiring login
+    refreshToken: {
+        type: String,
+        default: null
+    },
     // createdAt is automatically set to the current date and time when the user is created
     createdAt: {
         type: Date,
@@ -147,13 +152,12 @@ const userSchema = new mongoose.Schema({
 // The pre("validate") hook runs before each save.
 // It generates a userId if one doesn't exist yet
 // and it hashes the password if it has been modified, to avoid storing plaintext passwords
-userSchema.pre("validate", function(){
+userSchema.pre('validate', async function () {
     if (!this.userId) {
-        this.userId = Math.round(Math.random() * Number.MAX_SAFE_INTEGER);
+        this.userId = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
     }
-    // isModified("password") prevents double-hashing if the user updates other fields
-    if(this.isModified("password")){
-        this.password = hashPassword(this.password);
+    if (this.isModified('password')) {
+        this.password = await hashPassword(this.password);
     }
 });
 

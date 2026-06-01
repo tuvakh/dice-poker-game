@@ -13,12 +13,16 @@ const userApiRouter = express.Router();
 userApiRouter.post('/users', userValidator.validateCreateUser(), validate, userController.createUser);
 // This returns the user object without password on success
 userApiRouter.post('/users/login', userValidator.validateLogin(), validate, userController.loginUser);
+// Refresh access token using refresh token
+userApiRouter.post('/users/refresh', userController.refreshToken);
 // Forgot password: request reset email
 userApiRouter.post('/users/forgot-password', userValidator.validateForgotPassword(), validate, userController.forgotPassword);
 // Reset password: uses code from email link
 userApiRouter.post('/users/reset-password', userValidator.validateResetPassword(), validate, userController.resetPassword);
 // Verify email using token sent to user's inbox
 userApiRouter.post('/users/verify-email', userValidator.validateVerifyEmail(), validate, userController.verifyEmail);
+// Clears JWT cookies so the browser can no longer authenticate with old tokens
+userApiRouter.post('/users/logout', userController.logoutUser);
 
 // Only admins can get a paginated and searchable list of all users
 userApiRouter.get('/users', userValidator.validateGetAllUsers(), validate, requireAdmin, userController.getAllUsers);

@@ -1,4 +1,4 @@
-import { BASE_URL, handleResponse, getAuthHeaders } from "./config.js";
+import { BASE_URL, handleResponse, fetchWithAuth } from "./config.js";
 
 export async function getUsers({ page = 1, limit = 10, search = "" } = {}, signal) {
     const params = new URLSearchParams();
@@ -6,33 +6,29 @@ export async function getUsers({ page = 1, limit = 10, search = "" } = {}, signa
     if (limit) params.append('limit', limit);
     if (search) params.append('search', search);
 
-    const res = await fetch(`${BASE_URL}/users?${params.toString()}`, {
-        headers: { ...getAuthHeaders() },
+    const res = await fetchWithAuth(`${BASE_URL}/users?${params.toString()}`, {
         signal
     });
     return handleResponse(res);
 }
 
 export async function banUser(userId) {
-    const res = await fetch(`${BASE_URL}/users/${userId}/ban`, {
-        method: 'PUT',
-        headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' }
+    const res = await fetchWithAuth(`${BASE_URL}/users/${userId}/ban`, {
+        method: 'PUT'
     });
     return handleResponse(res);
 }
 
 export async function unbanUser(userId) {
-    const res = await fetch(`${BASE_URL}/users/${userId}/unban`, {
-        method: 'PUT',
-        headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' }
+    const res = await fetchWithAuth(`${BASE_URL}/users/${userId}/unban`, {
+        method: 'PUT'
     });
     return handleResponse(res);
 }
 
 export async function changeRole(userId, role) {
-    const res = await fetch(`${BASE_URL}/users/${userId}/role`, {
+    const res = await fetchWithAuth(`${BASE_URL}/users/${userId}/role`, {
         method: 'PUT',
-        headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
         body: JSON.stringify({ role })
     });
     return handleResponse(res);

@@ -24,7 +24,7 @@ try {
 
     // Award all trophies to dragonslayer (users[0])
     await User.findByIdAndUpdate(users[0]._id, {
-        $push: { trophies: { $each: trophies.map(t => t._id) } }
+        $push: { trophies: { $each: trophies.map(trophy => trophy._id) } }
     });
     console.log("Awarded all trophies to dragonslayer");
     

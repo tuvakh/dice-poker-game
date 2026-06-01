@@ -1,9 +1,7 @@
-import { BASE_URL, handleResponse } from "./config.js";
+import { BASE_URL, handleResponse, fetchWithAuth } from "./config.js";
 
 export async function getAdminStats() {
-    const res = await fetch(`${BASE_URL}/admin/stats`, {
-        headers: { "X-User-Role": "admin" }
-    });
+    const res = await fetchWithAuth(`${BASE_URL}/admin/stats`);
     return handleResponse(res);
 }
 

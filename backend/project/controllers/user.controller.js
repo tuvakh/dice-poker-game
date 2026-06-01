@@ -3,6 +3,7 @@
 
 import { matchedData } from "express-validator";
 import userServices from "../services/user.service.js";
+import { generateAccessToken, generateRefreshToken } from "../utils/jwt.js";
 
 // This function returns all users with optional search
 // Only admins ca reach this list
@@ -46,10 +47,36 @@ export async function createUser(req, res, next){
 // This function logs a user in by username and password
 // It returns the user object without the password field
 // If the email or password is wrong, it returns an error
+// Also generates JWT access and refresh tokens stored in HTTP-only cookies
 export async function loginUser(req, res, next){
     try {
         const { username, password } = matchedData(req);
         const result = await userServices.loginUser(username, password);
+        
+        // Generate access token (1 hour) and refresh token (30 days)
+        const accessToken = generateAccessToken(result);
+        const refreshToken = generateRefreshToken(result);
+        
+        // Save refresh token to database for revocation/validation
+        await userServices.saveRefreshToken(result.userId, refreshToken);
+        
+        // Set HTTP-only cookies with both tokens
+        // Access token - short-lived, used for API requests
+        res.cookie('accessToken', accessToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'Lax',
+            maxAge: 60 * 60 * 1000 // 1 hour in milliseconds
+        });
+        
+        // Refresh token - long-lived, used to get new access tokens
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'Lax',
+            maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days in milliseconds
+        });
+        
         res.status(200).json(result)  
     // next(error) forwards the error (if any) to middleware/error.js        
     } catch (error) {
@@ -146,6 +173,48 @@ export async function resetPassword(req, res, next) {
     }
 }
 
+// Refresh the access token using the refresh token
+// Called when access token has expired but refresh token is still valid
+export async function refreshToken(req, res, next) {
+    try {
+        const refreshTokenFromCookie = req.cookies.refreshToken;
+        
+        if (!refreshTokenFromCookie) {
+            return res.status(401).json({ error: 'UNAUTHORIZED', message: 'No refresh token found' });
+        }
+        
+        const decoded = userServices.verifyRefreshToken(refreshTokenFromCookie);
+        if (!decoded) {
+            return res.status(401).json({ error: 'UNAUTHORIZED', message: 'Invalid or expired refresh token' });
+        }
+        
+        // Get fresh user data
+        const user = await userServices.getUser(decoded.userId);
+        
+        // Generate new access token
+        const newAccessToken = generateAccessToken(user);
+        
+        // Set new access token cookie
+        res.cookie('accessToken', newAccessToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'Lax',
+            maxAge: 60 * 60 * 1000 // 1 hour
+        });
+        
+        res.status(200).json({ message: 'Access token refreshed' });
+    } catch (error) {
+        next(error);
+    }
+}
+
+// Clears the access and refresh token cookies, ending the user's session
+export async function logoutUser(req, res) {
+    res.clearCookie('accessToken');
+    res.clearCookie('refreshToken');
+    res.status(200).json({ message: 'Logged out' });
+}
+
 // This exports the functions as a default objects, so routes can import them in one line
 export default {
 	getAllUsers,
@@ -158,5 +227,7 @@ export default {
     changeRole,
     verifyEmail,
     forgotPassword,
-    resetPassword
+    resetPassword,
+    refreshToken,
+    logoutUser
 };

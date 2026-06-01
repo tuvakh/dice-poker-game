@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { loginUser, createUser, getUser } from "../api/users";
-
+import { BASE_URL } from "../api/config";
 // This context holds the logged-in user and auth functions (login, logout, register)
 const AuthContext = createContext(null);
 
@@ -21,6 +21,7 @@ export function AuthProvider({ children }) {
         setUser(null);
         sessionStorage.removeItem("user");
         setBannedMessage(null);
+        fetch(`${BASE_URL}/users/logout`, { method: 'POST', credentials: 'include' }).catch(() => { });
     }
 
     // Handles user ban: show message
@@ -96,11 +97,13 @@ export function AuthProvider({ children }) {
     // Used for example when saving appearance preferences or updating the profile
     function updateUserData(updates) {
         setUser(prev => {
+            if (!prev) return prev;
             const updated = { ...prev, ...updates };
             sessionStorage.setItem("user", JSON.stringify(updated));
             return updated;
         });
     }
+
 
     return (
         // Make user and all auth functions available to any component that calls useAuth()
