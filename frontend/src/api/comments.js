@@ -1,4 +1,4 @@
-import { BASE_URL, handleResponse, getAuthHeaders } from "./config.js";
+import { BASE_URL, handleResponse, fetchWithAuth } from "./config.js";
 
 // Fetches a list of comments, with optional filters for target, search, and pagination
 export async function getAllComments({ page, limit, search, targetId, targetType } = {}, signal) {
@@ -9,15 +9,14 @@ export async function getAllComments({ page, limit, search, targetId, targetType
     if (targetId) params.append("targetId", targetId);
     if (targetType) params.append("targetType", targetType);
 
-    const res = await fetch(`${BASE_URL}/comments?${params}`, { signal });
+    const res = await fetchWithAuth(`${BASE_URL}/comments?${params}`, { signal });
     return handleResponse(res);
 }
 
 // Creates a new comment
 export async function createComment(data) {
-    const res = await fetch(`${BASE_URL}/comments`, {
+    const res = await fetchWithAuth(`${BASE_URL}/comments`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
         body: JSON.stringify(data)
     });
     return handleResponse(res);
@@ -25,9 +24,8 @@ export async function createComment(data) {
 
 // Deletes a comment by commentId (admin only)
 export async function deleteComment(commentId) {
-    const res = await fetch(`${BASE_URL}/comments/${commentId}`, {
-        method: "DELETE",
-        headers: { ...getAuthHeaders() }
+    const res = await fetchWithAuth(`${BASE_URL}/comments/${commentId}`, {
+        method: "DELETE"
     });
     return handleResponse(res);
 }

@@ -1,12 +1,26 @@
-// I created a rudimentary auth middleware
-// It reads the X-User-Role header on every request to determine the access level for anonymous, regular and admin users.
-// In a real app I should use JWT tokens. I explained this more in my documentation
+// Authentication middleware that verifies JWT tokens from HTTP-only cookies
+// Uses access tokens for API requests, refresh tokens to get new access tokens
 
-// This function sets the user role on every request
-// It defaults to "anonymous" if no header is provided
+import { verifyToken, getRoleFromToken } from "../utils/jwt.js";
+
+// This function verifies JWT access token from cookies on every request
+// It defaults to "anonymous" if no valid token is found
 export function setUserRole(req, res, next) {
-    const role = req.headers["x-user-role"];
-    req.userRole = role || "anonymous";
+    const accessToken = req.cookies.accessToken;
+    
+    if (accessToken) {
+        const decoded = verifyToken(accessToken);
+        if (decoded) {
+            req.userRole = getRoleFromToken(decoded);
+            req.userId = decoded.userId;
+            req.username = decoded.username;
+            return next();
+        }
+    }
+    
+    // No valid access token found
+    req.userRole = "anonymous";
+    req.userId = null;
     next();
 }
 

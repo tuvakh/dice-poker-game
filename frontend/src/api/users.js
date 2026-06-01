@@ -1,17 +1,16 @@
-import { BASE_URL, handleResponse, getAuthHeaders } from "./config.js";
+import { BASE_URL, handleResponse, fetchWithAuth } from "./config.js";
 
 // Fetches a single user's profile by their userId
 export async function getUser(id) {
-    const res = await fetch(`${BASE_URL}/users/${id}`);
+    const res = await fetchWithAuth(`${BASE_URL}/users/${id}`);
     return handleResponse(res);
 }
 
 // Registers a new user account
 // data contains username, password, email, dateOfBirth, etc.
 export async function createUser(data) {
-    const res = await fetch(`${BASE_URL}/users`, {
+    const res = await fetchWithAuth(`${BASE_URL}/users`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data)
     });
     return handleResponse(res);
@@ -20,9 +19,8 @@ export async function createUser(data) {
 // Logs in a user and returns their profile data
 // data contains username and password
 export async function loginUser(data) {
-    const res = await fetch(`${BASE_URL}/users/login`, {
+    const res = await fetchWithAuth(`${BASE_URL}/users/login`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data)
     });
     return handleResponse(res);
@@ -34,13 +32,10 @@ export async function loginUser(data) {
 export async function updateUser(id, data) {
     // Check if data is a file upload or a plain object
     const isFormData = data instanceof FormData;
-    const res = await fetch(`${BASE_URL}/users/${id}`, {
+    const res = await fetchWithAuth(`${BASE_URL}/users/${id}`, {
         method: "PUT",
-        // For FormData, we skip Content-Type so the browser sets it automatically 
-        // For plain objects, we set it to JSON manually
-        headers: isFormData
-            ? { ...getAuthHeaders() }
-            : { "Content-Type": "application/json", ...getAuthHeaders() },
+        // For FormData, don't set Content-Type so the browser sets it with the boundary
+        headers: isFormData ? {} : {},
         body: isFormData ? data : JSON.stringify(data)
     });
     return handleResponse(res);
@@ -48,9 +43,8 @@ export async function updateUser(id, data) {
 
 // Verifies an email using the token sent to the user's inbox
 export async function verifyEmail(token) {
-    const res = await fetch(`${BASE_URL}/users/verify-email`, {
+    const res = await fetchWithAuth(`${BASE_URL}/users/verify-email`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token })
     });
     return handleResponse(res);
@@ -58,9 +52,8 @@ export async function verifyEmail(token) {
 
 // Requests a password reset email
 export async function forgotPassword(email) {
-    const res = await fetch(`${BASE_URL}/users/forgot-password`, {
+    const res = await fetchWithAuth(`${BASE_URL}/users/forgot-password`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })
     });
     return handleResponse(res);
@@ -68,9 +61,8 @@ export async function forgotPassword(email) {
 
 // Resets the password using the code from the email link
 export async function resetPassword(code, password) {
-    const res = await fetch(`${BASE_URL}/users/reset-password`, {
+    const res = await fetchWithAuth(`${BASE_URL}/users/reset-password`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code, password })
     });
     const result = await handleResponse(res);

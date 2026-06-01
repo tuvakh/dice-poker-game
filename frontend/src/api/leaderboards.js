@@ -1,4 +1,4 @@
-import { BASE_URL, handleResponse } from "./config.js";
+import { BASE_URL, handleResponse, fetchWithAuth } from "./config.js";
 
 export async function getRankings({ page = 1, limit = 10, sortBy, category } = {}) {
     const params = new URLSearchParams();
@@ -8,6 +8,6 @@ export async function getRankings({ page = 1, limit = 10, sortBy, category } = {
     if (sortBy) params.set("sortBy", sortBy);
     if (category) params.set("category", category);
 
-    const res = await fetch(`${BASE_URL}/leaderboards?${params.toString()}`);
+    const res = await fetchWithAuth(`${BASE_URL}/leaderboards?${params.toString()}`);
     return handleResponse(res);
 }

@@ -5,6 +5,7 @@ import { Match } from '../models/Match.js';
 import { checkPassword } from '../utils/hash.js';
 import { CustomError } from '../utils/customError.js';
 import { applyWeeklyCoinGrant } from '../utils/coins.js';
+import { verifyToken } from '../utils/jwt.js';
 import crypto from 'crypto';
 import { sendPasswordResetEmail, sendVerificationEmail } from '../utils/mailer.js';
 
@@ -275,8 +276,8 @@ export async function loginUser(username, password) {
     // prevent banned users from logging in
     if (user.banned) throw new CustomError('This account has been banned. Time to reflect on your choices!', 403, 'FORBIDDEN');
 
-    // checkPassword hashes the input and compares it to the stored hash
-    const correctPassword = checkPassword(password, user.password);
+    // checkPassword hashes the input with the user's salt and compares it to the stored hash
+    const correctPassword = checkPassword(password, user.password, user.passwordSalt);
 
     if (!correctPassword) {
         throw new CustomError("Nope, that's not the right password. Try again!", 401, 'UNAUTHORIZED');
@@ -338,6 +339,34 @@ export async function changeUserRole(userId, role) {
     return user;
 }
 
+// Save refresh token to database (for logout/revocation/validation)
+export async function saveRefreshToken(userId, token) {
+    const user = await User.findOne({ userId });
+    if (!user) {
+        throw new CustomError(`A user with the id ${userId}? Never heard of them!`, 404, 'NOT_FOUND');
+    }
+    user.refreshToken = token;
+    await user.save();
+    return user;
+}
+
+// Verify refresh token - checks both JWT validity and storage in DB
+export async function verifyRefreshToken(token) {
+    // First verify it's a valid JWT
+    const decoded = verifyToken(token);
+    if (!decoded || decoded.type !== 'refresh') {
+        return null;
+    }
+    
+    // Then check it matches the stored token (ensures logout/revocation works)
+    const user = await User.findOne({ userId: decoded.userId });
+    if (!user || user.refreshToken !== token) {
+        return null;
+    }
+    
+    return decoded;
+}
+
 export default {
     getAllUsers,
     getUser,
@@ -347,6 +376,8 @@ export default {
     banUser,
     unbanUser,
     changeUserRole,
+    saveRefreshToken,
+    verifyRefreshToken,
     verifyEmailToken,
     requestPasswordReset,
     resetPassword

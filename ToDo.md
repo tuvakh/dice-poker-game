@@ -31,9 +31,9 @@
 15. ✅ In game money(gambelinggg), needs to be shown on player page. --> Marie
 16. ✅ More game varients. --> Tuva
 17. ✅ Authentication and authorization --> Marie
-        ✅ No JWT — login returns raw user object in sessionStorage
-        ✅ No access/refresh tokens
-        ✅ Authorization faked — anyone can send X-User-Role: admin header and get full access
+        ✅ JWT
+        ✅access/refresh tokens
+        ✅ Authorization x-user role, should be tokens
         ✅ MD5 + global salt — two users with same password get same hash; needs per-user salt (bcrypt)
 18. ✅ implement a 404 page --> Marie
 19. ✅ Implement comments using websockets --> Tuva

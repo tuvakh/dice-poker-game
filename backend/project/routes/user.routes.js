@@ -13,6 +13,8 @@ const userApiRouter = express.Router();
 userApiRouter.post('/users', userValidator.validateCreateUser(), validate, userController.createUser);
 // This returns the user object without password on success
 userApiRouter.post('/users/login', userValidator.validateLogin(), validate, userController.loginUser);
+// Refresh access token using refresh token
+userApiRouter.post('/users/refresh', userController.refreshToken);
 // Forgot password: request reset email
 userApiRouter.post('/users/forgot-password', userValidator.validateForgotPassword(), validate, userController.forgotPassword);
 // Reset password: uses code from email link
