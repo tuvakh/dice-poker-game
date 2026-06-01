@@ -177,6 +177,15 @@
         color: inherit;
     }
 
+    &__bet-timer {
+    font-weight: bold;
+    font-size: 1rem;
+
+        &--urgent {
+            color: #c0392b;
+        }
+    }
+
     &__player-left {
         color: #c0392b;
         font-weight: bold;

@@ -449,9 +449,8 @@ export default function Game() {
                         </div>
                     )}
 
-                    <div className={`game__timer-wrapper${(timeLeft !== null && timeLeft <= 5) || (betTimeLeft !== null && betTimeLeft <= 5) ? ' game__timer-wrapper--urgent' : ''}`}>
+                    <div className={`game__timer-wrapper${timeLeft !== null && timeLeft <= 5 ? ' game__timer-wrapper--urgent' : ''}`}>
                         {gamePhase === 'rolling' && timeLeft !== null && `⏱ ${timeLeft}s`}
-                        {gamePhase === 'betting' && betTimeLeft !== null && `⏱ ${betTimeLeft}s`}
                     </div>
                     <div className="game__game-board" style={{ backgroundColor: preferences.boardColor }}>
                         {/* Info bar inside the box only when waiting */}
@@ -589,6 +588,7 @@ export default function Game() {
                                 userId={user?._id}
                                 coinWager={match.coinWager}
                                 onBet={sendBet}
+                                betTimeLeft={betTimeLeft}
                             />
                             {user && match.players.some(p => p?._id === user._id) && (
                                 <Button variant="plain" onClick={() => setShowLeaveConfirm(true)}>Leave game</Button>
