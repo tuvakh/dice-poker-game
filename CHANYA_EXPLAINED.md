@@ -426,4 +426,251 @@ Three places display trophies:
 
 ---
 
-what i have changed/ how i got it to work 
+## 15. Tournament Auto-Start — `frontend/src/pages/TournamentPage.jsx`
+
+The exam spec says tournaments start automatically when the scheduled date arrives — no admin button needed. I implemented this with two separate `useEffect` hooks, each guarded by a `useRef` flag to prevent duplicate calls.
+
+### First round (when tournament date arrives)
+
+```js
+const autoStartedRef = useRef(false);
+
+useEffect(() => {
+    if (!tournament || !user) return;
+    if (tournament.status !== 'upcoming') return;
+    if ((tournament.participants?.length ?? 0) < 2) return;
+    if (autoStartedRef.current) return;
+
+    const target = new Date(tournament.date).getTime();
+    const remaining = target - Date.now();
+
+    const fire = () => {
+        autoStartedRef.current = true;
+        startRound(id)
+            .then(updated => setTournament(updated))
+            .catch(() => getTournament(id).then(updated => setTournament(updated)));
+    };
+
+    if (remaining <= 0) { fire(); }
+    else {
+        const timer = setTimeout(fire, remaining);
+        return () => clearTimeout(timer);
+    }
+}, [tournament?.tournamentId, tournament?.status, tournament?.participants?.length, user, id]);
+```
+
+The dependency array uses `tournament?.tournamentId` instead of the whole `tournament` object so this effect does not re-run every time any field on the tournament changes — only when the tournament itself changes identity. `autoStartedRef` prevents the effect from firing twice if the component re-renders while the timeout is pending.
+
+The `.catch` fallback re-fetches the tournament instead of crashing. This handles the case where two users are both viewing the page and both try to start the round at the same moment — the second call will fail (backend rejects it), but the fallback re-fetch gets the already-started tournament.
+
+### Subsequent rounds (after each break countdown hits zero)
+
+Inside the countdown `useEffect`, when `remaining === 0`:
+
+```js
+const nextRoundFiredRef = useRef(false);
+
+if (remaining === 0 && !nextRoundFiredRef.current) {
+    nextRoundFiredRef.current = true;
+    startRound(id)
+        .then(updated => setTournament(updated))
+        .catch(() => getTournament(id).then(updated => setTournament(updated)));
+}
+// cleanup resets the flag so EACH new break can also auto-start
+return () => {
+    clearInterval(interval);
+    nextRoundFiredRef.current = false;
+};
+```
+
+The cleanup function resets `nextRoundFiredRef` to `false` when the countdown effect re-runs (which happens when `tournament` changes, e.g., after a new round starts). This means each round's break can auto-trigger the next round independently.
+
+---
+
+## 16. Auto-Redirect Players to Their Game — `frontend/src/pages/TournamentPage.jsx`
+
+The spec says players are automatically redirected from the tournament page to their game when a round starts. I implemented this with a `useEffect` that watches the tournament state:
+
+```js
+const redirectedRef = useRef(false);
+
+useEffect(() => {
+    if (!tournament || !user || tournament.status !== 'ongoing') return;
+    if (redirectedRef.current) return;
+
+    const latestRound = tournament.rounds[tournament.rounds.length - 1];
+    for (const match of latestRound) {
+        if (!match || match.status !== 'ongoing') continue;
+        const isPlayer = match.players?.some(
+            pl => (pl._id ?? pl)?.toString() === user._id?.toString()
+        );
+        if (isPlayer && match.matchId) {
+            redirectedRef.current = true;
+            navigate(`/game/${match.matchId}`, { state: { tournamentId: tournament.tournamentId } });
+            return;
+        }
+    }
+}, [tournament, user, navigate]);
+```
+
+`redirectedRef` prevents the redirect from firing again when the user navigates back after finishing their game — without it, they would immediately be sent back to the game again.
+
+The `navigate` call passes `tournamentId` in the `state` object. `Game.jsx` reads this with `useLocation()` and shows a "Back to tournament" button on the game-end screen. This is how the round-trip works: tournament → game (auto-redirect) → game ends → "Back to tournament" button → tournament page (standings updated).
+
+---
+
+## 17. Standings Section — `frontend/src/pages/TournamentPage.jsx`
+
+Standings are computed client-side from the `tournament.standings` array that the backend returns. Each entry in the array is `{ round: N, winners: [userObj, ...] }`. I build a win-count map across all rounds:
+
+```js
+const winMap = {};
+for (const roundData of (tournament.standings ?? [])) {
+    for (const winner of (roundData.winners ?? [])) {
+        const wId = (winner._id ?? winner)?.toString();
+        if (!wId) continue;
+        if (!winMap[wId]) winMap[wId] = { username: winner.username ?? '?', wins: 0 };
+        winMap[wId].wins++;
+    }
+}
+// Include all participants so players with 0 wins still appear
+for (const p of (tournament.participants ?? [])) {
+    const pId = (p._id ?? p)?.toString();
+    if (pId && !winMap[pId]) winMap[pId] = { username: p.username ?? '?', wins: 0 };
+}
+const standingsList = Object.values(winMap).sort((a, b) => b.wins - a.wins);
+```
+
+Including all participants (not just winners) is important so players who haven't won a match yet still appear in the table with 0 wins, rather than disappearing from the standings until they win something.
+
+The leading player gets a highlighted CSS class (`tournament-detail__standings-row--leader`) to make them visually stand out.
+
+---
+
+## 18. Admin Tournament Edit Page — `frontend/src/pages/admin/TournamentEdit.jsx`
+
+The individual tournament page shows an "Edit tournament" button for admins. Clicking it navigates to `/admin/tournaments/:id/edit`. This is a new admin page I built that pre-fills a form with the existing tournament data.
+
+On mount it calls three APIs in parallel:
+- `getTournament(id)` — loads the existing tournament data
+- `getAllGameCategories()` — populates the game variant dropdown
+- `getAllTrophies()` — populates the trophy dropdown
+
+The date field needs special handling because HTML `<input type="datetime-local">` expects `YYYY-MM-DDTHH:MM` format, not ISO format:
+
+```js
+const toDatetimeLocal = (iso) => {
+    if (!iso) return "";
+    return new Date(iso).toISOString().slice(0, 16);
+};
+```
+
+On submit it calls `updateTournament(id, { title, description, date, breaks, numberOfRounds, gameCategory, trophy })` and navigates back to the tournament page on success.
+
+I reused `_TournamentCreate.scss` for styling — the form layout is identical to the create page so there was no need for a separate stylesheet.
+
+---
+
+## 19. Backend — Update Tournament — `tournament.service.js`, `tournament.controller.js`, `tournament.validator.js`, `tournament.routes.js`
+
+To support the edit page I added a full backend stack for updating tournaments.
+
+**Validator** — `validateUpdateTournament()`: all fields optional, same validation rules as create. This means an admin can update just the title without having to re-send everything.
+
+**Service** — `updateTournament(tournamentId, updates)`: uses `findOneAndUpdate` with `$set` and `{ new: true }` to return the updated document. Only the fields that are present in `updates` are changed.
+
+**Controller** — `updateTournament`: uses `matchedData(req)` to get validated fields, extracts `tournamentId` from params, passes the rest as `updates`.
+
+**Route**:
+```js
+tournamentApiRouter.put('/tournaments/:tournamentId', requireAdmin, validateUpdateTournament(), validate, updateTournament);
+```
+
+Defined after the `knockoutRounds` route (`PUT /tournaments/:tournamentId/knockoutRounds`) so Express matches the more specific path first.
+
+---
+
+## 20. Fix: Join Button Showing "Join" After Refresh — `frontend/src/pages/TournamentPage.jsx`
+
+After joining a tournament, refreshing the page would show the "Join Tournament" button again, even though the user was already registered. The root cause was an ObjectId comparison bug.
+
+The original code compared participant IDs to the logged-in user's `_id`:
+```js
+// Broken — ObjectId serialisation varies between Mongoose versions
+const alreadyIn = tournament.participants?.some(
+    p => p._id?.toString() === user._id?.toString()
+);
+```
+
+Mongoose documents serialise `_id` differently depending on whether they came from `.toObject()`, `.populate()`, or direct JSON serialisation. The values looked the same when printed but failed strict equality.
+
+The fix: compare by `username` instead, which is always a plain string on both sides:
+```js
+const alreadyIn = user && tournament.participants?.some(
+    p => p.username && p.username === user.username
+);
+```
+
+I also changed `handleJoin` to re-fetch the full tournament from the server after joining (instead of an optimistic local update). This ensures the participants list matches exactly what MongoDB returns, so `alreadyIn` always has fresh data to check against.
+
+---
+
+## 21. Fix: Auto-Logout When Database Is Reseeded — `frontend/src/contexts/AuthContext.jsx`
+
+When the database is reseeded, all user IDs change. A user who was logged in before the reseed would have a stale `userId` in sessionStorage pointing to a user that no longer exists. On the next API call, the backend returns 404.
+
+I added error handling in the periodic user-status check that runs every 30 seconds:
+
+```js
+const checkUserStatus = async () => {
+    try {
+        const freshUser = await getUser(user.userId);
+        if (freshUser?.banned && !bannedMessage) {
+            handleBan("Your account has been banned.");
+        }
+    } catch (error) {
+        if (error?.message?.toLowerCase().includes("not found") || error?.status === 404) {
+            if (isMounted) logout();
+        }
+    }
+};
+```
+
+If the server says the user does not exist (404), `logout()` is called automatically. This clears sessionStorage and resets the auth state so the user is sent to the login page instead of seeing broken behaviour throughout the app.
+
+---
+
+## 22. Fix: Profile Images Not Persisting After Logout — `backend/project/services/user.service.js`
+
+Profile images were stored locally in the browser session (via `updateUserData`) but were never being saved to MongoDB. After logout and login, the image would be gone.
+
+The root cause was that `Object.assign(user, updateObj)` on a Mongoose document does not always reliably mark fields as "modified" in Mongoose's internal change-tracking. When Mongoose's `.save()` sees no modified paths, it sends nothing to MongoDB — the update is silently skipped.
+
+The fix was to switch from the `find + assign + save` pattern to `findOneAndUpdate` with `$set`:
+
+```js
+export async function updateUser(userId, updateObj) {
+    if (updateObj.password) {
+        updateObj.password = hashPassword(updateObj.password);  // hash manually since pre-save hook doesn't run
+    }
+    const user = await User.findOneAndUpdate(
+        { userId },
+        { $set: updateObj },
+        { new: true, runValidators: false }
+    ).select('-password');
+    if (!user) throw new CustomError(`User not found`, 404, 'NOT_FOUND');
+    return user;
+}
+```
+
+`$set` sends the update directly to MongoDB without going through Mongoose's document mutation cycle, so there is no risk of silent skipping. `runValidators: false` skips schema validation for the update (the validator middleware on the route already validated the input before it reached the service). Password hashing is done manually here because `findOneAndUpdate` does not trigger pre-save hooks.
+
+I also removed `profileImagePreview` from the `updateUserData` call in `User.jsx` — previously the frontend would store the local file preview in the auth context even if the server had failed to save it, masking the bug:
+
+```js
+// Before (masked failed saves):
+updateUserData({ profileImage: profileImagePreview || updated.profileImage });
+
+// After (always uses server-confirmed value):
+updateUserData({ profileImage: updated.profileImage });
+```

@@ -18,7 +18,8 @@ tournamentApiRouter.post('/tournaments/:tournamentId/join', requireUser, tournam
 tournamentApiRouter.delete('/tournaments/:tournamentId/leave', requireUser, tournamentValidator.validateLeaveTournament(), validate, tournamentController.leaveTournament);
 
 // Remaining participants gets paired together for the next round (points-based — all players play every round)
-tournamentApiRouter.put('/tournaments/:tournamentId/knockoutRounds', requireAdmin, tournamentValidator.validateKnockoutRounds(), validate, tournamentController.knockoutRounds);
+// requireUser (not requireAdmin) so the frontend can auto-start when the tournament date arrives
+tournamentApiRouter.put('/tournaments/:tournamentId/knockoutRounds', requireUser, tournamentValidator.validateKnockoutRounds(), validate, tournamentController.knockoutRounds);
 
 // Admin delete — permanently removes a tournament
 tournamentApiRouter.delete('/tournaments/:tournamentId', requireAdmin, tournamentValidator.validateTournamentId(), validate, tournamentController.deleteTournament);

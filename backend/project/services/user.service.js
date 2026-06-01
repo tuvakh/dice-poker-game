@@ -2,7 +2,7 @@
 
 import { User } from '../models/User.js';
 import { Match } from '../models/Match.js';
-import { checkPassword } from '../utils/hash.js';
+import { checkPassword, hashPassword } from '../utils/hash.js';
 import { CustomError } from '../utils/customError.js';
 import { applyWeeklyCoinGrant } from '../utils/coins.js';
 import crypto from 'crypto';
@@ -292,14 +292,20 @@ export async function loginUser(username, password) {
 }
 
 export async function updateUser(userId, updateObj) {
-    const user = await User.findOne({ userId }).select('-password');
+    // Hash password before update if provided, since findOneAndUpdate bypasses the pre-save hook
+    if (updateObj.password) {
+        updateObj.password = hashPassword(updateObj.password);
+    }
+
+    const user = await User.findOneAndUpdate(
+        { userId },
+        { $set: updateObj },
+        { new: true, runValidators: false }
+    ).select('-password');
+
     if (!user) {
         throw new CustomError(`A user with the id ${userId}? Never heard of them!`, 404, 'NOT_FOUND');
     }
-
-    // Object.assign copies all update fields onto the user document
-    Object.assign(user, updateObj);
-    await user.save();
 
     return user;
 }

@@ -3,7 +3,7 @@
 // Individual tournament detail page
 import { useState, useEffect, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router";
-import { getTournament, joinTournament, leaveTournament, deleteTournament, cancelTournament } from "../api/tournaments.js";
+import { getTournament, joinTournament, leaveTournament, deleteTournament, cancelTournament, startRound } from "../api/tournaments.js";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import { useSoundEffects } from "../hooks/useSoundEffects.js";
 import { getAllComments } from "../api/comments.js";
@@ -32,12 +32,14 @@ export default function TournamentPage() {
     const [showCancelConfirm, setShowCancelConfirm] = useState(false);
     const wsRef = useRef(null);
     const redirectedRef = useRef(false); // prevents redirect loop when navigating back from game
+    const autoStartedRef = useRef(false);     // prevents duplicate first-round auto-start
+    const nextRoundFiredRef = useRef(false);  // prevents duplicate next-round auto-start
     const [comments, setComments] = useState([]);
 
     // countdown state: seconds remaining until the next round is expected to start
     const [countdownSecs, setCountdownSecs] = useState(null);
 
-    // Fetches tournament data when the page loads or the URL id changes
+    // Fetches tournament data when the page loads or the URL id changes 
     useEffect(() => {
         setLoading(true);
         setError(null);
@@ -104,18 +106,62 @@ export default function TournamentPage() {
         // Next round expected at: last match end + break minutes
         const nextRoundAt = latestEndedAt + (tournament.breaks ?? 0) * 60 * 1000;
 
-        // Tick every second and update the displayed countdown
+        // Tick every second and update the displayed countdown.
+        // When it reaches zero, auto-start the next round.
         const tick = () => {
             const remaining = Math.max(0, Math.floor((nextRoundAt - Date.now()) / 1000));
             setCountdownSecs(remaining);
+            if (remaining === 0 && !nextRoundFiredRef.current) {
+                nextRoundFiredRef.current = true;
+                startRound(id)
+                    .then(updated => setTournament(updated))
+                    .catch(() => {
+                        getTournament(id).then(updated => setTournament(updated)).catch(() => {});
+                    });
+            }
         };
         tick();
         const interval = setInterval(tick, 1000);
-        return () => clearInterval(interval);
+        // Reset nextRoundFiredRef on cleanup so the FOLLOWING round's break can also auto-start
+        return () => {
+            clearInterval(interval);
+            nextRoundFiredRef.current = false;
+        };
     }, [tournament]);
+
+    // Auto-start: when the tournament date arrives and there are enough players, kick off the first round.
+    // Any logged-in user viewing the page can trigger this — the backend rejects duplicates gracefully.
+    useEffect(() => {
+        if (!tournament || !user) return;
+        if (tournament.status !== 'upcoming') return;
+        if ((tournament.participants?.length ?? 0) < 2) return;
+        if (autoStartedRef.current) return;
+
+        const target = tournament.date ? new Date(tournament.date).getTime() : null;
+        if (!target) return;
+
+        const fire = () => {
+            autoStartedRef.current = true;
+            startRound(id)
+                .then(updated => setTournament(updated))
+                .catch(() => {
+                    // If another user already started it, just re-fetch the latest state
+                    getTournament(id).then(updated => setTournament(updated)).catch(() => {});
+                });
+        };
+
+        const remaining = target - Date.now();
+        if (remaining <= 0) {
+            fire();
+        } else {
+            const timer = setTimeout(fire, remaining);
+            return () => clearTimeout(timer);
+        }
+    }, [tournament?.tournamentId, tournament?.status, tournament?.participants?.length, user, id]);
 
     // Auto-redirect participants to their ongoing match in the latest round.
     // redirectedRef prevents redirecting again when the user navigates back after the game.
+    //SO this puts users in a game when it starts
     useEffect(() => {
         if (!tournament || !user || tournament.status !== 'ongoing') return;
         if (redirectedRef.current) return;
@@ -141,13 +187,12 @@ export default function TournamentPage() {
         setJoinError(null);
         try {
             await joinTournament(id, user._id);
-            setJoined(true);
             playJoin();
-            // Optimistic update: add the user to the local participants list without re-fetching
-            setTournament(prev => prev
-                ? { ...prev, participants: [...(prev.participants ?? []), { _id: user._id, username: user.username }] }
-                : prev
-            );
+            // Re-fetch so the participants list matches exactly what the DB returns,
+            // ensuring alreadyIn computes correctly on this render and after refresh.
+            const updated = await getTournament(id);
+            setTournament(updated);
+            setJoined(true);
         } catch (err) {
             setJoinError(err.message ?? "Could not join tournament.");
         } finally {
@@ -181,6 +226,16 @@ export default function TournamentPage() {
             navigate('/tournament');
         } catch (err) {
             setError(err.message ?? "Could not delete tournament.");
+        }
+    }
+
+    // Admin: starts the next round, creating matches for all participants
+    async function handleStartRound() {
+        try {
+            const updated = await startRound(id);
+            setTournament(updated);
+        } catch (err) {
+            setError(err.message ?? "Could not start next round.");
         }
     }
 
@@ -228,8 +283,10 @@ export default function TournamentPage() {
 
     // alreadyIn checks the fetched data so returning visitors who were already registered see the right UI
     // joined is set when the user joins in this browser session (optimistic)
-    const alreadyIn = user && tournament.participants?.some(
-        p => (p._id ?? p)?.toString() === user._id?.toString()
+    // Username comparison is used because participants are populated objects with plain string usernames,
+    // while _id ObjectId serialisation can vary across Mongoose versions causing string mismatches.
+    const alreadyIn = user && tournament.participants?.some(p =>
+        p.username && p.username === user.username
     );
 
     // Players can leave as long as the tournament has not finished or been cancelled
@@ -387,7 +444,7 @@ export default function TournamentPage() {
                     <p>
                         {countdownSecs > 0
                             ? `Next round in ${Math.floor(countdownSecs / 60)}m ${countdownSecs % 60}s`
-                            : "Next round starting soon — waiting for the admin to begin."
+                            : "Next round starting…"
                         }
                     </p>
                 </div>

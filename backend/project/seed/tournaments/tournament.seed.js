@@ -42,7 +42,7 @@ export default async function seedTournaments(users, categories, trophies) {
         new Tournament({
             title: "Demo Open — Play Now!",
             description: "A live demo tournament you can join and play today. Sign in, click 'Start Next Round' as admin to create matches, then jump straight into your game from the bracket.",
-            date: new Date(),
+            date: new Date(Date.now() + 30 * 1000),
             breaks: 5,
             numberOfRounds: 3,
             gameCategory: categories[6]._id,
