@@ -24,16 +24,19 @@ class DicePokerBoard extends HTMLElement {
 
             .players {
                 display: flex;
+                flex-direction: row;
                 flex-wrap: wrap;
                 gap: 1.5rem;
                 justify-content: center;
+                width: 100%;
             }
 
             .player {
-                background-color: rgba(0,0,0,0.06);
                 border-radius: 0.8rem;
                 padding: 1rem;
-                min-width: 180px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
             }
 
             .player-name {
@@ -46,14 +49,6 @@ class DicePokerBoard extends HTMLElement {
             .dice {
                 display: flex;
                 gap: 0.4rem;
-                flex-wrap: wrap;
-                justify-content: center;
-            }
-
-            .controls {
-                margin-top: 1.5rem;
-                display: flex;
-                gap: 0.75rem;
                 justify-content: center;
             }
 
@@ -91,15 +86,7 @@ class DicePokerBoard extends HTMLElement {
         </style>
 
         <div class="players" id="players"></div>
-        <div class="controls">
-            <button id="btn-roll" disabled>Roll Again</button>
-            <button id="btn-done" disabled>Done Rolling</button>
-        </div>
         `;
-
-        // Wire up the two action buttons
-        this.shadowRoot.getElementById('btn-roll').addEventListener('click', () => this.handleRollAgain());
-        this.shadowRoot.getElementById('btn-done').addEventListener('click', () => this.handleDoneRolling());
 
         // Block hold-toggle events from opponents' dice
         // capture:true intercepts before the die reacts
@@ -150,15 +137,13 @@ class DicePokerBoard extends HTMLElement {
 
     // Updates each die's face
     // resetHeld:true is passed at round start to unhold all dice
-    setDice(userId, faces, resetHeld = false) {
+    setDice(userId, faces, animate = false) {
         const dice = this.diceElements[userId];
         if (!dice) return;
 
         faces.forEach((face, i) => {
             dice[i].setAttribute('face', face);
-            if (resetHeld) dice[i].setAttribute('held', 'false');
-            // roll() triggers the shake animation — the face was already set above
-            dice[i].roll();
+            if (animate) dice[i].roll();
         });
     }
 
@@ -181,12 +166,6 @@ class DicePokerBoard extends HTMLElement {
                 });
             }
         }
-
-        // Enable or disable the Roll Again / Done Rolling buttons
-        const btnRoll = this.shadowRoot.getElementById('btn-roll');
-        const btnDone = this.shadowRoot.getElementById('btn-done');
-        if (btnRoll) btnRoll.disabled = !canInteract;
-        if (btnDone) btnDone.disabled = !canInteract;
     }
 
     // Marks an opponent's dice as held visually

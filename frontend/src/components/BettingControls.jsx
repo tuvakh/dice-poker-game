@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import Button from "./Button.jsx";
 
 // Displays the betting UI for the current player's turn, or a waiting message otherwise
 export default function BettingControls({ bettingState, userId, coinWager, onBet }) {
@@ -16,25 +17,29 @@ export default function BettingControls({ bettingState, userId, coinWager, onBet
 
     return (
         <div className="game__bet-actions">
-            <p>Your turn</p>
-            <button onClick={() => onBet('fold')}>Fold</button>
+            <Button variant="plain" onClick={() => onBet('fold')}>Fold</Button>
             {/* 'Check' when no bet has been placed yet, 'Match' when someone has already bet */}
-            <button onClick={() => onBet('match')}>
+            <Button variant="plain" onClick={() => onBet('match')}>
                 {bettingState.highestBet === 0 ? 'Check' : `Match (${bettingState.highestBet})`}
-            </button>
+            </Button>
             {/* Raise is only available in wager games and only when you have more chips than the current bet */}
             {coinWager > 0 && bettingState.yourStack > bettingState.highestBet && (
-                <div className="game__bet-input">
-                    <input
-                        type="number"
-                        min={bettingState.highestBet + 1}
-                        max={bettingState.yourStack}
-                        value={betAmount}
-                        onChange={event => setBetAmount(Number(event.target.value))}
-                    />
-                    <button onClick={() => onBet('bet', betAmount)}>Bet</button>
-                </div>
+                <>
+                    <div className="game__bet-input">
+                        <span>Bet:</span>
+                        <input
+                            type="number"
+                            min={bettingState.highestBet + 1}
+                            max={bettingState.yourStack}
+                            value={betAmount}
+                            onChange={event => setBetAmount(Number(event.target.value))}
+                            onKeyDown={event => { if (event.key === 'Enter') onBet('bet', betAmount); }}
+                        />
+                    </div>
+                    <Button variant="plain" onClick={() => onBet('bet', betAmount)}>Bet</Button>
+                </>
             )}
         </div>
     );
+
 }

@@ -23,7 +23,7 @@ const AboutUs = lazy(() => import("./pages/AboutUs"));
 const AboutGame = lazy(() => import("./pages/AboutGame.jsx"));
 const Privacy = lazy(() => import("./pages/Privacy.jsx"));
 const Terms = lazy(() => import("./pages/Terms.jsx"));
-const NotFound = lazy(() => import("./pages/404.jsx"));
+const NotFound = lazy(() => import("./pages/Error404.jsx"));
 const VerifyEmail = lazy(() => import("./pages/VerifyEmail.jsx"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword.jsx"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword.jsx"));
