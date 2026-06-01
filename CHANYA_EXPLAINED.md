@@ -426,3 +426,4 @@ Three places display trophies:
 
 ---
 
+what i have changed/ how i got it to work 

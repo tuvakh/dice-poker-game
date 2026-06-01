@@ -1,9 +1,11 @@
+import { createPortal } from "react-dom";
 import "./_ConfirmDialog.scss";
 
 // Simple confirmation popup used for leave/cancel actions.
-// Pass message, onConfirm, and onCancel — the parent controls whether it shows.
+// Rendered via a Portal directly onto document.body so the fixed overlay
+// is never clipped by a parent element with overflow:hidden or position:relative.
 export default function ConfirmDialog({ message, onConfirm, onCancel }) {
-    return (
+    return createPortal(
         <div className="confirm-dialog__overlay" onClick={onCancel}>
             {/* stopPropagation stops a click inside the box from closing it */}
             <div className="confirm-dialog__box" onClick={e => e.stopPropagation()}>
@@ -17,6 +19,7 @@ export default function ConfirmDialog({ message, onConfirm, onCancel }) {
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }
