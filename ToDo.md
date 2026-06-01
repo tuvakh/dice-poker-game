@@ -47,11 +47,17 @@
         ✅ Dashboard doesn't show platform activity stats (same as homepage)
 22. ✅ anonymous can no longer play just spectate --> Tuva
 23. ✅ Focus on match making switches focus from queue to "rooms" where player can join and wait for other players to join. --> Chanya
-25. ⚠️ verify email when register --> Marie
+25. ✅ verify email when register --> Marie
 
 
 - ✅ exstra: maybe a back button when entering game? to go back to home page/leave? --> Tuva
+
 - when rolled 3 times the round should automatically end, you should have to click end roll.
 - add a border around profile picture incase someone has a transparent background on their profile picture.
 - be able to add a throphy on turnament creation, and show it on the tournament page.
 - limited time to bet.
+- Error messages on light mode has bad readability
+- Should automatically logout, when we reseed the database and the user don’t exist anymore
+- When watching a game you shouldn’t see the buttons
+- Confirmation message when leaving game
+- Test everything to see if both functionality and styling works (both light and dark mode) 

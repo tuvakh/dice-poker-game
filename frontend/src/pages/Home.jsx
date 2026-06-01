@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 
 import Hero from "../components/Hero.jsx";
@@ -12,6 +12,14 @@ import { getAllMatches } from "../api/matches.js";
 import { getAllTournaments } from "../api/tournaments.js";
 import { useAppearance } from "../contexts/AppearanceContext.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
+import GameCard from "../components/GameCard.jsx";
+import TournamentCard from "../components/TournamentCard.jsx";
+import Spinner from "../components/Spinner.jsx";
+
+import { getAllMatches } from "../api/matches.js";
+import { getAllTournaments } from "../api/tournaments.js";
+import { useAppearance } from "../contexts/AppearanceContext.jsx";
+
 import { filterLobbyMatches } from "../hooks/useLobbyGames.js";
 
 import homeHero from "../assets/home-hero.png";
@@ -42,6 +50,7 @@ export default function Home() {
     const navigate = useNavigate();
     const { preferences } = useAppearance();
     const { user } = useAuth();
+    const { preferences } = useAppearance();
     const [ready, setReady] = useState(false);
     const [lobbyGames, setLobbyGames] = useState([]);
     const [topGames, setTopGames] = useState([]);
@@ -75,6 +84,21 @@ export default function Home() {
                 setActivity(activityData);
 
                 const topOngoing = sortByAverageElo(ongoingData.matchList);
+          
+                // This is a helper function that calculates the average Elo of all players in a match
+                // and sorts matches so the highest-Elo games come first
+                const byAvgElo = matches => matches
+                    .map(match => ({
+                        ...match,
+                        // Add up all player Elos and divide by number of players
+                        // || 1 prevents dividing by zero if a match has no players yet
+                        avgElo: match.players.reduce((sum, player) => sum + (player.eloRating ?? 0), 0) / (match.players.length || 1)
+                    }))
+                    .sort((a, b) => b.avgElo - a.avgElo);
+
+                // Fill the top 5 with ongoing games first
+                // If there are fewer than 5 ongoing game, pad with the most recent finished games to always show 5 cards
+                const topOngoing = byAvgElo(ongoingData.matchList);
                 const remaining = 5 - topOngoing.length;
                 const topFinished = remaining > 0
                     ? sortByAverageElo((await getAllMatches({ status: "finished", limit: remaining })).matchList).slice(0, remaining)
