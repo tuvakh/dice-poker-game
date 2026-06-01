@@ -46,6 +46,16 @@ export async function createTournament(data) {
     return handleResponse(res);
 }
 
+// Updates a tournament's editable fields (admin only)
+export async function updateTournament(id, data) {
+    const res = await fetch(`${BASE_URL}/tournaments/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+        body: JSON.stringify(data)
+    });
+    return handleResponse(res);
+}
+
 // Permanently deletes a tournament (admin only)
 export async function deleteTournament(id) {
     const res = await fetch(`${BASE_URL}/tournaments/${id}`, {
@@ -58,6 +68,15 @@ export async function deleteTournament(id) {
 // Marks a tournament as cancelled without deleting it (admin only)
 export async function cancelTournament(id) {
     const res = await fetch(`${BASE_URL}/tournaments/${id}/cancel`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...getAuthHeaders() }
+    });
+    return handleResponse(res);
+}
+
+// Starts the next round of a tournament (admin only) — creates matches and transitions to ongoing
+export async function startRound(id) {
+    const res = await fetch(`${BASE_URL}/tournaments/${id}/knockoutRounds`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", ...getAuthHeaders() }
     });

@@ -26,6 +26,9 @@ tournamentApiRouter.delete('/tournaments/:tournamentId', requireAdmin, tournamen
 // Admin cancel — marks tournament as cancelled
 tournamentApiRouter.put('/tournaments/:tournamentId/cancel', requireAdmin, tournamentValidator.validateTournamentId(), validate, tournamentController.cancelTournament);
 
+// Admin update — edits title, description, date, and other settings
+tournamentApiRouter.put('/tournaments/:tournamentId', requireAdmin, tournamentValidator.validateUpdateTournament(), validate, tournamentController.updateTournament);
+
 // This returns a public, paginated list filterable by status
 tournamentApiRouter.get('/tournaments', tournamentValidator.validateGetAllTournaments(), validate, tournamentController.getAllTournaments);
 // This returns full details for one tournament, including rounds and standings

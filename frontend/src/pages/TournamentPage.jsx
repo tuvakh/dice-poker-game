@@ -241,6 +241,7 @@ export default function TournamentPage() {
             {/* Admin controls: delete and cancel are only shown to admin users */}
             {user?.role === 'admin' && !["finished", "cancelled"].includes(tournament.status) && (
                 <div className="tournament-detail__admin">
+                    <Button onClick={() => navigate(`/admin/tournaments/${tournament.tournamentId}/edit`)}>Edit tournament</Button>
                     <Button onClick={() => setShowCancelConfirm(true)} variant="danger">Cancel tournament</Button>
                     <Button onClick={() => setShowDeleteConfirm(true)} variant="danger">Delete tournament</Button>
                 </div>
