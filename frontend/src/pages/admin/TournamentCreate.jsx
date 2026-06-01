@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 import { createTournament } from "../../api/tournaments.js";
 import { getAllGameCategories } from "../../api/gameCategories.js";
 import { getAllTrophies, createTrophy } from "../../api/trophies.js";
@@ -6,6 +7,7 @@ import Spinner from "../../components/Spinner.jsx";
 import "./_TournamentCreate.scss";
 
 export default function AdminTournamentCreate(){
+    const navigate = useNavigate();
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [date, setDate] = useState("");
@@ -15,9 +17,11 @@ export default function AdminTournamentCreate(){
     const [gameCategories, setGameCategories] = useState([]);
     const [trophies, setTrophies] = useState([]);
     const [trophy, setTrophy] = useState("");
+    const [eloMin, setEloMin] = useState("");
+    const [eloMax, setEloMax] = useState("");
+    const [buyIn, setBuyIn] = useState(0);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
-    const [message, setMessage] = useState("");
     const [error, setError] = useState("");
 
     const [newTrophyTitle, setNewTrophyTitle] = useState("");
@@ -53,7 +57,6 @@ export default function AdminTournamentCreate(){
     async function handleSubmit(e) {
         e.preventDefault();
         setSubmitting(true);
-        setMessage("");
         setError("");
 
         try {
@@ -64,15 +67,12 @@ export default function AdminTournamentCreate(){
                 breaks: Number(breaks),
                 numberOfRounds: Number(numberOfRounds),
                 gameCategory,
-                ...(trophy && { trophy })
+                ...(trophy && { trophy }),
+                ...(eloMin !== "" && { eloMin: Number(eloMin) }),
+                ...(eloMax !== "" && { eloMax: Number(eloMax) }),
+                ...(Number(buyIn) > 0 && { buyIn: Number(buyIn) }),
             });
-            setMessage(`Tournament created: ${created.title || title}`);
-            setTitle("");
-            setDescription("");
-            setDate("");
-            setBreaks(0);
-            setNumberOfRounds(3);
-            setTrophy("");
+            navigate(`/tournament/${created.tournamentId}`);
         } catch (err) {
             setError(err.message);
         } finally {
@@ -114,7 +114,6 @@ export default function AdminTournamentCreate(){
             <h1>Create Tournament</h1>
             <p>Admin tournament creation</p>
 
-            {message && <p className="status status--success">{message}</p>}
             {error && <p className="status status--error">{error}</p>}
 
             <form onSubmit={handleSubmit} className="tournament-create-form">
@@ -161,6 +160,44 @@ export default function AdminTournamentCreate(){
                         min="0"
                         value={breaks}
                         onChange={e => setBreaks(e.target.value)}
+                    />
+                </div>
+
+                <div className="tournament-create-form__field">
+                    <label className="tournament-create-form__label" htmlFor="tc-elomin">Min Elo (optional)</label>
+                    <input
+                        id="tc-elomin"
+                        className="tournament-create-form__input"
+                        type="number"
+                        min="0"
+                        placeholder="Leave blank for open"
+                        value={eloMin}
+                        onChange={e => setEloMin(e.target.value)}
+                    />
+                </div>
+
+                <div className="tournament-create-form__field">
+                    <label className="tournament-create-form__label" htmlFor="tc-elomax">Max Elo (optional)</label>
+                    <input
+                        id="tc-elomax"
+                        className="tournament-create-form__input"
+                        type="number"
+                        min="0"
+                        placeholder="Leave blank for open"
+                        value={eloMax}
+                        onChange={e => setEloMax(e.target.value)}
+                    />
+                </div>
+
+                <div className="tournament-create-form__field">
+                    <label className="tournament-create-form__label" htmlFor="tc-buyin">Buy-in (coins)</label>
+                    <input
+                        id="tc-buyin"
+                        className="tournament-create-form__input"
+                        type="number"
+                        min="0"
+                        value={buyIn}
+                        onChange={e => setBuyIn(e.target.value)}
                     />
                 </div>
 
