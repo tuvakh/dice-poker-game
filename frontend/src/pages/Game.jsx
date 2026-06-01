@@ -9,8 +9,9 @@ import { usePolling } from "../hooks/usePolling.js";
 
 import { useAuth } from "../contexts/AuthContext.jsx";
 import { useAppearance } from "../contexts/AppearanceContext.jsx";
-import { useSoundEffects } from "../hooks/useSoundEffects.js"; 
+import { useSoundEffects } from "../hooks/useSoundEffects.js";
 
+import Button from "../components/Button.jsx";
 import Spinner from "../components/Spinner.jsx";
 import BettingControls from "../components/BettingControls.jsx";
 import CommentList from "../components/CommentList";
@@ -59,6 +60,14 @@ export default function Game() {
     const [standings, setStandings] = useState(null);
     const [forfeitBy, setForfeitBy] = useState(null);
     const [playerLeftNotice, setPlayerLeftNotice] = useState(null);
+
+    const [readyTimeLeft, setReadyTimeLeft] = useState(null);
+    const [timedOut, setTimedOut] = useState(false);
+    const [canRoll, setCanRoll] = useState(false);
+    const [roundResult, setRoundResult] = useState(null);
+    const readyTimerRef = useRef(null);
+    const [rollCount, setRollCount] = useState(0);
+
 
     // Fetches the latest match data from the backend
     async function fetchMatch() {
@@ -116,13 +125,26 @@ export default function Game() {
 
         // Someone didn't click ready in time: cancel the game
         if (message.type === 'ready-timeout') {
+            clearInterval(readyTimerRef.current);
+            setReadyTimeLeft(null);
             setGamePhase('cancelled');
         }
+
 
         // All required players have joined: show the Ready button
         if (message.type === 'all-joined') {
             setGamePhase('ready');
-            playJoin(); // Chanya
+            setReadyTimeLeft(30);
+            readyTimerRef.current = setInterval(() => {
+                setReadyTimeLeft(prev => {
+                    if (prev <= 1) {
+                        clearInterval(readyTimerRef.current);
+                        setGamePhase('cancelled');
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
         }
 
         // A player disconnected mid-game: show a notice so the remaining player knows
@@ -132,6 +154,12 @@ export default function Game() {
 
         // A new round started: start the countdown timer and initialise the board
         if (message.type === 'game-started') {
+            clearInterval(readyTimerRef.current);
+            setReadyTimeLeft(null);
+            setRoundResult(null);
+            setCanRoll(true);
+            setRollCount(0);
+            setTimedOut(false);
             setGamePhase('rolling');
             playClick(); // Chanya
             clearInterval(timerRef.current);
@@ -140,6 +168,7 @@ export default function Game() {
                 setTimeLeft(prev => {
                     if (prev <= 1) {
                         clearInterval(timerRef.current);
+                        setTimedOut(true);
                         return 0;
                     }
                     return prev - 1;
@@ -154,12 +183,12 @@ export default function Game() {
                     const playerData = currentPlayers.find(player => player?._id === playerId);
                     board.addPlayer(playerId, playerData?.username ?? playerId);
                     if (playerId !== user?._id) {
-                        board.setDice(playerId, ['?', '?', '?', '?', '?'], true);
+                        board.setDice(playerId, ['?', '?', '?', '?', '?']);
                     }
                 });
 
                 board.currentUserId = user?._id;
-                board.setDice(user?._id, message.yourDice, true);
+                board.setDice(user?._id, message.yourDice);
                 board.setInteractive(user?._id, true);
                 board.clearResults();
                 board.resetAllHeld();
@@ -169,8 +198,15 @@ export default function Game() {
         // Server re-rolled our non-held dice: update our board (die component plays its own sound)
         if (message.type === 'roll-result') {
             if (board) {
-                board.setDice(user?._id, message.yourDice);
+                board.setDice(user?._id, message.yourDice, true);
             }
+            setRollCount(prev => {
+                if (prev + 1 >= 3) {
+                    boardRef.current?.handleDoneRolling();
+                    return prev + 1;
+                }
+                return prev + 1;
+            });
         }
 
         // Another player re-rolled: show which of their dice are held (not the actual faces)
@@ -186,6 +222,7 @@ export default function Game() {
                 boardRef.current?.setInteractive(user._id, false);
                 clearInterval(timerRef.current);
                 setTimeLeft(null);
+                setCanRoll(false);
             }
         }
 
@@ -214,7 +251,8 @@ export default function Game() {
 
         // Round finished: play the end sound, reveal all dice and show hand results
         if (message.type === 'round-end') {
-            playRoundEnd();
+            setRoundResult(message.winners.includes(user?._id) ? 'won' : 'lost');
+            setCanRoll(false);
             setGamePhase(null);
 
             if (board) {
@@ -348,6 +386,13 @@ export default function Game() {
         };
     }, []);
 
+    const displayPot = bettingState?.pot ?? match?.coinWager ?? 0;
+    const isPreGame = match?.status === 'ongoing' && gamePhase === null && !roundResult && !forfeitBy;
+    const sortedStandings = standings ? [...standings].sort((a, b) => b.stack - a.stack) : [];
+    const topStack = sortedStandings[0]?.stack;
+    const isTie = sortedStandings.filter(entry => entry.stack === topStack).length > 1;
+    const isWinner = sortedStandings[0]?.userId === user?._id;
+
     if (error) return <p className="status status--error">{error}</p>;
     if (!match) return <Spinner />;
 
@@ -360,22 +405,39 @@ export default function Game() {
             )}
             <div className="game">
                 <div className="game__main">
-                    <div className="game__players">
-                        {match.players.filter(Boolean).map(player => (
-                            <PlayerInfo key={player._id} user={player} showImage />
-                        ))}
-                    </div>
+                    {/* Player cards only shown while waiting */}
+                    {(match.status === 'waiting' || gamePhase === 'ready' || isPreGame) && (
+                        <div className="game__players">
+                            {match.players.filter(Boolean).map(player =>
+                                <PlayerInfo key={player._id} user={player} showImage inline />
+                            )}
+                        </div>
+                    )}
+
                     <div className="game__game-board" style={{ backgroundColor: preferences.boardColor }}>
-                        {match.status === "waiting" && (
+                        {/* Info bar inside the box only when waiting */}
+                        {(match.status === 'waiting' || isPreGame) && match.gameCategory && (
+                            <div className="game__info-bar">
+                                <span>{match.gameCategory.timeController}s · {match.gameCategory.numberOfRounds} rounds · {match.gameCategory.gameRules === 'straights_allowed' ? 'Straights allowed' : 'No straights'}</span>
+                                <strong>Pot: {displayPot} {displayPot === 1 ? 'coin' : 'coins'}</strong>
+                            </div>
+                        )}
+
+                        {isPreGame && (
+                            <div className="game__waiting-overlay">
+                                <p>Starting game...</p>
+                            </div>
+                        )}
+
+                        {match.status === 'waiting' && (
                             <div className="game__waiting-overlay">
                                 {user ? (
                                     <>
-                                        <p>Waiting for other players to join...</p>
-                                        <p className="game__waiting-count">{match.players.length}/{match.maxPlayers ?? 2} players</p>
-                                        {match.players.some(player => player?._id === user._id) && (
-                                            <button onClick={handleLeave}>
+                                        <p>Waiting for {(match.maxPlayers ?? 2) - match.players.length} more opponents....</p>
+                                        {match.players.some(p => p?._id === user._id) && (
+                                            <Button onClick={handleLeave}>
                                                 {match.players.length === 1 ? 'Cancel game' : 'Leave game'}
-                                            </button>
+                                            </Button>
                                         )}
                                     </>
                                 ) : (
@@ -384,83 +446,127 @@ export default function Game() {
                             </div>
                         )}
 
-                        {match.status === "ongoing" && gamePhase !== 'ended' && !forfeitBy && (
+                        {match.status === 'ongoing' && gamePhase !== 'ended' && !forfeitBy && (
                             <>
-
                                 {gamePhase === 'rolling' && timeLeft !== null && (
                                     <p className="game__timer">⏱ {timeLeft}s</p>
                                 )}
                                 {gamePhase === 'ready' && (
                                     <div className="game__ready-overlay">
-                                        {readySent
-                                            ? <p>Waiting for opponent...</p>
-                                            : <button onClick={handleReady}>Ready</button>
-                                        }
+                                        {readyTimeLeft !== null && (
+                                            <span className="game__ready-timer">{readyTimeLeft}s</span>
+                                        )}
+                                        <h2 className="game__ready-title">READY?</h2>
+                                        <div className="game__ready-buttons">
+                                            <Button
+                                                className={`game__ready-yes${readySent ? ' game__ready-yes--confirmed' : ''}`}
+                                                onClick={handleReady}
+                                                disabled={readySent}
+                                            >
+                                                YES!
+                                            </Button>
+                                            <Button onClick={handleLeave}>Leave game</Button>
+                                        </div>
+                                        {readySent && (
+                                            <p className="game__ready-waiting">Waiting for opponents to be ready...</p>
+                                        )}
                                     </div>
                                 )}
                                 <dice-poker-board ref={boardRef}></dice-poker-board>
-                                {user && match.players.some(player => player?._id === user._id) && (
-                                    <button onClick={handleLeave}>Leave game</button>
-                                )}
                                 {playerLeftNotice && (
-                                    <p className="status status--error">
-                                        {match.players.find(player => player?._id === playerLeftNotice)?.username ?? 'Opponent'} left — their moves are now automatic
+                                    <p className="game__player-left">
+                                        {match.players.find(p => p?._id === playerLeftNotice)?.username ?? 'A player'} left — their turn is automatic
                                     </p>
                                 )}
-
                             </>
                         )}
 
-
-                        {match.status === "finished" && !gamePhase && (
+                        {match.status === 'finished' && !gamePhase && (
                             <div className="game__ended">
                                 <h2>Game over</h2>
-                                {match.outcome && <p>Result: {match.outcome}</p>}
                             </div>
                         )}
 
                         {(gamePhase === 'ended' || gamePhase === 'cancelled' || forfeitBy) && (
                             <div className="game__ended">
-                                <h2>Game over</h2>
-                                {gamePhase === 'cancelled' && <p>Not all players were ready in time.</p>}
-                                {forfeitBy && (
-                                    <p>{match.players.find(player => player?._id === forfeitBy)?.username ?? 'Opponent'} left the game</p>
+                                {standings ? (
+                                    <>
+                                        <h2 className="game__ended-title">
+                                            {isTie ? "IT'S A TIE!" : isWinner ? 'YOU WON!' : 'YOU LOST!'}
+                                        </h2>
+
+                                        <ol className="game__standings">
+                                            {sortedStandings.map((entry, i) => {
+                                                const playerName = match.players.find(p => p?._id === entry.userId)?.username ?? 'Unknown';
+                                                const isMe = entry.userId === user?._id;
+                                                const coinDisplay = entry.stack >= 0
+                                                    ? `+ ${entry.stack} coin${entry.stack !== 1 ? 's' : ''}`
+                                                    : `- ${Math.abs(entry.stack)} coin${Math.abs(entry.stack) !== 1 ? 's' : ''}`;
+                                                return (
+                                                    <li key={entry.userId} className={isMe ? 'game__standings-me' : ''}>
+                                                        {i + 1}. {i === 0 && '🎉 '}{playerName} {coinDisplay}
+                                                    </li>
+                                                );
+                                            })}
+
+                                        </ol>
+                                    </>
+                                ) : (
+                                    gamePhase === 'cancelled' && <p>Not all players were ready in time.</p>
                                 )}
-                                {standings && (
-                                    <ol className="game__standings">
-                                        {standings.map((entry, i) => {
-                                            const playerName = match.players.find(matchPlayer => matchPlayer?._id === entry.userId)?.username;
-                                            return (
-                                                <li key={entry.userId}>
-                                                    {i === 0 && '🏆 '}{playerName} — {entry.stack} coins
-                                                </li>
-                                            );
-                                        })}
-                                    </ol>
-                                )}
-                                <button onClick={() => navigate('/')}>Back to home</button>
+                                <Button onClick={() => navigate('/')}>Back to homepage</Button>
                             </div>
                         )}
                     </div>
 
+                    {roundResult && gamePhase !== 'ended' && (
+                        <p className={`game__round-result game__round-result--${roundResult}`}>
+                            You {roundResult} this round!
+                        </p>
+                    )}
+
+                    {gamePhase === 'rolling' && (
+                        <div className="game__roll-controls">
+                            {!canRoll && (
+                                <p className="game__ready-waiting">
+                                    {timedOut
+                                        ? "You've used up the time limit. Waiting for opponents to finish..."
+                                        : "Waiting for opponents to finish..."
+                                    }
+                                </p>
+                            )}
+                            <div className="game__roll-buttons">
+                                {user && match.players.some(p => p?._id === user._id) && (
+                                    <>
+                                        <Button variant="plain" disabled={!canRoll} onClick={() => boardRef.current?.handleRollAgain()}>Roll</Button>
+                                        <Button variant="plain" disabled={!canRoll} onClick={() => boardRef.current?.handleDoneRolling()}>Done rolling</Button>
+                                        <Button variant="plain" onClick={handleLeave}>Leave game</Button>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+
                     {gamePhase === 'betting' && bettingState && !forfeitBy && (
-                        <div className="game__betting">
-                            <p className="game__pot">Pot: {bettingState.pot} coins</p>
+                        <div className="game__bet-controls">
                             <BettingControls
                                 bettingState={bettingState}
                                 userId={user?._id}
                                 coinWager={match.coinWager}
                                 onBet={sendBet}
                             />
+                            {user && match.players.some(p => p?._id === user._id) && (
+                                <Button variant="plain" onClick={handleLeave}>Leave game</Button>
+                            )}
                         </div>
                     )}
 
-                    {match.gameCategory && (
-                        <p className="game__variant">
-                            Best of {match.gameCategory.numberOfRounds} · {match.gameCategory.gameRules} · {match.gameCategory.timeController}s total time
-                        </p>
+                    {match.status === 'ongoing' && gamePhase === null && !isPreGame && !forfeitBy && user && match.players.some(p => p?._id === user._id) && (
+                        <Button variant="plain" className="game__leave-btn" onClick={handleLeave}>Leave game</Button>
                     )}
                 </div>
+
                 <aside className="game__comments">
                     <CommentList comments={comments} />
                     {user
@@ -474,7 +580,7 @@ export default function Game() {
                         </>
                     }
                 </aside>
-            </div >
+            </div>
         </>
     );
 }
