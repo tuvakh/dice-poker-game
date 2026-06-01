@@ -23,7 +23,6 @@ class DicePokerBoard extends HTMLElement {
             :host {
                 display: block; 
                 padding: 1rem; 
-                padding-block-start: 2.5rem; 
                 width: 100%; 
             }
 
@@ -42,6 +41,14 @@ class DicePokerBoard extends HTMLElement {
                 display: flex;
                 flex-direction: column;
                 align-items: center;
+            }
+
+            .player-left-notice {
+                margin-top: 0.6rem;
+                font-weight: bold;
+                text-align: center;
+                font-size: 0.95rem;
+                color: #c0392b;
             }
 
             .player-name {
@@ -208,7 +215,21 @@ class DicePokerBoard extends HTMLElement {
 
     // Removes all hand result labels — called at the start of a new round
     clearResults() {
-        this.shadowRoot.querySelectorAll('.hand-result').forEach((result) => result.remove());
+        this.shadowRoot.querySelectorAll('.hand-result, .player-left-notice').forEach((el) => el.remove());
+    }
+
+    showPlayerLeft(userId) {
+        const section = this.shadowRoot.querySelector(`[data-user-id="${userId}"]`);
+        if (!section) return;
+
+        let noticeEl = section.querySelector('.player-left-notice');
+        if (!noticeEl) {
+            noticeEl = document.createElement('p');
+            noticeEl.className = 'player-left-notice';
+            section.querySelector('.player').appendChild(noticeEl);
+        }
+
+        noticeEl.textContent = '⚠️ This user left. Their turn is now automatic';
     }
 
     // Reads which dice are held and fires dp:roll-again
