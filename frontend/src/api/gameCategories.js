@@ -8,9 +8,3 @@ export async function getAllGameCategories() {
     const res = await fetchWithAuth(`${BASE_URL}/gamecategories`);
     return handleResponse(res);
 }
-
-// Fetches a single game category by ID 
-export async function getGameCategory(id) {
-    const res = await fetchWithAuth(`${BASE_URL}/gamecategories/${id}`);
-    return handleResponse(res);
-}

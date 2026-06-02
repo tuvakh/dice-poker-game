@@ -12,6 +12,8 @@ import { Trophy } from "../../models/Trophy.js";
 export default async function seedTournaments(users, categories, trophies) {
     await Tournament.deleteMany({});
 
+    const admin = users.find(u => u.role === 'admin');
+
     const tournaments = await Promise.all([
         // Already finished — played in spring, safe to browse without triggering auto-start
         new Tournament({
@@ -23,7 +25,8 @@ export default async function seedTournaments(users, categories, trophies) {
             gameCategory: categories[0]._id,
             participants: [users[0]._id, users[1]._id, users[2]._id, users[3]._id],
             status: "finished",
-            trophy: trophies[0]._id
+            trophy: trophies[0]._id,
+            createdBy: admin._id
         }).save(),
         // Upcoming — date is one week from now so it stays upcoming until then
         new Tournament({
@@ -35,7 +38,8 @@ export default async function seedTournaments(users, categories, trophies) {
             gameCategory: categories[6]._id,
             participants: [users[4]._id, users[5]._id, users[6]._id, users[7]._id],
             status: "upcoming",
-            trophy: trophies[1]._id
+            trophy: trophies[1]._id,
+            createdBy: admin._id
         }).save(),
         // Demo tournament: date is in the past so it auto-starts as soon as 2+ players have joined
         new Tournament({
@@ -47,7 +51,8 @@ export default async function seedTournaments(users, categories, trophies) {
             gameCategory: categories[6]._id,
             participants: [], // ← no pre-seeded players, join via the Join button
             status: "upcoming",
-            trophy: trophies[2]._id
+            trophy: trophies[2]._id,
+            createdBy: admin._id
         }).save()
     ]);
 

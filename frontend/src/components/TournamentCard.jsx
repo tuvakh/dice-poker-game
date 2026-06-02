@@ -40,6 +40,10 @@ export default function TournamentCard({ tournament, onClick }) {
                     <span>🎲 {tournament.gameCategory.gameRules === "straights_allowed" ? "Straights" : "No straights"} · {tournament.gameCategory.timeController}s</span>
                 )}
 
+                {tournament.createdBy?.username && (
+                    <span>🏅 by {tournament.createdBy.username}</span>
+                )}
+
                 {/* trophy is a populated object. Show image and title if available */}
                 {tournament.trophy && (
                     <span>

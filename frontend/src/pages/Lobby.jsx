@@ -1,14 +1,13 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router";
 import { useAuth } from "../contexts/AuthContext.jsx";
-import { getAllMatches } from "../api/matches";
-import { getAllGameCategories } from "../api/gameCategories";
+import { getAllMatches } from "../api/matches.js";
+import { getAllGameCategories } from "../api/gameCategories.js";
 
 import Hero from "../components/Hero.jsx";
 import GameCard from "../components/GameCard.jsx";
 import Spinner from "../components/Spinner.jsx";
 import Button from "../components/Button.jsx";
-
 
 import { filterLobbyMatches } from "../hooks/useLobbyGames.js";
 import { usePolling } from "../hooks/usePolling.js";
@@ -49,9 +48,12 @@ export default function Lobby() {
                 const list = Array.isArray(result) ? result : (result.gameCategories || result.categoryList || []);
                 if (mounted) setCategories(list);
             })
-            .catch(() => { })
+            .catch(() => { });
         return () => { mounted = false };
     }, []);
+
+    if (loading) return <Spinner />;
+    if (fetchError) return <p className="status status--error">{fetchError}</p>;
 
     // Logged in: hide games the user already joined, and hide games where their Elo is out of range
     const baseFiltered = filterLobbyMatches(lobbyGames, user);
@@ -78,13 +80,6 @@ export default function Lobby() {
 
     const visibleGames = filteredGames.slice(0, visibleCount);
 
-    useEffect(() => {
-        setVisibleCount(6);
-    }, [selectedRounds, selectedStraights, selectedSeconds]);
-
-    if (loading) return <Spinner />;
-    if (fetchError) return <p className="status status--error">{fetchError}</p>;
-
     return (
         <>
             <Hero title="Lobby" heroImg="/lobby-hero.webp">
@@ -108,7 +103,7 @@ export default function Lobby() {
                                             key={round}
                                             type="button"
                                             className={`btn--chip${String(selectedRounds) === String(round) ? " btn--chip--active" : ""}`}
-                                            onClick={() => setSelectedRounds(String(selectedRounds) === String(round) ? "" : String(round))}
+                                            onClick={() => { setSelectedRounds(String(selectedRounds) === String(round) ? "" : String(round)); setVisibleCount(6); }}
                                         >
                                             {round}
                                         </Button>
@@ -119,8 +114,8 @@ export default function Lobby() {
                             <div className="lobby__filter-group">
                                 <span className="lobby__filter-label">Straights</span>
                                 <div className="lobby__chips">
-                                    <Button type="button" className={`btn--chip${selectedStraights === 'allowed' ? ' btn--chip--active' : ''}`} onClick={() => setSelectedStraights(selectedStraights === 'allowed' ? '' : 'allowed')}>Allowed</Button>
-                                    <Button type="button" className={`btn--chip${selectedStraights === 'no' ? ' btn--chip--active' : ''}`} onClick={() => setSelectedStraights(selectedStraights === 'no' ? '' : 'no')}>No straights</Button>
+                                    <Button type="button" className={`btn--chip${selectedStraights === 'allowed' ? ' btn--chip--active' : ''}`} onClick={() => { setSelectedStraights(selectedStraights === 'allowed' ? '' : 'allowed'); setVisibleCount(6); }}>Allowed</Button>
+                                    <Button type="button" className={`btn--chip${selectedStraights === 'no' ? ' btn--chip--active' : ''}`} onClick={() => { setSelectedStraights(selectedStraights === 'no' ? '' : 'no'); setVisibleCount(6); }}>No straights</Button>
                                 </div>
                             </div>
 
@@ -132,7 +127,7 @@ export default function Lobby() {
                                             key={seconds}
                                             type="button"
                                             className={`btn--chip${String(selectedSeconds) === String(seconds) ? " btn--chip--active" : ""}`}
-                                            onClick={() => setSelectedSeconds(String(selectedSeconds) === String(seconds) ? "" : String(seconds))}
+                                            onClick={() => { setSelectedSeconds(String(selectedSeconds) === String(seconds) ? "" : String(seconds)); setVisibleCount(6); }}
                                         >
                                             {seconds}s
                                         </Button>

@@ -1,12 +1,12 @@
 import { useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { useAuth } from "../contexts/AuthContext.jsx";
 
 import Button from "../components/Button.jsx";
 import FormField from "../components/FormField.jsx";
 
 // Registration page — success shows a "check your inbox" message rather than auto-logging in (email verification required)
-export default function Register (){
+export default function Register() {
     const { register } = useAuth();
 
     const [email, setEmail] = useState("");
@@ -19,7 +19,7 @@ export default function Register (){
     // fieldErrors maps field names to messages shown under each input; error is a fallback for general failures
     const [error, setError] = useState(null);
     const [fieldErrors, setFieldErrors] = useState({});
-    const [successMessage, setSuccessMessage] = useState("");
+    const [successMessage, setSuccessMessage] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     // submittingRef prevents a double-submit if the user clicks faster than the state update cycle
     const submittingRef = useRef(false);
@@ -29,7 +29,7 @@ export default function Register (){
         if (submittingRef.current) return;
         setError(null);
         setFieldErrors({});
-        setSuccessMessage("");
+        setSuccessMessage(null);
 
         if (password !== passwordRepeat) {
             setFieldErrors({ passwordRepeat: "Passwords do not match" });
@@ -62,7 +62,7 @@ export default function Register (){
         <section>
             <form className="form" onSubmit={handleSubmit}>
                 <h1>Register</h1>
-                
+
                 <FormField label="Username" error={fieldErrors.username}>
                     <input
                         value={username}
@@ -70,7 +70,7 @@ export default function Register (){
                         type="text"
                     />
                 </FormField>
-                
+
                 <FormField label="Email" error={fieldErrors.email}>
                     <input
                         value={email}
@@ -78,7 +78,7 @@ export default function Register (){
                         type="email"
                     />
                 </FormField>
-                
+
                 <FormField label="Password" error={fieldErrors.password}>
                     <input
                         value={password}
@@ -86,7 +86,7 @@ export default function Register (){
                         type="password"
                     />
                 </FormField>
-                
+
                 <FormField label="Repeat password" error={fieldErrors.passwordRepeat}>
                     <input
                         value={passwordRepeat}
@@ -94,7 +94,7 @@ export default function Register (){
                         type="password"
                     />
                 </FormField>
-                
+
                 <FormField label="Date of Birth" error={fieldErrors.age}>
                     <input
                         value={dateOfBirth}
@@ -102,7 +102,7 @@ export default function Register (){
                         type="date"
                     />
                 </FormField>
-                
+
                 <FormField label={<>I agree to the <Link to="/terms">terms and conditions</Link></>} inline>
                     <input
                         aria-label="I agree to terms and conditions"
@@ -111,10 +111,10 @@ export default function Register (){
                         onChange={event => setAgreeToTerms(event.target.checked)}
                     />
                 </FormField>
-                
+
                 {error && <p className="status status--error">{error}</p>}
                 {successMessage && <p className="status status--success">{successMessage}</p>}
-                
+
                 <Button type="submit" disabled={isSubmitting}>{isSubmitting ? "Registering..." : "Register"}</Button>
             </form>
         </section>

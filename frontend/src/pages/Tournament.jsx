@@ -5,8 +5,7 @@ import TournamentCard from "../components/TournamentCard.jsx";
 
 import Hero from "../components/Hero.jsx";
 import Spinner from "../components/Spinner.jsx";
-import Button from "../components/Button.jsx"; 
-
+import Button from "../components/Button.jsx";
 
 const STATUS_TABS = [
     { value: "",         label: "All" },
@@ -86,13 +85,14 @@ export default function Tournament() {
             <section>
                 <div className="tournament-tabs">
                     {STATUS_TABS.map(tab => (
-                        <button
+                        <Button
                             key={tab.value}
+                            type="button"
                             className={`tournament-tabs__btn${statusFilter === tab.value ? " tournament-tabs__btn--active" : ""}`}
                             onClick={() => { playClick(); setStatusFilter(tab.value); }}
                         >
                             {tab.label}
-                        </button>
+                        </Button>
                     ))}
                 </div>
                 
@@ -116,11 +116,7 @@ export default function Tournament() {
                     </select>
                 </div>
 
-                <h2>
-                    {statusFilter
-                        ? statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)
-                        : "All"} tournaments
-                </h2>
+                <h2>{STATUS_TABS.find(tab => tab.value === statusFilter)?.label ?? "All"} tournaments</h2>
 
                 {loading && <Spinner />}
                 {error && <p className="status status--error">{error}</p>}

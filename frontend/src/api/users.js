@@ -34,8 +34,6 @@ export async function updateUser(id, data) {
     const isFormData = data instanceof FormData;
     const res = await fetchWithAuth(`${BASE_URL}/users/${id}`, {
         method: "PUT",
-        // For FormData, don't set Content-Type so the browser sets it with the boundary
-        headers: isFormData ? {} : {},
         body: isFormData ? data : JSON.stringify(data)
     });
     return handleResponse(res);
@@ -65,6 +63,5 @@ export async function resetPassword(code, password) {
         method: 'POST',
         body: JSON.stringify({ code, password })
     });
-    const result = await handleResponse(res);
-    return result;
+    return handleResponse(res);
 }
