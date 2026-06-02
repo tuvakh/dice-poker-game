@@ -1,4 +1,4 @@
-// This model represents a single match between two players.
+// This model represents a single match between players.
 // It stores the result, ELO changes, and whether the match is part of a tournament or not.
 
 import mongoose from "mongoose";
@@ -22,7 +22,7 @@ const matchSchema = new mongoose.Schema({
     endedAt: { 
         type: Date
     },
-    // players is an array of two User references
+    // players is an array of User references
     // This is populated with full user objects when queried
     players: [{
         type: mongoose.Schema.Types.ObjectId,
@@ -60,7 +60,7 @@ const matchSchema = new mongoose.Schema({
         ref: 'GameCategory',
         required: true
     },
-    // tournamentId is only set if this match is part of a tournament knockout round
+    // tournamentId is only set if this match is part of a tournament round
     tournamentId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Tournament'

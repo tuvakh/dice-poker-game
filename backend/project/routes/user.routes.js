@@ -1,4 +1,4 @@
-// These routes handles registration, login, profile management, and admin actions.
+// These routes handle registration, login, profile management, and admin actions.
 
 import express from "express";
 import userController from "../controllers/user.controller.js";

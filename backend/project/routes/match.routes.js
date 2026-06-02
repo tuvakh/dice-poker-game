@@ -23,7 +23,7 @@ matchApiRouter.get('/matches/:matchId', matchValidator.validateGetMatch(), valid
 // This adds a user to an existing waiting match — only registered users can join as players
 matchApiRouter.post('/matches/:matchId/join', requireUser, matchValidator.validateJoinMatch(), validate, matchController.joinMatch);
 
-// Only registered users can leave their own match
+// Only registered users can leave their own match — reuses validateJoinMatch as both routes validate the same fields
 matchApiRouter.delete('/matches/:matchId/leave', requireUser, matchValidator.validateJoinMatch(), validate, matchController.leaveMatch);
 
 export default matchApiRouter;

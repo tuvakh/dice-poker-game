@@ -9,7 +9,7 @@ import { requireAdmin, requireUser } from "../middleware/role.js";
 
 const commentApiRouter = express.Router();
 
-// This allowes registered users to create comments
+// This allows registered users to create comments
 // Anonymous users cannot leave comments
 commentApiRouter.post('/comments', requireUser, commentValidator.validateCreateComment(), validate, commentController.createComment);
 

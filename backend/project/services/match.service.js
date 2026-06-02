@@ -131,7 +131,7 @@ export async function recordMatch(matchId, matchData) {
     const player1 = await User.findById(match.players[0]);
     const player2 = await User.findById(match.players[1]);
 
-    // Checks if both players still exists
+    // Checks if both players still exist
     if (!player1 || !player2) {
         throw new CustomError('Oops! One or more players have left the building!', 404, 'NOT_FOUND');
     }
@@ -158,7 +158,7 @@ export async function recordMatch(matchId, matchData) {
         { userId: player2._id, delta: newRating2 - player2[eloField] }
     ];
 
-    // update the time-control-specific rating
+    // update both the time-control-specific rating and the global eloRating
     player1[eloField] = newRating1;
     player1.eloRating = newRating1;
     await player1.save();

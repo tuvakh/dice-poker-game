@@ -325,17 +325,13 @@ async function resendVerification(email) {
     if (!user || user.emailVerified) {
         return { message: 'a new link has been sent.' };
     }
-    const { token, expires } = generateVerificationToken();
-    user.emailVerificationToken = token;
-    user.emailVerificationTokenExpires = expires;
-    user.emailVerificationTokens = [{ token, expires }];
+    const tokenData = generateEmailVerificationToken();
+    user.emailVerificationToken = tokenData.token;
+    user.emailVerificationTokenExpires = tokenData.expires;
+    user.emailVerificationTokens = [{ token: tokenData.token, expires: tokenData.expires }];
     await user.save();
-    try {
-        await sendVerificationEmail(user.email, token);
-    } catch (err) {
-        console.error('Failed to resend verification email:', err);
-    }
-    return { message: 'a new link has been sent.' };
+    await sendVerificationEmail(email, tokenData.token);
+    return { message: 'If that email is pending verification, a new link has been sent.' };
 }
 
 export default {

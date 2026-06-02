@@ -46,28 +46,30 @@ const userSchema = new mongoose.Schema({
         required: true
     },
 
+    // emailVerificationToken and emailVerificationTokenExpires are used for direct single-token lookup
     emailVerificationToken: {
         type: String,
         default: null
     },
-
     emailVerificationTokenExpires: {
         type: Date,
         default: null
     },
+    // emailVerificationTokens array is used for $elemMatch queries when validating tokens
     emailVerificationTokens: [{
         token: { type: String, required: true },
         expires: { type: Date, required: true }
     }],
+    // passwordResetToken and passwordResetTokenExpires are used for direct single-token lookup
     passwordResetToken: {
         type: String,
         default: null
     },
-
     passwordResetTokenExpires: {
         type: Date,
         default: null
     },
+    // passwordResetTokens array is used for $elemMatch queries when validating tokens
     passwordResetTokens: [{
         token: { type: String, required: true },
         expires: { type: Date, required: true }
