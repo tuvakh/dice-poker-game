@@ -18,7 +18,7 @@ const Tournament = lazy(() => import("./pages/Tournament.jsx"));
 const TournamentPage = lazy(() => import("./pages/TournamentPage.jsx"));
 const User = lazy(() => import("./pages/User.jsx"));
 const CreateGame = lazy(() => import("./pages/CreateGame.jsx"));
-const AboutUs = lazy(() => import("./pages/AboutUs"));
+const AboutUs = lazy(() => import("./pages/AboutUs.jsx"));
 const AboutGame = lazy(() => import("./pages/AboutGame.jsx"));
 const Privacy = lazy(() => import("./pages/Privacy.jsx"));
 const Terms = lazy(() => import("./pages/Terms.jsx"));
@@ -32,19 +32,15 @@ const AdminComments = lazy(() => import("./pages/admin/Comments.jsx"));
 const AdminTournamentCreate = lazy(() => import("./pages/admin/TournamentCreate.jsx"));
 const AdminTournamentEdit = lazy(() => import("./pages/admin/TournamentEdit.jsx"));
 
-// Main application component with routing configuration
-function AppContent() {
+export default function App() {
   const { bannedMessage } = useAuth();
 
   return (
     <>
-      {bannedMessage && (
-        <BanModal message={bannedMessage} />
-      )}
+      {bannedMessage && <BanModal message={bannedMessage} />}
       <BrowserRouter>
         <Suspense fallback={<Spinner />}>
           <Routes>
-            {/* All routes wrapped in Layout component for consistent header/footer */}
             <Route element={<Layout />}>
               <Route path="/" element={<Home />} />
               <Route path="/game/:id" element={<Game />} />
@@ -77,9 +73,3 @@ function AppContent() {
     </>
   );
 }
-
-function App() {
-  return <AppContent />;
-}
-
-export default App;

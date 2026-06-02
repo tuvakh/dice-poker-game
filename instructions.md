@@ -1,6 +1,4 @@
-# Put your backend project here
-
-Don't forget to include a seeding script and instructions on how to launch the project. List external dependencies (e.g., MongoDB running on a specific port).
+# Instructions
 
 ## Seeding and launching the app
 
@@ -21,6 +19,8 @@ EMAIL_USER=pr7hr2b42k4wolys@ethereal.email
 EMAIL_PASS=cyWtVu8B99xVFBqvSd
 EMAIL_FROM=noreply@example.com
 FRONTEND_URL=http://localhost:5173
+
+JWT_SECRET=55f3baa1d48df60b5a62d22b0c40810010844f0eb3aa63fccca11d7486f9748b2986e7103be60cfcbd945816dbc82f2083c50e414362e8f7983dd94f6e42c494
 
 ### Install dependencies
 
