@@ -4,7 +4,6 @@ import { getTournament, updateTournament } from "../../api/tournaments.js";
 import { getAllGameCategories } from "../../api/gameCategories.js";
 import { getAllTrophies } from "../../api/trophies.js";
 import Spinner from "../../components/Spinner.jsx";
-import "./_TournamentCreate.scss";
 
 export default function AdminTournamentEdit() {
     const { id } = useParams();
@@ -43,9 +42,9 @@ export default function AdminTournamentEdit() {
             setDescription(tournament.description ?? "");
             // Convert ISO date string to datetime-local format (YYYY-MM-DDTHH:mm)
             if (tournament.date) {
-                const d = new Date(tournament.date);
-                const pad = n => String(n).padStart(2, "0");
-                setDate(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`);
+                const dateObj = new Date(tournament.date);
+                const pad = number => String(number).padStart(2, "0");
+                setDate(`${dateObj.getFullYear()}-${pad(dateObj.getMonth() + 1)}-${pad(dateObj.getDate())}T${pad(dateObj.getHours())}:${pad(dateObj.getMinutes())}`);
             }
             setBreaks(tournament.breaks ?? 0);
             setNumberOfRounds(tournament.numberOfRounds ?? 3);
@@ -59,8 +58,8 @@ export default function AdminTournamentEdit() {
         return () => { cancelled = true; };
     }, [id]);
 
-    async function handleSubmit(e) {
-        e.preventDefault();
+    async function handleSubmit(event) {
+        event.preventDefault();
         setSubmitting(true);
         setMessage("");
         setError("");
@@ -101,7 +100,7 @@ export default function AdminTournamentEdit() {
                         id="te-title"
                         className="tournament-create-form__input"
                         value={title}
-                        onChange={e => setTitle(e.target.value)}
+                        onChange={event => setTitle(event.target.value)}
                         required
                     />
                 </div>
@@ -112,7 +111,7 @@ export default function AdminTournamentEdit() {
                         id="te-description"
                         className="tournament-create-form__textarea"
                         value={description}
-                        onChange={e => setDescription(e.target.value)}
+                        onChange={event => setDescription(event.target.value)}
                         required
                     />
                 </div>
@@ -124,7 +123,7 @@ export default function AdminTournamentEdit() {
                         className="tournament-create-form__input"
                         type="datetime-local"
                         value={date}
-                        onChange={e => setDate(e.target.value)}
+                        onChange={event => setDate(event.target.value)}
                         required
                     />
                 </div>
@@ -137,7 +136,7 @@ export default function AdminTournamentEdit() {
                         type="number"
                         min="0"
                         value={breaks}
-                        onChange={e => setBreaks(e.target.value)}
+                        onChange={event => setBreaks(event.target.value)}
                     />
                 </div>
 
@@ -147,7 +146,7 @@ export default function AdminTournamentEdit() {
                         id="te-rounds"
                         className="tournament-create-form__select"
                         value={numberOfRounds}
-                        onChange={e => setNumberOfRounds(e.target.value)}
+                        onChange={event => setNumberOfRounds(event.target.value)}
                     >
                         <option value={3}>3</option>
                         <option value={5}>5</option>
@@ -161,7 +160,7 @@ export default function AdminTournamentEdit() {
                         id="te-category"
                         className="tournament-create-form__select"
                         value={gameCategory}
-                        onChange={e => setGameCategory(e.target.value)}
+                        onChange={event => setGameCategory(event.target.value)}
                         required
                     >
                         {gameCategories.length === 0 ? (
@@ -187,20 +186,20 @@ export default function AdminTournamentEdit() {
                             <span className="trophy-option__icon">🚫</span>
                             <span className="trophy-option__title">No trophy</span>
                         </button>
-                        {trophies.map(t => (
+                        {trophies.map(trophy => (
                             <button
                                 type="button"
-                                key={t._id}
-                                className={`trophy-option${trophy === t._id ? " trophy-option--selected" : ""}`}
-                                onClick={() => setTrophy(t._id)}
+                                key={trophy._id}
+                                className={`trophy-option${trophy === trophy._id ? " trophy-option--selected" : ""}`}
+                                onClick={() => setTrophy(trophy._id)}
                             >
                                 <img
                                     className="trophy-option__img"
-                                    src={`/${t.image}`}
-                                    alt={t.title}
-                                    onError={e => { e.target.replaceWith(Object.assign(document.createElement("span"), { className: "trophy-option__icon", textContent: "🏆" })); }}
+                                    src={`/${trophy.image}`}
+                                    alt={trophy.title}
+                                    onError={event => { event.target.replaceWith(Object.assign(document.createElement("span"), { className: "trophy-option__icon", textContent: "🏆" })); }}
                                 />
-                                <span className="trophy-option__title">{t.title}</span>
+                                <span className="trophy-option__title">{trophy.title}</span>
                             </button>
                         ))}
                     </div>

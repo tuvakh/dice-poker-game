@@ -1,182 +1,172 @@
 .tournament-create-form {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  max-width: 560px;
-  margin-top: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-width: 560px;
+    margin-top: 1.5rem;
+
+    &__field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    &__label {
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+
+    &__input,
+    &__textarea,
+    &__select {
+        font-family: inherit;
+        font-size: 0.9rem;
+        padding: 8px 10px;
+        border: 1.5px solid var(--secondary-color);
+        border-radius: 6px;
+        background: #fff;
+        color: #222;
+        width: 100%;
+        box-sizing: border-box;
+
+        &:focus {
+            outline: 2px solid var(--button-color);
+            border-color: transparent;
+        }
+    }
+
+    &__textarea {
+        min-height: 90px;
+        resize: vertical;
+    }
+
+    &__submit {
+        align-self: flex-start;
+        background: var(--button-color);
+        color: #fff;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-family: inherit;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: opacity 0.15s;
+
+        &:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+    }
 }
 
-.tournament-create-form__field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.tournament-create-form__label {
-  font-size: 0.9rem;
-  font-weight: 600;
-}
-
-.tournament-create-form__input,
-.tournament-create-form__textarea,
-.tournament-create-form__select {
-  font-family: inherit;
-  font-size: 0.9rem;
-  padding: 8px 10px;
-  border: 1.5px solid var(--secondary-color);
-  border-radius: 6px;
-  background: #fff;
-  color: #222;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.tournament-create-form__input:focus,
-.tournament-create-form__textarea:focus,
-.tournament-create-form__select:focus {
-  outline: 2px solid var(--button-color);
-  border-color: transparent;
-}
-
-.tournament-create-form__textarea {
-  min-height: 90px;
-  resize: vertical;
-}
-
-/* Trophy badge picker */
 .trophy-picker {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
 }
 
 .trophy-option {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 14px;
-  border: 2px solid var(--secondary-color);
-  border-radius: 10px;
-  background: #fff;
-  cursor: pointer;
-  color: #222;
-  font-family: inherit;
-  font-size: 0.78rem;
-  min-width: 80px;
-  max-width: 110px;
-  transition: border-color 0.15s, box-shadow 0.15s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 14px;
+    border: 2px solid var(--secondary-color);
+    border-radius: 10px;
+    background: #fff;
+    cursor: pointer;
+    color: #222;
+    font-family: inherit;
+    font-size: 0.78rem;
+    min-width: 80px;
+    max-width: 110px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+
+    &:hover { border-color: var(--button-color); }
+
+    &--selected {
+        border-color: var(--button-color);
+        box-shadow: 0 0 0 3px rgba(211, 90, 146, 0.25);
+    }
+
+    &--none {
+        opacity: 0.65;
+
+        &.trophy-option--selected { opacity: 1; }
+    }
+
+    &__img {
+        width: 52px;
+        height: 52px;
+        object-fit: contain;
+        border-radius: 4px;
+    }
+
+    &__icon {
+        font-size: 2rem;
+        line-height: 1;
+    }
+
+    &__title {
+        text-align: center;
+        word-break: break-word;
+        line-height: 1.2;
+    }
 }
 
-.trophy-option:hover {
-  border-color: var(--button-color);
-}
-
-.trophy-option--selected {
-  border-color: var(--button-color);
-  box-shadow: 0 0 0 3px rgba(211, 90, 146, 0.25);
-}
-
-.trophy-option--none {
-  opacity: 0.65;
-}
-
-.trophy-option--none.trophy-option--selected {
-  opacity: 1;
-}
-
-.trophy-option__img {
-  width: 52px;
-  height: 52px;
-  object-fit: contain;
-  border-radius: 4px;
-}
-
-.trophy-option__icon {
-  font-size: 2rem;
-  line-height: 1;
-}
-
-.trophy-option__title {
-  text-align: center;
-  word-break: break-word;
-  line-height: 1.2;
-}
-
-.tournament-create-form__submit {
-  align-self: flex-start;
-  background: var(--button-color, #D35A92);
-  color: #fff;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-family: inherit;
-  font-size: 0.95rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity 0.15s;
-}
-
-.tournament-create-form__submit:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* Trophy upload box */
 .trophy-upload {
-  border: 2px dashed var(--secondary-color);
-  border-radius: 10px;
-  padding: 16px 20px;
-  background: #fff;
-}
+    border: 2px dashed var(--secondary-color);
+    border-radius: 10px;
+    padding: 16px 20px;
+    background: #fff;
 
-.trophy-upload__heading {
-  font-size: 0.95rem;
-  font-weight: 700;
-  margin-bottom: 12px;
-}
+    &__heading {
+        font-size: 0.95rem;
+        font-weight: 700;
+        margin-bottom: 12px;
+    }
 
-.trophy-upload__form {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
+    &__form {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
 
-.trophy-upload__file-label {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 72px;
-  height: 72px;
-  border: 1.5px solid var(--secondary-color);
-  border-radius: 8px;
-  cursor: pointer;
-  background: #f9f9f9;
-  overflow: hidden;
-  flex-shrink: 0;
-  transition: border-color 0.15s;
-}
+    &__file-label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 72px;
+        height: 72px;
+        border: 1.5px solid var(--secondary-color);
+        border-radius: 8px;
+        cursor: pointer;
+        background: #f9f9f9;
+        overflow: hidden;
+        flex-shrink: 0;
+        transition: border-color 0.15s;
 
-.trophy-upload__file-label:hover {
-  border-color: var(--button-color);
-}
+        &:hover { border-color: var(--button-color); }
+    }
 
-.trophy-upload__preview {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
+    &__preview {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
 
-.trophy-upload__placeholder {
-  font-size: 0.72rem;
-  text-align: center;
-  color: #888;
-  padding: 4px;
-}
+    &__placeholder {
+        font-size: 0.72rem;
+        text-align: center;
+        color: #888;
+        padding: 4px;
+    }
 
-.trophy-upload__msg {
-  margin-top: 10px;
-  font-size: 0.85rem;
-  color: var(--button-color);
+    &__msg {
+        margin-top: 10px;
+        font-size: 0.85rem;
+        color: var(--button-color);
+    }
 }

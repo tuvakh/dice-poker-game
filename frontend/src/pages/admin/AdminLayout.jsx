@@ -1,11 +1,19 @@
-import { Outlet, Link } from "react-router-dom";
-import "./_Admin.scss";
+import { Outlet, Link } from "react-router";
+import { useAuth } from "../../contexts/AuthContext.jsx";
+import logo from "../../assets/logo.png";
+import Button from "../../components/Button.jsx";
 
 export default function AdminLayout() {
+    const { logout } = useAuth();
+
     return (
         <section className="admin">
             <aside className="admin__nav">
-                <h2>Admin</h2>
+                <div className="admin__logo">
+                    <Link to="/">
+                        <img src={logo} alt="Spanish Poker Dice logo" />
+                    </Link>
+                </div>    
                 <nav>
                     <ul>
                         <li><Link to="/admin">Dashboard</Link></li>
@@ -14,6 +22,9 @@ export default function AdminLayout() {
                         <li><Link to="/admin/tournaments/create">Create Tournament</Link></li>
                     </ul>
                 </nav>
+                <div className="admin__logout">
+                    <Button onClick={logout}>Log out</Button>
+                </div>
             </aside>
             <main className="admin__content">
                 <Outlet />

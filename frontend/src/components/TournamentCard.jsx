@@ -37,7 +37,7 @@ export default function TournamentCard({ tournament, onClick }) {
                 {tournament.trophy && (
                     <span>
                         {tournament.trophy.image && (
-                            <img src={`/${tournament.trophy.image}`} alt={tournament.trophy.title ?? "Trophy"} style={{ width: 20, height: 20, objectFit: "contain", verticalAlign: "middle", marginRight: 4 }} />
+                            <img src={tournament.trophy.image} alt={tournament.trophy.title ?? "Trophy"} style={{ width: 20, height: 20, objectFit: "contain", verticalAlign: "middle", marginRight: 4 }} />
                         )}
                         {tournament.trophy.title}
                     </span>

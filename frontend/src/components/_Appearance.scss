@@ -11,6 +11,7 @@
 
     &__panel {
         background-color: var(--button-border-color);
+        border: 2px solid #fff;
         padding: var(--normal-space);
         margin-block-start: var(--small-space);
         border-radius: var(--border-radius);
@@ -30,6 +31,18 @@
             font-size: 0.9rem;
             padding-block-start: var(--mini-space);
         }
+    }
+
+    &__range {
+        padding-block: 1rem;
+
+    }
+    &__logout {
+        padding-block: 1rem;
+        border-top: 1px solid #fff;
+        display: flex;
+        justify-content: center;
+        text-align: center;
     }
 }
 

@@ -1,16 +1,19 @@
 import { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import Button from "./Button.jsx"
 import FormField from "./FormField.jsx"
 import { useAppearance } from "../contexts/AppearanceContext.jsx"
+import { useAuth } from "../contexts/AuthContext.jsx"
 
 // The available board background colors the user can pick from
 const BOARD_COLORS = ["#ffffff", "#1a1a2e", "#2d6a4f", "#8b0000", "#1d3557"];
 
 // Appearance settings panel allows users to customize theme, board color, sound, and lobby display count
 // Settings gets stored in localStorage and the user's backend profile if logged in
-export default function Appearance (){
+export default function Appearance() {
     const [isOpen, setIsOpen] = useState(false);
     const { preferences, updatePreferences } = useAppearance();
+    const { user, logout } = useAuth();
     const containerRef = useRef(null);
 
     // Attaches click-outside and scroll listeners only when the panel is open
@@ -58,6 +61,7 @@ export default function Appearance (){
                     <FormField label={`Lobby games: ${preferences.lobbyCount}`}>
                         <input
                             type="range"
+                            className="appearance__range"
                             min="1"
                             max="15"
                             value={preferences.lobbyCount}
@@ -65,6 +69,11 @@ export default function Appearance (){
                         />
                     </FormField>
 
+                    {user && (
+                        <div className="appearance__logout">
+                            <Link to="/" onClick={logout} className="button button--primary">Log out</Link>
+                        </div>
+                    )}
                 </div>
             )}
         </div>

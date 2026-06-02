@@ -94,8 +94,8 @@ export default function TournamentPage() {
 
         // Find the most recent endedAt across all matches in the latest round
         const latestEndedAt = latestRound.reduce((maxTime, match) => {
-            const t = match?.endedAt ? new Date(match.endedAt).getTime() : 0;
-            return t > maxTime ? t : maxTime;
+            const endTime = match?.endedAt ? new Date(match.endedAt).getTime() : 0;
+            return endTime > maxTime ? endTime : maxTime;
         }, 0);
 
         if (!latestEndedAt) {
@@ -116,7 +116,7 @@ export default function TournamentPage() {
                 startRound(id)
                     .then(updated => setTournament(updated))
                     .catch(() => {
-                        getTournament(id).then(updated => setTournament(updated)).catch(() => {});
+                        getTournament(id).then(updated => setTournament(updated)).catch(() => { });
                     });
             }
         };
@@ -146,7 +146,7 @@ export default function TournamentPage() {
                 .then(updated => setTournament(updated))
                 .catch(() => {
                     // If another user already started it, just re-fetch the latest state
-                    getTournament(id).then(updated => setTournament(updated)).catch(() => {});
+                    getTournament(id).then(updated => setTournament(updated)).catch(() => { });
                 });
         };
 
@@ -171,7 +171,7 @@ export default function TournamentPage() {
         for (const match of latestRound) {
             if (!match || match.status !== 'ongoing') continue;
             const players = match.players ?? [];
-            const isPlayer = players.some(pl => (pl._id ?? pl)?.toString() === user._id?.toString());
+            const isPlayer = players.some(player => (player._id ?? player)?.toString() === user._id?.toString());
             if (isPlayer && match.matchId) {
                 redirectedRef.current = true;
                 // Pass tournamentId in state so Game.jsx can show "Back to tournament"
@@ -275,18 +275,18 @@ export default function TournamentPage() {
         }
     }
     // Include all participants so players with 0 wins still appear
-    for (const p of (tournament.participants ?? [])) {
-        const pId = (p._id ?? p)?.toString();
-        if (pId && !winMap[pId]) winMap[pId] = { username: p.username ?? '?', wins: 0 };
+    for (const participant of (tournament.participants ?? [])) {
+        const participantId = (participant._id ?? participant)?.toString();
+        if (participantId && !winMap[participantId]) winMap[participantId] = { username: participant.username ?? '?', wins: 0 };
     }
-    const standingsList = Object.values(winMap).sort((a, b) => b.wins - a.wins);
+    const standingsList = Object.values(winMap).sort((entryA, entryB) => entryB.wins - entryA.wins);
 
     // alreadyIn checks the fetched data so returning visitors who were already registered see the right UI
     // joined is set when the user joins in this browser session (optimistic)
     // Username comparison is used because participants are populated objects with plain string usernames,
     // while _id ObjectId serialisation can vary across Mongoose versions causing string mismatches.
-    const alreadyIn = user && tournament.participants?.some(p =>
-        p.username && p.username === user.username
+    const alreadyIn = user && tournament.participants?.some(participant =>
+        participant.username && participant.username === user.username
     );
 
     // Players can leave as long as the tournament has not finished or been cancelled
@@ -337,17 +337,23 @@ export default function TournamentPage() {
             )}
 
             {/* Admin controls: delete and cancel are only shown to admin users */}
-            {user?.role === 'admin' && !["finished", "cancelled"].includes(tournament.status) && (
+            {user?.role === 'admin' && tournament.status !== 'finished' && (
                 <div className="tournament-detail__admin">
-                    <Button onClick={() => navigate(`/admin/tournaments/${tournament.tournamentId}/edit`)}>Edit tournament</Button>
-                    <Button onClick={() => setShowCancelConfirm(true)} variant="danger">Cancel tournament</Button>
+                    {tournament.status !== 'cancelled' && (
+                        <>
+                            <Button onClick={() => navigate(`/admin/tournaments/${tournament.tournamentId}/edit`)}>Edit tournament</Button>
+                            <Button onClick={() => setShowCancelConfirm(true)} variant="danger">Cancel tournament</Button>
+                        </>
+                    )}
                     <Button onClick={() => setShowDeleteConfirm(true)} variant="danger">Delete tournament</Button>
                 </div>
             )}
 
+
             {showCancelConfirm && (
                 <ConfirmDialog
                     message="Cancel this tournament? Players will be notified it won't run."
+                    confirmLabel="Yes, cancel"
                     onConfirm={() => { setShowCancelConfirm(false); handleCancel(); }}
                     onCancel={() => setShowCancelConfirm(false)}
                 />
@@ -355,6 +361,7 @@ export default function TournamentPage() {
             {showDeleteConfirm && (
                 <ConfirmDialog
                     message="Permanently delete this tournament? This cannot be undone."
+                    confirmLabel="Yes, delete"
                     onConfirm={() => { setShowDeleteConfirm(false); handleDelete(); }}
                     onCancel={() => setShowDeleteConfirm(false)}
                 />
@@ -428,7 +435,7 @@ export default function TournamentPage() {
                     <div className="tournament-detail__trophy">
                         {tournament.trophy.image && (
                             <img
-                                src={`/${tournament.trophy.image}`}
+                                src={tournament.trophy.image}
                                 alt={tournament.trophy.title ?? "Trophy"}
                                 className="tournament-detail__trophy-img"
                             />
@@ -506,15 +513,15 @@ export default function TournamentPage() {
                                                 {players.length === 0 ? (
                                                     <p className="bracket__match-player bracket__match-player--tbd">TBD</p>
                                                 ) : (
-                                                    players.map((pl, pIdx) => (
+                                                    players.map((player, playerIdx) => (
                                                         <p
-                                                            key={pIdx}
-                                                            className={`bracket__match-player${winner && (pl._id ?? pl)?.toString() === (winner._id ?? winner)?.toString()
+                                                            key={playerIdx}
+                                                            className={`bracket__match-player${winner && (player._id ?? player)?.toString() === (winner._id ?? winner)?.toString()
                                                                 ? " bracket__match-player--winner"
                                                                 : ""
                                                                 }`}
                                                         >
-                                                            {pl.username ?? pl}
+                                                            {player.username ?? player}
                                                         </p>
                                                     ))
                                                 )}

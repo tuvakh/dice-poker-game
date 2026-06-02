@@ -71,7 +71,7 @@ figcaption {
     }
 }
 
-section:not(.hero) {
+section:not(.hero, .admin__stats, .admin__incidents) {
     width: 80%;
     margin: auto;
     padding: var(--big-space);
