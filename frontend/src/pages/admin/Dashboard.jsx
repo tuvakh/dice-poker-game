@@ -37,20 +37,12 @@ export default function AdminDashboard() {
 
             <section className="admin__stats">
                 <div className="stat-card">
-                    <div className="stat-card__value">{stats.totalUsers}</div>
-                    <div className="stat-card__label">Total Users</div>
-                </div>
-                <div className="stat-card">
                     <div className="stat-card__value">{stats.activeMatches24h}</div>
                     <div className="stat-card__label">Active Matches (24h)</div>
                 </div>
                 <div className="stat-card">
                     <div className="stat-card__value">{stats.newSignups7d}</div>
                     <div className="stat-card__label">New Signups (7d)</div>
-                </div>
-                <div className="stat-card">
-                    <div className="stat-card__value">{stats.pendingReports}</div>
-                    <div className="stat-card__label">Pending Reports</div>
                 </div>
             </section>
 

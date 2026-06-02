@@ -30,8 +30,8 @@ const server = http.createServer(app); // Express handles HTTP requests
 
 // This limits each IP to 100 requests per 15 minutes to prevent abuse
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 500,
+    windowMs: 60 * 1000,
+    max: 200,
     handler: async (req, res) => {
         try {
             await Security.create({
