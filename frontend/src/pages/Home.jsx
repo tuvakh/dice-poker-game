@@ -8,6 +8,7 @@ import TournamentCard from "../components/TournamentCard.jsx";
 import Spinner from "../components/Spinner.jsx";
 
 import { getActivity } from "../api/activity.js";
+import "./_Home.scss";
 import { getAllMatches } from "../api/matches.js";
 import { getAllTournaments } from "../api/tournaments.js";
 import { useAppearance } from "../contexts/AppearanceContext.jsx";
@@ -117,12 +118,12 @@ export default function Home() {
                     <h2>Platform activity</h2>
                     <div className="home-activity__stats">
                         <div className="home-activity__stat">
+                            <span className="home-activity__label">Games live right now</span>
                             <span className="home-activity__number">{activity.ongoingMatches}</span>
-                            <span>games live right now</span>
                         </div>
                         <div className="home-activity__stat">
+                            <span className="home-activity__label">Players active this week</span>
                             <span className="home-activity__number">{activity.activeUsers}</span>
-                            <span>players active this week</span>
                         </div>
                     </div>
                 </section>
