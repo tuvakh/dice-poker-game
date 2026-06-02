@@ -44,8 +44,7 @@ export function generateRefreshToken(user) {
  */
 export function verifyToken(token) {
     try {
-        const decoded = jwt.verify(token, SECRET_KEY);
-        return decoded;
+        return jwt.verify(token, SECRET_KEY);
     } catch (error) {
         return null;
     }

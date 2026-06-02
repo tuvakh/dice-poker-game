@@ -7,7 +7,7 @@ import { TOURNAMENT_STATUS } from "../config/constants.js";
 // This function validates the numeric tournamentId route parameter
 // .bail() stops the chain if the param is invalid so later validators don't run on bad data
 // .toInt() converts the string param to a number so it can be compared as an integer
-export function validateTournamentId(){
+function validateTournamentId(){
     return [
         param("tournamentId")
             .isInt({ min: 1, max: Number.MAX_SAFE_INTEGER })
@@ -18,7 +18,7 @@ export function validateTournamentId(){
 }
 
 // All query params in this function are optional — they only apply if the client sends them
-export function validateGetAllTournaments(){
+function validateGetAllTournaments(){
     return [
         query("page")
             .optional()
@@ -38,7 +38,7 @@ export function validateGetAllTournaments(){
     ];
 }
 
-export function validateCreateTournament(){
+function validateCreateTournament(){
     return [
         body("title")
             .notEmpty()
@@ -88,7 +88,7 @@ export function validateCreateTournament(){
 };
 
 // userId is not accepted from the body — it is injected from the verified JWT in the controller
-export function validateJoinTournament(){
+function validateJoinTournament(){
     return [
         param("tournamentId")
             .isInt({ min: 1 })
@@ -98,7 +98,7 @@ export function validateJoinTournament(){
 }
 
 // userId is not accepted from the body — it is injected from the verified JWT in the controller
-export function validateLeaveTournament(){
+function validateLeaveTournament(){
     return [
         param("tournamentId")
             .isInt({ min: 1 })
@@ -107,7 +107,7 @@ export function validateLeaveTournament(){
     ];
 }
 
-export function validateStartNextRound(){
+function validateStartNextRound(){
     return [
         param("tournamentId")
             .isInt({ min: 1 })
@@ -117,7 +117,7 @@ export function validateStartNextRound(){
 }
 
 // All fields are optional so the admin can patch only what changed
-export function validateUpdateTournament(){
+function validateUpdateTournament(){
     return [
         param("tournamentId")
             .isInt({ min: 1 })

@@ -468,7 +468,7 @@ export default function attachWebSocket(server) {
         ws.send(
             JSON.stringify({
                 type: 'game-started',
-                yourDice: player.dice ?? [],
+                yourDice: player.dice,
                 rollsLeft: player.rollsLeft,
                 players: Object.keys(state.players),
                 timeRemaining: Math.ceil(player.timeRemaining / 1000)
@@ -494,7 +494,7 @@ export default function attachWebSocket(server) {
         state.phase = 'rolling';
 
         // Roll dice for every player
-        for (const [userId, player] of Object.entries(state.players)) {
+        for (const player of Object.values(state.players)) {
             // Start with '?' so the client sees blank dice until the player clicks Roll Again at least once
             // This also prevents clicking Done Rolling before any real faces have been revealed
             player.dice = ['?', '?', '?', '?', '?'];

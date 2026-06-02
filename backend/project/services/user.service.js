@@ -9,7 +9,7 @@ import { verifyToken } from '../utils/jwt.js';
 import crypto from 'crypto';
 import { sendPasswordResetEmail, sendVerificationEmail } from '../utils/mailer.js';
 
-export async function getAllUsers({ page = 1, limit = 10, search = '' }) {
+async function getAllUsers({ page = 1, limit = 10, search = '' }) {
     // Only search by username if a search term was provided
     // otherwise return all users
     const searchUsers = search ? { username: { $regex: search, $options: 'i' } } : {};
@@ -31,7 +31,7 @@ export async function getAllUsers({ page = 1, limit = 10, search = '' }) {
     };
 }
 
-export async function getUser(userId) {
+async function getUser(userId) {
     // populate() replaces trophy ObjectIds with the full trophy objects including image and title
     const user = await User.findOne({ userId }).select('-password').populate('trophies');
     if (!user) {
@@ -55,19 +55,13 @@ export async function getUser(userId) {
     return { ...user.toObject(), totalGames, monthWins, monthLosses };
 }
 
-function generateEmailVerificationToken() {
+function generateVerificationToken() {
     const token = crypto.randomBytes(32).toString('hex');
     const expires = new Date(Date.now() + 1000 * 60 * 15); // Token expires in 15 minutes
     return { token, expires };
 }
 
-function generatePasswordResetToken() {
-    const token = crypto.randomBytes(32).toString('hex');
-    const expires = new Date(Date.now() + 1000 * 60 * 15); // Token expires in 15 minutes
-    return { token, expires };
-}
-
-export async function createUser(userObj) {
+async function createUser(userObj) {
     const { username, email, password, age, role } = userObj;
 
     const existingUsername = await User.findOne({ username });
@@ -80,14 +74,7 @@ export async function createUser(userObj) {
         throw new CustomError(`A user with the email ${email} is already registered — did you forget your password?`, 409, 'CONFLICT');
     }
 
-    const hasValidVerificationToken =
-        existingEmail &&
-        existingEmail.emailVerificationToken &&
-        existingEmail.emailVerificationTokenExpires &&
-        existingEmail.emailVerificationTokenExpires > new Date();
-    const tokenData = hasValidVerificationToken
-        ? { token: existingEmail.emailVerificationToken, expires: existingEmail.emailVerificationTokenExpires }
-        : generateEmailVerificationToken();
+    const tokenData = generateVerificationToken();
 
     const newUser = await User.create({
         username,
@@ -110,7 +97,7 @@ export async function createUser(userObj) {
     return { newUser, token: tokenData.token };
 }
 
-export async function verifyEmailToken(token) {
+async function verifyEmailToken(token) {
     if (!token) {
         throw new CustomError('Verification token is required', 400, 'BAD_REQUEST');
     }
@@ -146,14 +133,14 @@ export async function verifyEmailToken(token) {
     return user;
 }
 
-export async function requestPasswordReset(email) {
+async function requestPasswordReset(email) {
     const user = await User.findOne({ email });
 
     if (!user) {
         throw new CustomError('No account found with that email address.', 404, 'NOT_FOUND');
     }
 
-    const tokenData = generatePasswordResetToken();
+    const tokenData = generateVerificationToken();
 
     const updatedUser = await User.findOneAndUpdate(
         {
@@ -193,7 +180,7 @@ export async function requestPasswordReset(email) {
     return { message: `Reset link sent to ${email}.` };
 }
 
-export async function resetPassword(code, password) {
+async function resetPassword(code, password) {
     const user = await User.findOne({
         $or: [
             {
@@ -226,7 +213,7 @@ export async function resetPassword(code, password) {
     return { message: 'Password reset successfully' };
 }
 
-export async function loginUser(username, password) {
+async function loginUser(username, password) {
     // Case-insensitive search so "TUVA", "tuva", and "Tuva" all find the same account
     const user = await User.findOne({ username: { $regex: `^${username}$`, $options: 'i' } });
     if (!user) {
@@ -251,7 +238,7 @@ export async function loginUser(username, password) {
     return user;
 }
 
-export async function updateUser(userId, updateObj) {
+async function updateUser(userId, updateObj) {
     // Hash password before update if provided, since findOneAndUpdate bypasses the pre-save hook
     if (updateObj.password) {
         updateObj.password = await hashPassword(updateObj.password);
@@ -271,7 +258,7 @@ export async function updateUser(userId, updateObj) {
 }
 
 // Handles user banning
-export async function banUser(userId) {
+async function banUser(userId) {
     const user = await User.findOneAndUpdate({ userId }, { banned: true }, { new: true });
     if (!user) {
         throw new CustomError(`A user with the id ${userId}? Never heard of them, must be a ghost`, 404, 'NOT_FOUND');
@@ -283,7 +270,7 @@ export async function banUser(userId) {
 }
 
 // Unban a user (admin only)
-export async function unbanUser(userId) {
+async function unbanUser(userId) {
     const user = await User.findOneAndUpdate({ userId }, { banned: false }, { new: true });
     if (!user) {
         throw new CustomError(`A user with the id ${userId}? Never heard of them, must be a ghost`, 404, 'NOT_FOUND');
@@ -293,7 +280,7 @@ export async function unbanUser(userId) {
 }
 
 // Change a user's role (admin only)
-export async function changeUserRole(userId, role) {
+async function changeUserRole(userId, role) {
     if (!['user', 'admin'].includes(role)) {
         throw new CustomError('Invalid role', 400, 'BAD_REQUEST');
     }
@@ -305,7 +292,7 @@ export async function changeUserRole(userId, role) {
 }
 
 // Save refresh token to database (for logout/revocation/validation)
-export async function saveRefreshToken(userId, token) {
+async function saveRefreshToken(userId, token) {
     const user = await User.findOne({ userId });
     if (!user) {
         throw new CustomError(`A user with the id ${userId}? Never heard of them, must be a ghost`, 404, 'NOT_FOUND');
@@ -316,29 +303,38 @@ export async function saveRefreshToken(userId, token) {
 }
 
 // Verify refresh token - checks both JWT validity and storage in DB
-export async function verifyRefreshToken(token) {
+async function verifyRefreshToken(token) {
     // First verify it's a valid JWT
     const decoded = verifyToken(token);
     if (!decoded || decoded.type !== 'refresh') {
         return null;
     }
-    
+
     // Then check it matches the stored token (ensures logout/revocation works)
     const user = await User.findOne({ userId: decoded.userId });
     if (!user || user.refreshToken !== token) {
         return null;
     }
-    
+
     return decoded;
 }
 
-export async function resendVerification(email) {
+async function resendVerification(email) {
     const user = await User.findOne({ email });
     // Return a neutral message whether the user exists or not to prevent enumeration
     if (!user || user.emailVerified) {
         return { message: 'a new link has been sent.' };
     }
-    await resendVerificationEmail(user);
+    const { token, expires } = generateVerificationToken();
+    user.emailVerificationToken = token;
+    user.emailVerificationTokenExpires = expires;
+    user.emailVerificationTokens = [{ token, expires }];
+    await user.save();
+    try {
+        await sendVerificationEmail(user.email, token);
+    } catch (err) {
+        console.error('Failed to resend verification email:', err);
+    }
     return { message: 'a new link has been sent.' };
 }
 

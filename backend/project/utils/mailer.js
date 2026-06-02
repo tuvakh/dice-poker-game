@@ -36,5 +36,3 @@ export async function sendVerificationEmail(toEmail, token) {
             <p>This link expires in 15 minutes</p>`
     });
 }
-
-export default { sendVerificationEmail, sendPasswordResetEmail };

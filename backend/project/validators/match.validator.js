@@ -6,7 +6,7 @@ import { MATCH_STATUS } from "../config/constants.js";
 // This function validates the numeric matchId route parameter
 // .bail() stops the chain if invalid
 // .toInt() converts the string param to a number
-export function validateMatchId(){
+function validateMatchId(){
     return [
         param("matchId")
             .isInt({ min: 1, max: Number.MAX_SAFE_INTEGER })
@@ -17,7 +17,7 @@ export function validateMatchId(){
 }
 
 // All query params in this function are optional for filtering and pagination
-export function validateGetAllMatches(){
+function validateGetAllMatches(){
     return [
         query("page")
             .optional()
@@ -45,7 +45,7 @@ export function validateGetAllMatches(){
     ];
 }
 
-export function validateCreateMatch(){
+function validateCreateMatch(){
     return [
         // gameCategoryId is required and must be a valid MongoDB ObjectId
         body("gameCategoryId")
@@ -76,7 +76,7 @@ export function validateCreateMatch(){
 };
 
 
-export function validateRecordMatch(){
+function validateRecordMatch(){
     return [
         param("matchId")
             .isInt({ min: 1 })
@@ -95,7 +95,7 @@ export function validateRecordMatch(){
 }
 
 // userId is not accepted from the body — it is injected from the verified JWT in the controller
-export function validateJoinMatch() {
+function validateJoinMatch() {
     return [
         param("matchId")
             .isInt({ min: 1 })
