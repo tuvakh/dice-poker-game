@@ -146,9 +146,11 @@ input[type=range] {
 
 .status--error {
   color: var(--error-color);
+  font-weight: bold;
 }
 .status--success {
-  color: var(--secondary-color);
+  color: var(--success-color);
+  font-style: italic;
 }
 
 .spinner-wrapper {
@@ -215,10 +217,11 @@ input[type=range] {
   --text-color: #000000;
   --fake-link-color: #ab06a0;
   --info-color: #c0457e;
-  --elo-color: #c75e1d;
+  --elo-color: #b75e27;
   --copyright-color: #bfe3d7;
   --number-color: #b43a73;
   --error-color: #b50758;
+  --success-color: #2f733b;
   --die-bg-color: #ffffff;
   --die-face-color-red: #e40f0f;
   --die-face-color-black: #000000;
@@ -234,7 +237,7 @@ input[type=range] {
 [data-theme=dark] {
   --primary-color: #203B33;
   --secondary-color: #598276;
-  --tertiary-color: #131212;
+  --tertiary-color: #201717;
   --box-color: #900A49;
   --button-color: #BC1E68;
   --button-border-color: #E78BB6;
@@ -246,6 +249,7 @@ input[type=range] {
   --copyright-color: #a3a3a3;
   --number-color: #E78BB6;
   --error-color: #ffcee5;
+  --success-color: #98d2a2;
 }
 
 .footer {
@@ -263,6 +267,7 @@ input[type=range] {
 }
 
 .header {
+  position: relative;
   padding: var(--medium-space);
   background-color: var(--tertiary-color);
   display: grid;
@@ -277,15 +282,60 @@ input[type=range] {
   align-items: center;
   justify-content: flex-end;
 }
-@media (max-width: 600px) {
+.header__hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  color: #fff;
+}
+.header__hamburger span {
+  display: block;
+  width: 24px;
+  height: 2px;
+  background-color: currentColor;
+  transition: transform 0.2s, opacity 0.2s;
+}
+.header__hamburger--open span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+.header__hamburger--open span:nth-child(2) {
+  opacity: 0;
+}
+.header__hamburger--open span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+@media (max-width: 1000px) {
   .header {
+    grid-template-columns: 1fr auto;
+  }
+  .header .navbar {
+    grid-row: 2;
+    grid-column: 1/-1;
+  }
+  .header__user {
+    display: none;
+  }
+  .header__hamburger {
     display: flex;
-    flex-direction: column;
+    grid-row: 1;
+    grid-column: 2;
   }
 }
 
 .navbar {
   text-align: center;
+}
+.navbar__list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 .navbar__item {
   display: inline-block;
@@ -295,12 +345,39 @@ input[type=range] {
   font-weight: bold;
   text-decoration: underline;
 }
-@media (max-width: 600px) {
-  .navbar {
-    padding-block: var(--small-space);
+.navbar__item--mobile-user {
+  display: none;
+}
+@media (max-width: 1000px) {
+  .navbar__list {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: var(--tertiary-color);
+    z-index: 100;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  .navbar__list--open {
+    display: flex;
   }
   .navbar__item {
-    padding-block-start: var(--mini-space);
+    padding-block: var(--mini-space);
+    width: 100%;
+    text-align: center;
+    background-color: var(--primary-color);
+  }
+  .navbar__item--mobile-user {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--small-space);
+    margin-block-start: var(--norma-sapce);
+    padding-top: var(--small-space);
+    border-top: 1px solid var(--secondary-color);
   }
 }
 
@@ -337,14 +414,16 @@ input[type=range] {
   border: 0.1rem solid var(--button-border-color);
   border-radius: 50px;
   padding: var(--mini-space) var(--normal-space);
-  color: var(--text-color);
+  color: #fff;
   min-width: 130px;
+  font-weight: normal;
   cursor: pointer;
 }
 .button--danger, .greeting__button--danger, .all-games-btn--danger {
-  background-color: #5a1a1a;
-  border-color: #c0392b;
-  color: #ff6b6b;
+  background-color: #a91756;
+  border-color: #e679a8;
+  color: #ffd4e7;
+  margin-block-start: 0.5rem;
 }
 .button--danger:hover, .greeting__button--danger:hover, .all-games-btn--danger:hover {
   background-color: #7a2020;
@@ -388,9 +467,10 @@ input[type=range] {
   width: 100%;
 }
 .form-field__error {
-  color: red;
+  color: var(--error-color);
   font-size: 0.8rem;
   margin-top: 0.25rem;
+  font-weight: bold;
 }
 .form-field--inline {
   flex-direction: row-reverse;
@@ -626,25 +706,30 @@ input[type=range] {
 }
 .tournament-card__status {
   display: inline-block;
-  font-size: 0.7rem;
+  font-size: 0.6rem;
+  font-weight: bold;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  padding: 2px 8px;
+  padding: 4px 10px;
   border-radius: 4px;
   width: -moz-fit-content;
   width: fit-content;
 }
 .tournament-card__status--upcoming {
-  background: #1a3a1a;
-  color: #4caf50;
+  background: #d6690a;
+  color: #fff8f3;
 }
 .tournament-card__status--active, .tournament-card__status--ongoing {
-  background: #2e1a00;
-  color: #ff9800;
+  background: #d55886;
+  color: #fff0f5;
 }
 .tournament-card__status--completed, .tournament-card__status--finished {
-  background: var(--box-color);
-  color: var(--text-color);
+  background: #3b6856;
+  color: #eafff6;
+}
+.tournament-card__status--cancelled {
+  background: #930b0b;
+  color: rgb(255, 239, 239);
 }
 
 .login {
@@ -725,7 +810,7 @@ input[type=range] {
   align-items: center;
   justify-content: center;
   gap: var(--normal-space);
-  font-size: 1.4rem;
+  font-size: 1.2rem;
   font-weight: bold;
   text-align: center;
 }
@@ -760,6 +845,7 @@ input[type=range] {
   font-weight: 900;
   letter-spacing: 0.05em;
   margin: 0;
+  color: var(--text-color);
 }
 .game__ready-buttons {
   display: flex;
@@ -768,7 +854,10 @@ input[type=range] {
 .game__ready-yes--confirmed {
   background-color: #2a6644;
   color: white;
-  border-color: #2a6644;
+  border-color: #a0afa6;
+}
+.game__ready-yes--confirmed:disabled {
+  opacity: 1;
 }
 .game__ready-waiting {
   font-weight: bold;
@@ -821,10 +910,10 @@ input[type=range] {
   font-size: 1rem;
 }
 .game__bet-timer--urgent {
-  color: #c0392b;
+  color: #c02b6c;
 }
 .game__player-left {
-  color: #c0392b;
+  color: var(--text-color);
   font-weight: bold;
   font-size: 0.9rem;
   margin-block-start: var(--mini-space);
@@ -837,10 +926,10 @@ input[type=range] {
   text-align: center;
 }
 .game__round-result--won {
-  color: #2a8c4a;
+  color: var(--text-color);
 }
 .game__round-result--lost {
-  color: #c0392b;
+  color: var(--button-color);
 }
 .game__ended {
   flex: 1;
@@ -882,6 +971,11 @@ input[type=range] {
   max-height: 90vh;
   position: sticky;
   top: 0;
+}
+@media (max-width: 1000px) {
+  .game__comments {
+    padding-block-start: var(--normal-space);
+  }
 }
 .game__comments .comments-list {
   flex: 1;
@@ -1011,6 +1105,13 @@ input[type=range] {
 .profile__about--empty {
   color: var(--secondary-color);
 }
+.profile__image-preview img {
+  width: 80px;
+  height: 80px;
+  -o-object-fit: cover;
+     object-fit: cover;
+  border-radius: 50%;
+}
 
 @media (max-width: 600px) {
   .stats {
@@ -1129,14 +1230,15 @@ input[type=range] {
   border: 2px solid var(--secondary-color);
   border-radius: var(--border-radius);
   background: var(--secondary-color);
-  color: var(--text-color);
   font-size: 0.9rem;
 }
 .tournament-controls__search::-moz-placeholder {
-  opacity: 0.6;
+  opacity: 0.7;
+  color: var(--text-color);
 }
 .tournament-controls__search::placeholder {
-  opacity: 0.6;
+  opacity: 0.7;
+  color: var(--text-color);
 }
 .tournament-controls__sort {
   padding: var(--mini-space) var(--normal-space);
@@ -1148,6 +1250,10 @@ input[type=range] {
   cursor: pointer;
 }
 
+.tournament-detail h2 {
+  margin-block-start: var(--big-space);
+  margin-block-end: var(--small-space);
+}
 .tournament-detail .back-link {
   position: static;
   display: inline-block;
@@ -1183,6 +1289,7 @@ input[type=range] {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: var(--small-space);
+  padding: 0;
   margin-block-start: var(--small-space);
 }
 .tournament-detail__player-item {
@@ -1340,12 +1447,20 @@ input[type=range] {
   padding: 24px;
   box-sizing: border-box;
 }
+.admin table tr,
+.admin table td {
+  border: 1px solid var(--secondary-color);
+}
+.admin table th {
+  background-color: var(--secondary-color);
+  border: 1px solid var(--primary-color);
+}
 .admin__nav {
   display: flex;
   flex-direction: column;
   align-items: center;
   width: 220px;
-  background: var(--box-color, #f6f7fb);
+  background: var(--tertiary-color);
   border-radius: 8px;
   padding: 16px;
   height: calc(100vh - 48px);
@@ -1365,14 +1480,14 @@ input[type=range] {
   margin: 8px 0;
 }
 .admin__nav a {
-  color: var(--text-color, #222);
+  color: var(--text-color);
   text-decoration: none;
   padding: 8px 10px;
   display: block;
   border-radius: 6px;
 }
 .admin__nav a:hover, .admin__nav a.active {
-  background: var(--secondary-color, #e9eefb);
+  background: var(--box-color);
 }
 .admin__logout {
   margin-block-start: auto;
@@ -1386,7 +1501,7 @@ input[type=range] {
 }
 .admin__subtitle {
   margin: 0 0 18px 0;
-  color: var(--muted-color, #666);
+  color: var(--muted-color);
 }
 .admin__stats {
   display: grid;
@@ -1475,7 +1590,7 @@ input[type=range] {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  color: var(--die-face-color-black);
+  color: var(--text-color);
 }
 .stat-card__value {
   font-size: 24px;
@@ -1484,7 +1599,8 @@ input[type=range] {
   color: var(--text-color);
 }
 .stat-card__label {
-  color: var(--die-face-color-black);
+  color: var(--primary-color);
+  font-weight: bold;
 }
 
 .actions-row {
@@ -1495,13 +1611,14 @@ input[type=range] {
 
 .btn {
   background: transparent;
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--button-border-color);
   padding: 8px 12px;
   border-radius: 6px;
   cursor: pointer;
+  color: var(--text-color);
 }
 .btn--primary {
-  background: var(--button-color, #D35A92);
+  background: var(--button-color);
   color: white;
   border: none;
   padding: 8px 12px;
@@ -1514,6 +1631,12 @@ input[type=range] {
   border: none;
   padding: 6px 8px;
   border-radius: 6px;
+}
+
+.pagination .btn {
+  border: none;
+  background-color: var(--button-color);
+  margin: 1rem;
 }
 
 .trophy-option {

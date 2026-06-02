@@ -6,13 +6,17 @@ import { useAppearance } from "../contexts/AppearanceContext.jsx"
 import { useAuth } from "../contexts/AuthContext.jsx"
 
 // The available board background colors the user can pick from
-const BOARD_COLORS = ["#ffffff", "#1a1a2e", "#2d6a4f", "#8b0000", "#1d3557"];
+const BOARD_COLORS = {
+    light: ["#abc6ba", "#e6a9c5", "#aec0db", "#d4ab8f", "#b4b4b4"],
+    dark: ["#2d6a4f", "#85123e", "#0f294d", "#b24f08", "#1c1b1b"],
+};
 
 // Appearance settings panel allows users to customize theme, board color, sound, and lobby display count
 // Settings gets stored in localStorage and the user's backend profile if logged in
 export default function Appearance() {
     const [isOpen, setIsOpen] = useState(false);
     const { preferences, updatePreferences } = useAppearance();
+    const colors = BOARD_COLORS[preferences.theme] ?? BOARD_COLORS.dark;
     const { user, logout } = useAuth();
     const containerRef = useRef(null);
 
@@ -38,12 +42,15 @@ export default function Appearance() {
             {isOpen && (
                 <div className="appearance__panel">
                     {/* Toggles between light and dark theme */}
-                    <Button onClick={() => updatePreferences({ theme: preferences.theme === "light" ? "dark" : "light" })}>
+                    <Button onClick={() => {
+                        const newTheme = preferences.theme === "light" ? "dark" : "light";
+                        updatePreferences({ theme: newTheme, boardColor: BOARD_COLORS[newTheme][0] });
+                    }}>
                         {preferences.theme === "light" ? "Dark mode" : "Light mode"}
                     </Button>
 
                     {/* Renders a color swatch for each board color option*/}
-                    {BOARD_COLORS.map(color => (
+                    {colors.map(color => (
                         <button
                             className="color-btn"
                             key={color}

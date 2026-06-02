@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import { getTournament, updateTournament } from "../../api/tournaments.js";
 import { getAllGameCategories } from "../../api/gameCategories.js";
-import { getAllTrophies } from "../../api/trophies.js";
+import { createTrophy } from "../../api/trophies.js";
 import Spinner from "../../components/Spinner.jsx";
 
 export default function AdminTournamentEdit() {
@@ -17,7 +17,9 @@ export default function AdminTournamentEdit() {
     const [gameCategory, setGameCategory] = useState("");
     const [trophy, setTrophy] = useState("");
     const [gameCategories, setGameCategories] = useState([]);
-    const [trophies, setTrophies] = useState([]);
+    const [newTrophyTitle, setNewTrophyTitle] = useState("");
+    const [newTrophyFile, setNewTrophyFile] = useState(null);
+    const [newTrophyPreview, setNewTrophyPreview] = useState(null);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [message, setMessage] = useState("");
@@ -28,8 +30,7 @@ export default function AdminTournamentEdit() {
         Promise.all([
             getTournament(id),
             getAllGameCategories(),
-            getAllTrophies().catch(() => [])
-        ]).then(([tournament, catResult, trophyResult]) => {
+        ]).then(([tournament, catResult]) => {
             if (cancelled) return;
             if (["ongoing", "finished"].includes(tournament.status)) {
                 navigate(`/tournament/${id}`, { replace: true });
@@ -39,7 +40,6 @@ export default function AdminTournamentEdit() {
                 ? catResult
                 : (catResult.gameCategories || catResult.categoryList || []);
             setGameCategories(categories);
-            setTrophies(Array.isArray(trophyResult) ? trophyResult : []);
 
             // Pre-populate form with existing tournament data
             setTitle(tournament.title ?? "");
@@ -62,12 +62,24 @@ export default function AdminTournamentEdit() {
         return () => { cancelled = true; };
     }, [id]);
 
+    function handleTrophyFileChange(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        setNewTrophyFile(file);
+        setNewTrophyPreview(URL.createObjectURL(file));
+    }
+
     async function handleSubmit(event) {
         event.preventDefault();
         setSubmitting(true);
         setMessage("");
         setError("");
         try {
+            let trophyId = trophy;
+            if (newTrophyFile && newTrophyTitle.trim()) {
+                const created = await createTrophy({ title: newTrophyTitle.trim(), image: newTrophyFile });
+                trophyId = created._id;
+            }
             await updateTournament(id, {
                 title,
                 description,
@@ -75,7 +87,7 @@ export default function AdminTournamentEdit() {
                 breaks: Number(breaks),
                 numberOfRounds: Number(numberOfRounds),
                 gameCategory,
-                ...(trophy ? { trophy } : {})
+                ...(trophyId ? { trophy: trophyId } : {})
             });
             setMessage("Tournament updated!");
         } catch (err) {
@@ -180,33 +192,28 @@ export default function AdminTournamentEdit() {
                     </select>
                 </div>
 
-                <div className="tournament-create-form__field">
-                    <span className="tournament-create-form__label">Trophy (optional)</span>
-                    <div className="trophy-picker">
-                        <button
-                            type="button"
-                            className={`trophy-option trophy-option--none${trophy === "" ? " trophy-option--selected" : ""}`}
-                            onClick={() => setTrophy("")}
-                        >
-                            <span className="trophy-option__icon">🚫</span>
-                            <span className="trophy-option__title">No trophy</span>
-                        </button>
-                        {trophies.map(trophy => (
-                            <button
-                                type="button"
-                                key={trophy._id}
-                                className={`trophy-option${trophy === trophy._id ? " trophy-option--selected" : ""}`}
-                                onClick={() => setTrophy(trophy._id)}
-                            >
-                                <img
-                                    className="trophy-option__img"
-                                    src={`/${trophy.image}`}
-                                    alt={trophy.title}
-                                    onError={event => { event.target.replaceWith(Object.assign(document.createElement("span"), { className: "trophy-option__icon", textContent: "🏆" })); }}
-                                />
-                                <span className="trophy-option__title">{trophy.title}</span>
-                            </button>
-                        ))}
+                <div className="trophy-upload">
+                    <h3 className="trophy-upload__heading">Trophy (optional)</h3>
+                    <div className="trophy-upload__form">
+                        <input
+                            className="tournament-create-form__input"
+                            type="text"
+                            placeholder="Trophy title"
+                            value={newTrophyTitle}
+                            onChange={event => setNewTrophyTitle(event.target.value)}
+                        />
+                        <label className="trophy-upload__file-label">
+                            {newTrophyPreview
+                                ? <img className="trophy-upload__preview" src={newTrophyPreview} alt="preview" />
+                                : <span className="trophy-upload__placeholder">Choose image</span>
+                            }
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleTrophyFileChange}
+                                style={{ display: "none" }}
+                            />
+                        </label>
                     </div>
                 </div>
 

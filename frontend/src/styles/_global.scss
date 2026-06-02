@@ -114,10 +114,12 @@ input[type="range"] {
 .status {    
     &--error {
         color: var(--error-color);
+        font-weight: bold;
     }
 
     &--success {
-        color: var(--secondary-color);
+        color: var(--success-color);
+        font-style: italic;
     }
 }
 
