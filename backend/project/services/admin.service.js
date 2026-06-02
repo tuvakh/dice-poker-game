@@ -14,9 +14,6 @@ export async function getStats() {
     const since7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const newSignups7d = await User.countDocuments({ createdAt: { $gte: since7d } });
 
-    // Pending reports - not implemented; return 0 for now
-    const pendingReports = 0;
-
     const recentIncidents = await Security.find()
     .sort({ timestamp: -1 })
     .limit(20)
@@ -26,7 +23,6 @@ export async function getStats() {
         totalUsers,
         activeMatches24h,
         newSignups7d,
-        pendingReports,
         recentIncidents
     };
 }

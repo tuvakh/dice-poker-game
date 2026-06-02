@@ -52,23 +52,7 @@ export async function getUser(userId) {
 
     const totalGames = await Match.countDocuments({ players: user._id });
 
-    // This calculate the date 7 days ago to find matches played this week
-    const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-
-    const recentMatches = await Match.find({
-        players: user._id,
-        startedAt: { $gte: oneWeekAgo },
-        status: 'finished'
-    });
-
-    // This sum up the ELO deltas from all finished matches this week to get the weekly rating change
-    const weeklyEloChange = recentMatches.reduce((total, match) => {
-        const change = match.eloChanges?.find((c) => c.userId.toString() === user._id.toString());
-        return total + (change?.delta || 0);
-    }, 0);
-
-    // This spreads the user object and add the computed fields before returning
-    return { ...user.toObject(), totalGames, ratingChange: weeklyEloChange, monthWins, monthLosses };
+    return { ...user.toObject(), totalGames, monthWins, monthLosses };
 }
 
 function generateEmailVerificationToken() {
@@ -88,7 +72,7 @@ export async function createUser(userObj) {
 
     const existingUsername = await User.findOne({ username });
     if (existingUsername) {
-        throw new CustomError(`Sorry, ${username} is already taken.. Time to get creative!`, 409, 'CONFLICT');
+        throw new CustomError(`Sorry, ${username} is already taken.. Be more creative will ya`, 409, 'CONFLICT');
     }
 
     const existingEmail = await User.findOne({ email });
@@ -246,10 +230,10 @@ export async function loginUser(username, password) {
     // Case-insensitive search so "TUVA", "tuva", and "Tuva" all find the same account
     const user = await User.findOne({ username: { $regex: `^${username}$`, $options: 'i' } });
     if (!user) {
-        throw new CustomError(`We don't know anyone with the username ${username}!`, 404, 'NOT_FOUND');
+        throw new CustomError(`We don't know anyone with the username, STRANGER DANGER! ${username}!`, 404, 'NOT_FOUND');
     }
     // prevent banned users from logging in
-    if (user.banned) throw new CustomError('This account has been banned. Time to reflect on your choices!', 403, 'FORBIDDEN');
+    if (user.banned) throw new CustomError('This account has been banned. Now go to the  skamme krok and reflect on your choices', 403, 'FORBIDDEN');
 
     // checkPassword hashes the input with the user's salt and compares it to the stored hash
     const correctPassword = await checkPassword(password, user.password);
@@ -280,7 +264,7 @@ export async function updateUser(userId, updateObj) {
     ).select('-password');
 
     if (!user) {
-        throw new CustomError(`A user with the id ${userId}? Never heard of them!`, 404, 'NOT_FOUND');
+        throw new CustomError(`A user with the id ${userId}? Never heard of them, must be a ghost`, 404, 'NOT_FOUND');
     }
 
     return user;
@@ -290,7 +274,7 @@ export async function updateUser(userId, updateObj) {
 export async function banUser(userId) {
     const user = await User.findOneAndUpdate({ userId }, { banned: true }, { new: true });
     if (!user) {
-        throw new CustomError(`A user with the id ${userId}? Never heard of them!`, 404, 'NOT_FOUND');
+        throw new CustomError(`A user with the id ${userId}? Never heard of them, must be a ghost`, 404, 'NOT_FOUND');
     }
 
     // This sets the password to undefined so it's not included in the response
@@ -302,7 +286,7 @@ export async function banUser(userId) {
 export async function unbanUser(userId) {
     const user = await User.findOneAndUpdate({ userId }, { banned: false }, { new: true });
     if (!user) {
-        throw new CustomError(`A user with the id ${userId}? Never heard of them!`, 404, 'NOT_FOUND');
+        throw new CustomError(`A user with the id ${userId}? Never heard of them, must be a ghost`, 404, 'NOT_FOUND');
     }
     user.password = undefined;
     return user;
@@ -315,7 +299,7 @@ export async function changeUserRole(userId, role) {
     }
     const user = await User.findOneAndUpdate({ userId }, { role }, { new: true }).select('-password');
     if (!user) {
-        throw new CustomError(`A user with the id ${userId}? Never heard of them!`, 404, 'NOT_FOUND');
+        throw new CustomError(`A user with the id ${userId}? Never heard of them, must be a ghost`, 404, 'NOT_FOUND');
     }
     return user;
 }
@@ -324,7 +308,7 @@ export async function changeUserRole(userId, role) {
 export async function saveRefreshToken(userId, token) {
     const user = await User.findOne({ userId });
     if (!user) {
-        throw new CustomError(`A user with the id ${userId}? Never heard of them!`, 404, 'NOT_FOUND');
+        throw new CustomError(`A user with the id ${userId}? Never heard of them, must be a ghost`, 404, 'NOT_FOUND');
     }
     user.refreshToken = token;
     await user.save();
@@ -352,10 +336,10 @@ export async function resendVerification(email) {
     const user = await User.findOne({ email });
     // Return a neutral message whether the user exists or not to prevent enumeration
     if (!user || user.emailVerified) {
-        return { message: 'If that email is pending verification, a new link has been sent.' };
+        return { message: 'a new link has been sent.' };
     }
     await resendVerificationEmail(user);
-    return { message: 'If that email is pending verification, a new link has been sent.' };
+    return { message: 'a new link has been sent.' };
 }
 
 export default {

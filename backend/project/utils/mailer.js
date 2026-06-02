@@ -20,7 +20,7 @@ export async function sendPasswordResetEmail(toEmail, token) {
         to: toEmail,
         subject: 'Reset your password – Spanish Poker Dice',
         html: `<p>Click <a href="${link}">here</a> to reset your password.</p>
-               <p>This link expires in 15 minutes. If you did not request this, ignore this email.</p>`
+               <p>This link expires in 15 minutes. If you did not request this, ignore this email, and refrain from talking to any Nigerian princes</p>`
     });
 }
 
@@ -33,7 +33,7 @@ export async function sendVerificationEmail(toEmail, token) {
         to: toEmail,
         subject: 'Verify your email - Spanish Poker Dice',
         html: `<p>Thanks for registering! Click <a href="${link}">here</a> to verify your email.</p>
-            <p>This link expires in 15 minutes.</p>`
+            <p>This link expires in 15 minutes</p>`
     });
 }
 

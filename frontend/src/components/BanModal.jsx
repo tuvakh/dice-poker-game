@@ -10,7 +10,7 @@ export default function BanModal({ message }) {
         // No onClick on the overlay — banned users cannot click away from this modal
         <div className="ban-modal__overlay">
             <div className="ban-modal__content">
-                <div className="ban-modal__icon">⛔</div>
+                <div className="ban-modal__icon">🚫</div>
                 <h2 className="ban-modal__title">Account Banned</h2>
                 <p className="ban-modal__message">{message}</p>
                 <button className="ban-modal__button" onClick={() => logout()}>

@@ -1,20 +1,20 @@
 // Shared validation limits used/imported across model and validator files
 // Used to keep limits consistent, and to avoid having to update multiple places if something change
-export const MIN_USERNAME_LENGTH = 3; // characters
-export const MAX_USERNAME_LENGTH = 30; // characters
+export const MIN_USERNAME_LENGTH = 3; 
+export const MAX_USERNAME_LENGTH = 30;
 
-export const MIN_PASSWORD_LENGTH = 8; // characters
-export const MAX_PASSWORD_LENGTH = 128; // characters
+export const MIN_PASSWORD_LENGTH = 8;
+export const MAX_PASSWORD_LENGTH = 128; 
 
-export const MIN_AGE = 18; // years
+export const MIN_AGE = 18;
 
-export const MIN_TITLE_LENGTH = 3; // characters
-export const MAX_TITLE_LENGTH = 128; // characters
-export const MIN_DESCRIPTION_LENGTH = 1; // characters
-export const MAX_DESCRIPTION_LENGTH = 1000; // characters
+export const MIN_TITLE_LENGTH = 3;
+export const MAX_TITLE_LENGTH = 128;
+export const MIN_DESCRIPTION_LENGTH = 1;
+export const MAX_DESCRIPTION_LENGTH = 1000;
 
-export const MIN_COMMENT_LENGTH = 1; // characters
-export const MAX_COMMENT_LENGTH = 1000; // characters
+export const MIN_COMMENT_LENGTH = 1;
+export const MAX_COMMENT_LENGTH = 1000;
 
 export const GAME_RULES = ["straights_allowed", "straights_not_allowed"];
 export const NUMBER_OF_ROUNDS = [3, 5, 7];

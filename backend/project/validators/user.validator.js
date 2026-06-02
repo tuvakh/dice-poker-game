@@ -43,7 +43,7 @@ export function validateCreateUser(){
         body("username")
             .trim()
             .escape() // replaces all XSS-related characters with their HTML equivalents
-            .isAlphanumeric().withMessage("Only alphanumeric characters allowed in Username")
+            .isAlphanumeric().withMessage("Only alphanumeric characters allowed in Username, sorry we are boring.")
             .isLength({ min: 3 }).withMessage("Username has to be longer than 3 characters")
             .bail(),
         // password length is validated here, not in the model, since the model stores the hash
@@ -58,7 +58,7 @@ export function validateCreateUser(){
             .bail(),
         // age must meet the minimum age requirement imported from constants.js
         body("age")
-            .isInt({ min: MIN_AGE }).withMessage(`You must be at least ${MIN_AGE} years to play`)
+            .isInt({ min: MIN_AGE }).withMessage(`You must be at least ${MIN_AGE} years to play, go play outside instead.`)
             .bail()
     ];
 }
