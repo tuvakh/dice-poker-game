@@ -53,9 +53,8 @@ Starts the Vite dev server, accessible at http://localhost:5173.
 ## Notes on unfinished work and known bugs
 
 - **Stale token after re-seed or server restart** — the app issues a refresh token, but if the database is re-seeded or the server resets, existing tokens become invalid. The app does not detect this and instead silently breaks — API calls fail and the UI stops working correctly without any logout or error prompt to the user.
-- **"Played games in the last week" activity stat missing** — the homepage activity section shows active players and live games, but not total games played in the last 7 days as required.
-- **Tournament does not auto-redirect after game completion** — players are redirected from the tournament page to their game, but are not automatically sent back to the tournament page when the game ends.
-- **5-player game layout is broken** — the game board layout does not handle 5 players well visually.
+- **Tournament does not auto-redirect after game completion** — players are redirected from the tournament page to their game, but are not automatically sent back to the tournament page when the game ends. It also doesn't work 100% correctly
+- **5-player game layout has bad structure** — It places everyone underneath each other so you ahve to scroll to see the buttons if you're the user on top of the page
 - **Weak password strength requirements** — the registration form does give visual feedback on password validation, but the only enforced rule is a minimum of 8 characters. There are no requirements for special characters, numbers, or mixed case, making the password policy weaker than recommended.
 - **Email address is not verified to actually exist** — registration only checks that the format is valid, not that the address is reachable. A fake-format email will pass.
-- **Carta Alta (high card) tiebreaker** — if no player has a named hand, the winner is determined by highest face value. This is correct per the rules, but may appear as if the game has no winner.
+- **No winner when no hands are matched** — the game determines the winner purely based on hand rankings. If no player has any recognised hand (no pair, no three of a kind, etc.), the round produces no winner instead of falling back to a highest-dice comparison.
