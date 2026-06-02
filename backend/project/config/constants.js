@@ -1,7 +1,7 @@
 // Shared validation limits used/imported across model and validator files
 // Used to keep limits consistent, and to avoid having to update multiple places if something change
 export const MIN_USERNAME_LENGTH = 3; // characters
-export const MAX_USERNAME_LENGTH = 128; // characters
+export const MAX_USERNAME_LENGTH = 30; // characters
 
 export const MIN_PASSWORD_LENGTH = 8; // characters
 export const MAX_PASSWORD_LENGTH = 128; // characters

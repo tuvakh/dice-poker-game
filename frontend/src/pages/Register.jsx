@@ -95,6 +95,7 @@ export default function Register() {
                         value={username}
                         onChange={event => setUsername(event.target.value)}
                         type="text"
+                        maxLength={30}
                     />
                 </FormField>
 
