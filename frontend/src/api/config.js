@@ -88,7 +88,7 @@ export async function handleResponse(res) {
         const error = new Error(body.message || body.errors?.[0]?.msg || 'Something went wrong');
         // If the backend sent back field-specific errors it can get showed under the right input
         if (body.errors) {
-            error.fieldErrors = Object.fromEntries(body.errors.map((event) => [event.path, event.msg]));
+            error.fieldErrors = Object.fromEntries(body.errors.map((fieldError) => [fieldError.path, fieldError.msg]));
         }
         throw error;
     }

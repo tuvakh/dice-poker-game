@@ -39,8 +39,8 @@ export default function BettingControls({ bettingState, userId, coinWager, onBet
                 {bettingState.highestBet === 0 ? 'Check' : `Match (${bettingState.highestBet})`}
             </Button>
 
-            {/* Raise input: only shown in wager games and only if the player has more chips than the current bet */}
-            {coinWager > 0 && bettingState.yourStack > bettingState.highestBet && (
+            {/* Bet input: only shown when no one has bet yet — once a bet is open, others can only fold or match */}
+            {coinWager > 0 && bettingState.highestBet === 0 && (
                 <>
                     <Button onClick={() => onBet('bet', betAmount)}>Bet:</Button>
                     <input

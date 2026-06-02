@@ -8,8 +8,8 @@ export default async function seedComments(users, tournaments, matches) {
     await Comment.deleteMany({});
 
     // Helper so each comment gets a realistic staggered timestamp
-    const ago = (days, hours = 0, mins = 0) =>
-        new Date(Date.now() - (days * 86400 + hours * 3600 + mins * 60) * 1000);
+    const ago = (days, hours = 0, minutes = 0) =>
+        new Date(Date.now() - (days * 86400 + hours * 3600 + minutes * 60) * 1000);
 
     await Promise.all([
         // Finished games (matches[0-9])

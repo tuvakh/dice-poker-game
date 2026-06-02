@@ -399,7 +399,7 @@ export default function attachWebSocket(server) {
 
     // Builds a { userId: stack } map to send coin totals to all clients
     function getStacks(players) {
-        return Object.fromEntries(Object.entries(players).map(([uid, player]) => [uid, player.stack]));
+        return Object.fromEntries(Object.entries(players).map(([userId, player]) => [userId, player.stack]));
     }
 
     // Sends each player only their own dice — other players' dice stay hidden
@@ -575,8 +575,8 @@ export default function attachWebSocket(server) {
                 const activePlayers = Object.values(state.players).filter((gamePlayer) => !gamePlayer.folded);
                 const allMatched = activePlayers.every((gamePlayer) => gamePlayer.bet === state.highestBet);
 
-                const activePlayerIds = Object.keys(state.players).filter((id) => !state.players[id].folded);
-                const allActivePlayed = activePlayerIds.every((id) => state.bettorsActed.has(id));
+                const activePlayerIds = Object.keys(state.players).filter((playerId) => !state.players[playerId].folded);
+                const allActivePlayed = activePlayerIds.every((playerId) => state.bettorsActed.has(playerId));
                 if (allMatched && allActivePlayed) {
                     revealAndScore(matchId, state);
                     return;

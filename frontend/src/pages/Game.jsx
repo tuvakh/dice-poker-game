@@ -263,7 +263,7 @@ export default function Game() {
             setGamePhase('betting');
             clearInterval(timerRef.current);
             setTimeLeft(null);
-            setBettingState({ currentBettor: message.currentBettor, pot: message.pot, highestBet: 0, yourStack: message.stacks?.[user?._id] ?? 0 });
+            setBettingState({ currentBettor: message.currentBettor, pot: message.pot, highestBet: 0, yourStack: message.stacks?.[user?._id] ?? match?.coinWager ?? 0 });
             if (message.currentBettor === user?._id) startBetTimer();
         }
 
@@ -276,6 +276,11 @@ export default function Game() {
                 clearInterval(betTimerRef.current);
                 setBetTimeLeft(null);
             }
+        }
+
+        // Someone placed a bet: update the pot and record the new highest bet
+        if (message.type === 'player-bet') {
+            setBettingState(prev => ({ ...prev, pot: message.pot, highestBet: message.amount }));
         }
 
         // Someone matched the current bet: update the pot

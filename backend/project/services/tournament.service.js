@@ -75,7 +75,7 @@ export async function leaveTournament(tournamentId, userId){
         throw new CustomError("This tournament is already done — you can't leave now.", 400, "BAD_REQUEST");
     }
     const before = tournament.participants.length;
-    tournament.participants = tournament.participants.filter(p => !p.equals(userId));
+    tournament.participants = tournament.participants.filter(participant => !participant.equals(userId));
     if(tournament.participants.length === before){
         throw new CustomError("You are not a participant in this tournament.", 404, "NOT_FOUND");
     }
