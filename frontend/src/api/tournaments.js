@@ -1,4 +1,3 @@
-// Chanya
 import { BASE_URL, handleResponse, fetchWithAuth } from "./config.js";
 
 // Fetches all tournaments, optionally filtered by status
@@ -44,9 +43,8 @@ export async function createTournament(data) {
 
 // Updates a tournament's editable fields (admin only)
 export async function updateTournament(id, data) {
-    const res = await fetch(`${BASE_URL}/tournaments/${id}`, {
+    const res = await fetchWithAuth(`${BASE_URL}/tournaments/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
         body: JSON.stringify(data)
     });
     return handleResponse(res);

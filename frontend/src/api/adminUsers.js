@@ -1,5 +1,6 @@
 import { BASE_URL, handleResponse, fetchWithAuth } from "./config.js";
 
+// Fetches a paginated, searchable list of all users — used by the admin user management panel
 export async function getUsers({ page = 1, limit = 10, search = "" } = {}, signal) {
     const params = new URLSearchParams();
     if (page) params.append('page', page);
@@ -12,6 +13,7 @@ export async function getUsers({ page = 1, limit = 10, search = "" } = {}, signa
     return handleResponse(res);
 }
 
+// Bans a user, preventing them from logging in
 export async function banUser(userId) {
     const res = await fetchWithAuth(`${BASE_URL}/users/${userId}/ban`, {
         method: 'PUT'
@@ -19,6 +21,7 @@ export async function banUser(userId) {
     return handleResponse(res);
 }
 
+// Reverses a ban, restoring the user's access
 export async function unbanUser(userId) {
     const res = await fetchWithAuth(`${BASE_URL}/users/${userId}/unban`, {
         method: 'PUT'
@@ -26,6 +29,7 @@ export async function unbanUser(userId) {
     return handleResponse(res);
 }
 
+// Changes a user's role (e.g. user → admin)
 export async function changeRole(userId, role) {
     const res = await fetchWithAuth(`${BASE_URL}/users/${userId}/role`, {
         method: 'PUT',
@@ -33,5 +37,3 @@ export async function changeRole(userId, role) {
     });
     return handleResponse(res);
 }
-
-export default { getUsers, banUser, unbanUser, changeRole };
