@@ -320,7 +320,7 @@ async function resendVerification(email) {
     user.emailVerificationTokens = [{ token: tokenData.token, expires: tokenData.expires }];
     await user.save();
     await sendVerificationEmail(email, tokenData.token);
-    return { message: 'If that email is pending verification, a new link has been sent.' };
+    return { message: 'A new link has been sent.' };
 }
 
 export default {
