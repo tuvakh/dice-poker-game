@@ -5,6 +5,7 @@ import { getAllGameCategories } from "../../api/gameCategories.js";
 import { createTrophy } from "../../api/trophies.js";
 import Spinner from "../../components/Spinner.jsx";
 
+// Admin form for editing an existing tournament; redirects away if the tournament is already ongoing or finished
 export default function AdminTournamentEdit() {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -22,29 +23,31 @@ export default function AdminTournamentEdit() {
     const [newTrophyPreview, setNewTrophyPreview] = useState(null);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
-    const [message, setMessage] = useState("");
-    const [error, setError] = useState("");
+    const [message, setMessage] = useState(null);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         let cancelled = false;
+        // Fetch tournament and categories in parallel to minimise loading time
         Promise.all([
             getTournament(id),
             getAllGameCategories(),
         ]).then(([tournament, catResult]) => {
             if (cancelled) return;
+            // Editing an ongoing or finished tournament would break active matches — redirect instead
             if (["ongoing", "finished"].includes(tournament.status)) {
                 navigate(`/tournament/${id}`, { replace: true });
                 return;
             }
+            // API can return either an array or an object with a named list property
             const categories = Array.isArray(catResult)
                 ? catResult
                 : (catResult.gameCategories || catResult.categoryList || []);
             setGameCategories(categories);
 
-            // Pre-populate form with existing tournament data
             setTitle(tournament.title ?? "");
             setDescription(tournament.description ?? "");
-            // Convert ISO date string to datetime-local format (YYYY-MM-DDTHH:mm)
+            // datetime-local inputs require "YYYY-MM-DDTHH:mm" — the ISO string includes seconds and timezone which must be stripped
             if (tournament.date) {
                 const dateObj = new Date(tournament.date);
                 const pad = number => String(number).padStart(2, "0");
@@ -52,6 +55,7 @@ export default function AdminTournamentEdit() {
             }
             setBreaks(tournament.breaks ?? 0);
             setNumberOfRounds(tournament.numberOfRounds ?? 3);
+            // gameCategory and trophy may be populated objects or bare IDs depending on query depth
             setGameCategory(tournament.gameCategory?._id ?? tournament.gameCategory ?? "");
             setTrophy(tournament.trophy?._id ?? tournament.trophy ?? "");
         }).catch(err => {
@@ -60,8 +64,9 @@ export default function AdminTournamentEdit() {
             if (!cancelled) setLoading(false);
         });
         return () => { cancelled = true; };
-    }, [id]);
+    }, [id, navigate]);
 
+    // Creates a local object URL for the image preview; the real upload happens on form submit
     function handleTrophyFileChange(event) {
         const file = event.target.files[0];
         if (!file) return;
@@ -72,9 +77,10 @@ export default function AdminTournamentEdit() {
     async function handleSubmit(event) {
         event.preventDefault();
         setSubmitting(true);
-        setMessage("");
-        setError("");
+        setMessage(null);
+        setError(null);
         try {
+            // If a new trophy image was provided, create it first and use the new ID; otherwise keep the existing trophy
             let trophyId = trophy;
             if (newTrophyFile && newTrophyTitle.trim()) {
                 const created = await createTrophy({ title: newTrophyTitle.trim(), image: newTrophyFile });
@@ -87,7 +93,7 @@ export default function AdminTournamentEdit() {
                 breaks: Number(breaks),
                 numberOfRounds: Number(numberOfRounds),
                 gameCategory,
-                ...(trophyId ? { trophy: trophyId } : {})
+                ...(trophyId && { trophy: trophyId })
             });
             setMessage("Tournament updated!");
         } catch (err) {
@@ -140,6 +146,7 @@ export default function AdminTournamentEdit() {
                         type="datetime-local"
                         value={date}
                         onChange={event => setDate(event.target.value)}
+                        // Subtracts the timezone offset so the min is current local time, not UTC
                         min={new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)}
                         required
                     />
@@ -183,9 +190,9 @@ export default function AdminTournamentEdit() {
                         {gameCategories.length === 0 ? (
                             <option value="">No categories available</option>
                         ) : (
-                            gameCategories.map(cat => (
-                                <option key={cat._id} value={cat._id}>
-                                    {cat.numberOfRounds} rounds - {cat.gameRules} - {cat.timeController}s
+                            gameCategories.map(category => (
+                                <option key={category._id} value={category._id}>
+                                    {category.numberOfRounds} rounds - {category.gameRules} - {category.timeController}s
                                 </option>
                             ))
                         )}

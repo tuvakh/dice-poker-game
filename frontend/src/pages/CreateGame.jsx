@@ -62,7 +62,7 @@ export default function CreateGame() {
                 coinWager: formData.coinWager,
                 maxPlayers: formData.numberOfPlayers,
                 // desiredOpponentElo is optional — only included if the user entered a positive number
-                ...(Number(formData.desiredOpponentElo) > 0 ? { desiredOpponentElo: Number(formData.desiredOpponentElo) } : {})
+                ...(Number(formData.desiredOpponentElo) > 0 && { desiredOpponentElo: Number(formData.desiredOpponentElo) })
             });
 
             navigate(`/game/${match.matchId}`);

@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import Button from "../components/Button.jsx";
 
+// Rendered by the router for any path that doesn't match a defined route
 export default function NotFound() {
     return (
         <div className="not-found">
