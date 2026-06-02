@@ -37,7 +37,7 @@ export async function getTournament(tournamentId){
         .populate('createdBy', 'username');
 
      if(!tournament){
-        throw new CustomError(`A tournament with the id ${tournamentId} doesn't exist.. Maybe it was cancelled? :(`, 404, "NOT_FOUND");
+        throw new CustomError(`A tournament with the id ${tournamentId} doesn't exist. Maybe it was cancelled? :(`, 404, "NOT_FOUND");
     }
 
     // This populates match details for each round
@@ -84,7 +84,7 @@ export async function leaveTournament(tournamentId, userId){
 }
 
 export async function createTournament(tournamentData){
-    // req.userId is the numeric public-facing ID — resolve it to the MongoDB _id for the ObjectId ref
+    // createdBy is the numeric public-facing userId — resolve it to the MongoDB _id for the ObjectId ref
     if (tournamentData.createdBy) {
         const creator = await User.findOne({ userId: tournamentData.createdBy }).select('_id');
         tournamentData.createdBy = creator?._id ?? undefined;
@@ -96,7 +96,7 @@ export async function createTournament(tournamentData){
 export async function joinTournament(tournamentId, userId){
     const tournament = await Tournament.findOne({ tournamentId });
     if(!tournament){
-        throw new CustomError(`A tournament with the id ${tournamentId} doesn't exist.. Maybe it was cancelled? :(`, 404, "NOT_FOUND");
+        throw new CustomError(`A tournament with the id ${tournamentId} doesn't exist. Maybe it was cancelled? :(`, 404, "NOT_FOUND");
     }
 
     // Prevent joining a finished or cancelled tournament
@@ -119,7 +119,7 @@ export async function joinTournament(tournamentId, userId){
 export async function startNextRound(tournamentId){
     const tournament = await Tournament.findOne({ tournamentId });
     if(!tournament){
-        throw new CustomError(`A tournament with id the ${tournamentId} don't exist.. Maybe it was cancelled? :(`, 404, "NOT_FOUND");
+        throw new CustomError(`A tournament with the id ${tournamentId} doesn't exist. Maybe it was cancelled? :(`, 404, "NOT_FOUND");
     }
 
     // Block if we've already run all the rounds

@@ -28,7 +28,7 @@ const commentSchema = new mongoose.Schema({
         enum: COMMENT_TARGET,
         required: true
     },
-    // The comments has a fixed min and max length
+    // comment has a fixed min and max length
     comment: {
         type: String,
         trim: true,
@@ -36,7 +36,7 @@ const commentSchema = new mongoose.Schema({
         maxLength: [MAX_COMMENT_LENGTH, `Calm down, your comment can't be longer than ${MAX_COMMENT_LENGTH} characters`],
         required: true
     },
-    // ref: "User" allows Mongoose to populate the full user object when needed userId
+    // ref: "User" allows Mongoose to populate the full user object when needed
     userId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",

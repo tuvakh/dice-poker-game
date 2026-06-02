@@ -338,8 +338,13 @@ export async function resendVerification(email) {
     if (!user || user.emailVerified) {
         return { message: 'a new link has been sent.' };
     }
-    await resendVerificationEmail(user);
-    return { message: 'a new link has been sent.' };
+    const tokenData = generateEmailVerificationToken();
+    user.emailVerificationToken = tokenData.token;
+    user.emailVerificationTokenExpires = tokenData.expires;
+    user.emailVerificationTokens = [{ token: tokenData.token, expires: tokenData.expires }];
+    await user.save();
+    await sendVerificationEmail(email, tokenData.token);
+    return { message: 'If that email is pending verification, a new link has been sent.' };
 }
 
 export default {

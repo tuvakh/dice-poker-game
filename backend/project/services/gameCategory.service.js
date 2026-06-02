@@ -3,7 +3,7 @@
 import { GameCategory } from '../models/GameCategory.js';
 import { CustomError } from '../utils/customError.js';
 
-// getAllGameCategories returns all 18 game categories
+// getAllGameCategories returns all game categories
 export async function getAllGameCategories(){
     const gameCategory = await GameCategory.find();
     return gameCategory;
