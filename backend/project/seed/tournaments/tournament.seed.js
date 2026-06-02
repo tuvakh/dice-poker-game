@@ -12,7 +12,7 @@ import { Trophy } from "../../models/Trophy.js";
 export default async function seedTournaments(users, categories, trophies) {
     await Tournament.deleteMany({});
 
-    const admin = users.find(u => u.role === 'admin');
+    const admin = users.find(user => user.role === 'admin');
 
     const tournaments = await Promise.all([
         // Already finished — played in spring, safe to browse without triggering auto-start

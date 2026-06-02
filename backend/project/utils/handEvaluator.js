@@ -147,8 +147,8 @@ export function calculateEloDeltas(standings, users, eloK = 32) {
     // Compare every pair of players exactly once (standings[i] vs standings[j] where j > i)
     for (let i = 0; i < standings.length; i++) {
         for (let j = i + 1; j < standings.length; j++) {
-            const userA = users.find(u => String(u._id) === standings[i].userId);
-            const userB = users.find(u => String(u._id) === standings[j].userId);
+            const userA = users.find(user => String(user._id) ===standings[i].userId);
+            const userB = users.find(user => String(user._id) ===standings[j].userId);
             if (!userA || !userB) continue;
 
             // Standard ELO expected score: probability that A beats B given their rating difference

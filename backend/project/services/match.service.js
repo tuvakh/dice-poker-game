@@ -126,7 +126,7 @@ export async function recordMatch(matchId, matchData) {
     // eloK=32 controls how much ratings change per match
     // Expected score is the probability of winning based on rating difference
     // Actual score is 1 for win, 0 for loss
-    const eloK = 32;
+    const eloKFactor = 32;
 
     const player1 = await User.findById(match.players[0]);
     const player2 = await User.findById(match.players[1]);
@@ -149,8 +149,8 @@ export async function recordMatch(matchId, matchData) {
     const score2 = 1 - score1;
 
     // new ratings
-    const newRating1 = Math.round(player1[eloField] + eloK * (score1 - expected1));
-    const newRating2 = Math.round(player2[eloField] + eloK * (score2 - expected2));
+    const newRating1 = Math.round(player1[eloField] + eloKFactor * (score1 - expected1));
+    const newRating2 = Math.round(player2[eloField] + eloKFactor * (score2 - expected2));
 
     // This store the ELO delta for each player, so weekly rating change can be calculated in the user profile
     match.eloChanges = [
@@ -187,14 +187,14 @@ export async function recordMatch(matchId, matchData) {
                 // Count wins per participant across all rounds to find the overall winner
                 const allMatches = await Match.find({ _id: { $in: allMatchIds } });
                 const winCounts = {};
-                for (const m of allMatches) {
-                    if (m.winner) {
-                        const wId = m.winner.toString();
-                        winCounts[wId] = (winCounts[wId] || 0) + 1;
+                for (const match of allMatches) {
+                    if (match.winner) {
+                        const winnerId = match.winner.toString();
+                        winCounts[winnerId] = (winCounts[winnerId] || 0) + 1;
                     }
                 }
                 // Sort by win count descending, pick the top player
-                const sorted = Object.entries(winCounts).sort((a, b) => b[1] - a[1]);
+                const sorted = Object.entries(winCounts).sort((entryA, entryB) => entryB[1] - entryA[1]);
                 const winnerId = sorted[0]?.[0];
 
                 tournament.status = 'finished';

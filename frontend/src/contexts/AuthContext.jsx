@@ -66,9 +66,9 @@ export function AuthProvider({ children }) {
 
     // Creates a new account; if email verification is required, returns a token for the verify page
     async function register(data) {
-        const resp = await createUser(data);
+        const registrationResult = await createUser(data);
         // Backend returns either the user directly or { newUser, token } when verification is needed
-        const payload = resp && resp.newUser ? resp : { newUser: resp };
+        const payload = registrationResult && registrationResult.newUser ? registrationResult : { newUser: registrationResult };
         const created = payload.newUser;
 
         if (created?.emailVerified) {

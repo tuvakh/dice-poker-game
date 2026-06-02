@@ -63,7 +63,7 @@ export async function getUser(userId) {
 
     // This sum up the ELO deltas from all finished matches this week to get the weekly rating change
     const weeklyEloChange = recentMatches.reduce((total, match) => {
-        const change = match.eloChanges?.find((c) => c.userId.toString() === user._id.toString());
+        const change = match.eloChanges?.find((eloChange) => eloChange.userId.toString() === user._id.toString());
         return total + (change?.delta || 0);
     }, 0);
 

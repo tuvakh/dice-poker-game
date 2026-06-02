@@ -375,7 +375,6 @@ input[type=range] {
     justify-content: center;
     align-items: center;
     gap: var(--small-space);
-    margin-block-start: var(--normal-space);
     padding-top: var(--small-space);
     border-top: 1px solid var(--secondary-color);
   }
@@ -1196,6 +1195,19 @@ input[type=range] {
 .all-games-btn {
   margin-block-start: var(--medium-space);
   display: inline-block;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--small-space);
+  margin-block-start: var(--medium-space);
+}
+.pagination span {
+  color: var(--secondary-color);
+  font-size: 0.9rem;
 }
 
 .tournament-tabs {

@@ -120,7 +120,7 @@ export default function User() {
     function getPageNumbers(currentPage, totalPages) {
         const start = Math.max(1, currentPage - 2);
         const end = Math.min(totalPages, currentPage + 2);
-        const pages = Array.from({ length: end - start + 1 }, (unused, i) => start + i);
+        const pages = Array.from({ length: end - start + 1 }, (_, index) => start + index);
         if (start > 1) pages.unshift('...');
         if (end < totalPages) pages.push('...');
         return pages;

@@ -278,10 +278,10 @@ export default function TournamentPage() {
     const winMap = {};
     for (const roundData of (tournament.standings ?? [])) {
         for (const winner of (roundData.winners ?? [])) {
-            const wId = (winner._id ?? winner)?.toString();
-            if (!wId) continue;
-            if (!winMap[wId]) winMap[wId] = { username: winner.username ?? '?', wins: 0 };
-            winMap[wId].wins++;
+            const winnerId = (winner._id ?? winner)?.toString();
+            if (!winnerId) continue;
+            if (!winMap[winnerId]) winMap[winnerId] = { username: winner.username ?? '?', wins: 0 };
+            winMap[winnerId].wins++;
         }
     }
     // Include all participants so players with 0 wins still appear
@@ -515,15 +515,15 @@ export default function TournamentPage() {
                     <h2>Bracket</h2>
                     <div className="bracket">
                         <div className="bracket__rounds">
-                            {tournament.rounds.map((round, rIdx) => (
-                                <div key={rIdx} className="bracket__round">
-                                    <p className="bracket__round-label">Round {rIdx + 1}</p>
-                                    {round.map((match, mIdx) => {
+                            {tournament.rounds.map((round, roundIndex) => (
+                                <div key={roundIndex} className="bracket__round">
+                                    <p className="bracket__round-label">Round {roundIndex + 1}</p>
+                                    {round.map((match, matchIndex) => {
                                         const players = match?.players ?? [];
                                         const winner = match?.winner;
                                         const matchId = match?.matchId;
                                         const card = (
-                                            <div key={mIdx} className={`bracket__match${matchId ? " bracket__match--clickable" : ""}`}>
+                                            <div key={matchIndex} className={`bracket__match${matchId ? " bracket__match--clickable" : ""}`}>
                                                 {match?.status && (
                                                     <span className={`bracket__match-status bracket__match-status--${match.status}`}>
                                                         {match.status}
@@ -532,9 +532,9 @@ export default function TournamentPage() {
                                                 {players.length === 0 ? (
                                                     <p className="bracket__match-player bracket__match-player--tbd">TBD</p>
                                                 ) : (
-                                                    players.map((player, playerIdx) => (
+                                                    players.map((player, playerIndex) => (
                                                         <p
-                                                            key={playerIdx}
+                                                            key={playerIndex}
                                                             className={`bracket__match-player${winner && (player._id ?? player)?.toString() === (winner._id ?? winner)?.toString()
                                                                 ? " bracket__match-player--winner"
                                                                 : ""
@@ -548,7 +548,7 @@ export default function TournamentPage() {
                                         );
                                         // Wrap with a link so players can navigate directly to their game
                                         return matchId
-                                            ? <Link key={mIdx} to={`/game/${matchId}`} onClick={playClick} style={{ textDecoration: "none" }}>{card}</Link>
+                                            ? <Link key={matchIndex} to={`/game/${matchId}`} onClick={playClick} style={{ textDecoration: "none" }}>{card}</Link>
                                             : card;
                                     })}
                                 </div>

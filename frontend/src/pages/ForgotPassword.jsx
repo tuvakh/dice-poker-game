@@ -20,7 +20,7 @@ export default function ForgotPassword() {
 
     useEffect(() => {
         if (cooldown <= 0) return;
-        const id = setTimeout(() => setCooldown(c => c - 1), 1000);
+        const id = setTimeout(() => setCooldown(count => count - 1), 1000);
         return () => clearTimeout(id);
     }, [cooldown]);
 

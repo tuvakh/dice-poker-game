@@ -37,8 +37,8 @@ export function AppearanceProvider({ children }) {
     // Button marks itself with data-sound-handled so this listener skips it (avoids double sounds)
     useEffect(() => {
         function handleGlobalClick(event) {
-            const btn = event.target.closest("button");
-            if (!btn || btn.dataset.soundHandled !== undefined) return;
+            const button = event.target.closest("button");
+            if (!button || button.dataset.soundHandled !== undefined) return;
             if (!JSON.parse(localStorage.getItem("preferences") || "{}").soundEnabled) return;
             try {
                 if (!globalAcRef.current) {
