@@ -14,7 +14,6 @@ export default function AdminTournamentCreate() {
     const [numberOfRounds, setNumberOfRounds] = useState(3);
     const [gameCategory, setGameCategory] = useState("");
     const [gameCategories, setGameCategories] = useState([]);
-    const [trophy, setTrophy] = useState("");
     const [eloMin, setEloMin] = useState("");
     const [eloMax, setEloMax] = useState("");
     const [buyIn, setBuyIn] = useState(0);
@@ -26,6 +25,7 @@ export default function AdminTournamentCreate() {
     const [newTrophyFile, setNewTrophyFile] = useState(null);
     const [newTrophyPreview, setNewTrophyPreview] = useState(null);
 
+    // Load game categories on mount so the dropdown is populated before the admin starts filling the form
     useEffect(() => {
         let cancelled = false;
         getAllGameCategories()
@@ -50,7 +50,8 @@ export default function AdminTournamentCreate() {
         setError("");
 
         try {
-            let trophyId = trophy;
+            // If the admin uploaded a new trophy image, create the trophy first and attach its ID to the tournament
+            let trophyId = "";
             if (newTrophyFile && newTrophyTitle.trim()) {
                 const created = await createTrophy({ title: newTrophyTitle.trim(), image: newTrophyFile });
                 trophyId = created._id;
