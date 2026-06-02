@@ -9,8 +9,10 @@ import Button from "../../components/Button.jsx";
 export default function AdminComments() {
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState("");
+    // Holds the ID of the comment pending deletion so the ConfirmDialog can reference it without closing early
     const [confirmDelete, setConfirmDelete] = useState(null);
     const limit = 10;
+    // 250 ms debounce prevents an API call on every keystroke while the admin is typing a search term
     const debouncedSearch = useDebouncedValue(search, 250);
 
     const { data, loading, error } = useFetch((signal) => getAllComments({ page, limit, search: debouncedSearch }, signal), [page, debouncedSearch]);

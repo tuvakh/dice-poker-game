@@ -18,6 +18,7 @@ import { filterLobbyMatches } from "../hooks/useLobbyGames.js";
 import { usePolling } from "../hooks/usePolling.js";
 
 
+// Ranks matches by the average ELO of their players so the highest-rated games surface first
 function sortByAverageElo(matches) {
     return matches
         .map(match => ({
@@ -27,6 +28,8 @@ function sortByAverageElo(matches) {
         .sort((matchA, matchB) => matchB.avgElo - matchA.avgElo);
 }
 
+// Defers the data fetch until the browser is idle so the initial paint isn't blocked by API calls.
+// Falls back to setTimeout(0) in environments that don't support requestIdleCallback.
 function getIdleDelaySetter(setReady) {
     if (typeof window === "undefined") return () => { };
 
@@ -59,6 +62,7 @@ export default function Home() {
 
         let cancelled = false;
 
+        // All four requests fire in parallel to avoid a waterfall; activity failure is non-fatal
         async function load() {
             try {
                 const [waitingData, ongoingData, tournamentData, activityData] = await Promise.all([
@@ -74,6 +78,7 @@ export default function Home() {
                 setTournaments(tournamentData.tournamentList.slice(0, 5));
                 setActivity(activityData);
 
+                // Fill the top 5 slots with ongoing games first; backfill with finished games if fewer than 5 are live
                 const topOngoing = sortByAverageElo(ongoingData.matchList);
                 const remaining = 5 - topOngoing.length;
                 const topFinished = remaining > 0

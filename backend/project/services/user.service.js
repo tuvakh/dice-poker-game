@@ -191,7 +191,7 @@ export async function requestPasswordReset(email) {
     const user = await User.findOne({ email });
 
     if (!user) {
-        return { message: 'If an account exists for that email, a reset link has been sent.' };
+        throw new CustomError('No account found with that email address.', 404, 'NOT_FOUND');
     }
 
     const tokenData = generatePasswordResetToken();
@@ -221,7 +221,7 @@ export async function requestPasswordReset(email) {
     );
 
     if (!updatedUser) {
-        return { message: 'If an account exists for that email, a reset link has been sent.' };
+        return { message: `Reset link sent to ${email}.` };
     }
 
     try {
@@ -231,7 +231,7 @@ export async function requestPasswordReset(email) {
         console.error('Failed to send password reset email:', err);
     }
 
-    return { message: 'If an account exists for that email, a reset link has been sent.' };
+    return { message: `Reset link sent to ${email}.` };
 }
 
 export async function resetPassword(code, password) {

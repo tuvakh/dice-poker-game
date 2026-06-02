@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import { resetPassword as apiResetPassword } from "../api/users";
@@ -10,6 +10,7 @@ export default function ResetPassword() {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const { logout } = useAuth();
+    // The reset code is embedded in the email link as ?code=... and read here on page load
     const code = searchParams.get('code');
 
     const [password, setPassword] = useState("");
@@ -26,7 +27,7 @@ export default function ResetPassword() {
         setError(null);
         setMessage("");
 
-        // Validate inputs before locking form
+        // Validate all inputs before locking the form — avoids showing a disabled button for simple input errors
         if (!code) {
             setError("Missing reset code. Please use the link from your email.");
             return;
@@ -52,7 +53,8 @@ export default function ResetPassword() {
             setIsSubmitting(true);
             const result = await apiResetPassword(code, password);
             setMessage(result.message || "Password reset successfully. Redirecting to login...");
-            logout(); // Clear old cached user so new password works
+            // Clear cached session so the user must log in fresh with the new password
+            logout();
             setTimeout(() => navigate('/login'), 2000);
         } catch (err) {
             setError(err.message);
