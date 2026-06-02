@@ -237,7 +237,7 @@ input[type=range] {
 [data-theme=dark] {
   --primary-color: #203B33;
   --secondary-color: #598276;
-  --tertiary-color: #201717;
+  --tertiary-color: #0a0808;
   --box-color: #900A49;
   --button-color: #BC1E68;
   --button-border-color: #E78BB6;
