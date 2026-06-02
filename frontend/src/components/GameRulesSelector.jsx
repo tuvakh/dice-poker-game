@@ -1,4 +1,5 @@
 // Lets the user choose whether straights are allowed in the game
+// onChange comes from the parent (CreateGame) and updates the shared game settings state there
 export default function GameRulesSelector({ onChange }) {
     return (
         <label>

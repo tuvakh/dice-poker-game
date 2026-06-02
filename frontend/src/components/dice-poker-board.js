@@ -8,16 +8,16 @@ class DicePokerBoard extends HTMLElement {
         // Shadow DOM isolates this component's styles and structure from the rest of the page
         this.attachShadow({ mode: 'open' });
 
-        // The logged-in user's ID — used to decide whose dice are interactive
+        // The logged-in user's ID, used to decide whose dice are interactive
         this.currentUserId = null;
 
-        // Lookup table: userId → array of 5 dice-poker-die elements for that player
+        // Lookup table: userId -> array of 5 dice-poker-die elements for that player
         this.diceElements = {};
     }
 
     // Called by the browser when the element enters the DOM
     connectedCallback() {
-        // Renders the board shell once. Players and their dice are added later via addPlayer()
+        // Renders the board shell once; players and their dice are added later via addPlayer()
         this.shadowRoot.innerHTML = `
         <style>
             :host {
@@ -54,10 +54,9 @@ class DicePokerBoard extends HTMLElement {
             .player-name {
                 font-weight: bold;
                 font-size: 1rem;
-                margin-block:var(--small-space);
+                margin-block: var(--small-space);
                 text-align: center;
             }
-
 
             .dice {
                 display: flex;
@@ -100,8 +99,8 @@ class DicePokerBoard extends HTMLElement {
         <div class="players" id="players"></div>
         `;
 
-        // Block hold-toggle events from opponents' dice
-        // capture:true intercepts before the die reacts
+        // Intercept hold-toggle events from opponents' dice before they reach the die element
+        // capture:true means this listener runs before the die's own click handler
         this.addEventListener(
             'dp:die-held-changed',
             (event) => {
@@ -113,15 +112,15 @@ class DicePokerBoard extends HTMLElement {
         );
     }
 
-    // Creates a section with 5 dice for a player, called once per player when the game starts
+    // Creates a section with 5 dice for a player; called once per player when the game starts
     addPlayer(userId, name) {
-        // Avoid duplicating a player if addPlayer is called again (e.g., on rejoin)
+        // Avoid duplicating a player if addPlayer is called again (e.g. on rejoin)
         if (this.diceElements[userId]) return;
 
         const playersContainer = this.shadowRoot.getElementById('players');
 
         const section = document.createElement('section');
-        // data-user-id is stored on the section so showResult can find it by userId later
+        // data-user-id lets showResult and showPlayerLeft find this section by userId later
         section.dataset.userId = userId;
         section.innerHTML = `
             <div class="player">
@@ -138,6 +137,7 @@ class DicePokerBoard extends HTMLElement {
             const die = document.createElement('dice-poker-die');
             die.setAttribute('owner', userId);
             die.setAttribute('die-id', String(i));
+            // '?' means unrevealed; the face is set by the server once rolls come in
             die.setAttribute('face', '?');
             die.setAttribute('held', 'false');
             diceContainer.appendChild(die);
@@ -147,8 +147,7 @@ class DicePokerBoard extends HTMLElement {
         playersContainer.appendChild(section);
     }
 
-    // Updates each die's face
-    // resetHeld:true is passed at round start to unhold all dice
+    // Updates each die's face value; if animate is true, triggers the shake+spin animation
     setDice(userId, faces, animate = false) {
         const dice = this.diceElements[userId];
         if (!dice) return;
@@ -159,7 +158,7 @@ class DicePokerBoard extends HTMLElement {
         });
     }
 
-    // Enables/disables the current player's dice and buttons, and always locks opponents' dice
+    // Enables/disables the current player's dice; always locks and dims opponents' dice
     setInteractive(userId, canInteract) {
         const dice = this.diceElements[userId];
         if (dice) {
@@ -169,7 +168,7 @@ class DicePokerBoard extends HTMLElement {
             });
         }
 
-        // Dim and disable all opponents' dice regardless of canInteract
+        // Dim all opponents' dice regardless of canInteract
         for (const [otherId, otherDice] of Object.entries(this.diceElements)) {
             if (otherId !== userId) {
                 otherDice.forEach((die) => {
@@ -180,8 +179,7 @@ class DicePokerBoard extends HTMLElement {
         }
     }
 
-    // Marks an opponent's dice as held visually
-    // We show holds but never reveal their face values
+    // Marks a player's dice as held visually; used to show opponents' holds without revealing their faces
     setHeld(userId, heldArray) {
         const dice = this.diceElements[userId];
         if (!dice) return;
@@ -190,14 +188,16 @@ class DicePokerBoard extends HTMLElement {
         });
     }
 
-    // Clears held state on every player's dice — called at the start of each round
+    // Clears held state on every player's dice; called at the start of each new round
     resetAllHeld() {
         for (const diceArray of Object.values(this.diceElements)) {
             diceArray.forEach((die) => die.setAttribute('held', 'false'));
         }
     }
 
-    // Shows the hand type label next to a player's dice, created lazily if it doesn't exist yet
+    // showResult and showPlayerLeft both lazily create a label under a player's dice if it doesn't exist yet
+
+    // Shows the hand type label (e.g. "Full House") and highlights the winner
     showResult(userId, handType, isWinner) {
         const section = this.shadowRoot.querySelector(`[data-user-id="${userId}"]`);
         if (!section) return;
@@ -213,11 +213,7 @@ class DicePokerBoard extends HTMLElement {
         resultEl.classList.toggle('winner', isWinner);
     }
 
-    // Removes all hand result labels — called at the start of a new round
-    clearResults() {
-        this.shadowRoot.querySelectorAll('.hand-result, .player-left-notice').forEach((el) => el.remove());
-    }
-
+    // Shows a notice under a player's dice when they have left the game
     showPlayerLeft(userId) {
         const section = this.shadowRoot.querySelector(`[data-user-id="${userId}"]`);
         if (!section) return;
@@ -232,27 +228,32 @@ class DicePokerBoard extends HTMLElement {
         noticeEl.textContent = '⚠️ This user left. Their turn is now automatic';
     }
 
-    // Reads which dice are held and fires dp:roll-again
-    // Game.jsx forwards this to the server
+    // Removes all result and notice labels; called at the start of a new round
+    clearResults() {
+        this.shadowRoot.querySelectorAll('.hand-result, .player-left-notice').forEach((el) => el.remove());
+    }
+
+    // handleRollAgain and handleDoneRolling are the two player action handlers; both read held state and dispatch upward
+
+    // Reads which dice are held and fires dp:roll-again so Game.jsx can forward it to the server
     handleRollAgain() {
         const held = this.diceElements[this.currentUserId].map((die) => die.getAttribute('held') === 'true');
         this.dispatch('dp:roll-again', { held });
     }
 
-    // Fires dp:done-rolling
-    // guard prevents firing before all dice have loaded (face === '?')
+    // Fires dp:done-rolling; guards against firing before all dice have been revealed
     handleDoneRolling() {
         const dice = this.diceElements[this.currentUserId];
         const hasUnrevealedDice = dice?.some((die) => die.getAttribute('face') === '?');
         if (hasUnrevealedDice) return;
 
-        // Disable interaction immediately so the player can't change holds after confirming
+        // Lock interaction immediately so the player cannot change holds after confirming
         this.setInteractive(this.currentUserId, false);
         const held = this.diceElements[this.currentUserId].map((die) => die.getAttribute('held') === 'true');
         this.dispatch('dp:done-rolling', { held });
     }
 
-    // Fires a custom event with bubbles:true and composed:true so Game.jsx can catch it across the shadow DOM
+    // Helper that fires any custom event upward; bubbles and composed let it cross the shadow DOM boundary to Game.jsx
     dispatch(type, detail) {
         this.dispatchEvent(
             new CustomEvent(type, {

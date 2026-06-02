@@ -1,12 +1,13 @@
 import { useAuth } from "../contexts/AuthContext.jsx";
 import "./_BanModal.scss";
 
-// Modal shown to users when they are banned
-// Users must log out, they cannot dismiss
+// Shown when a banned user tries to use the platform; cannot be dismissed, only logged out
 export default function BanModal({ message }) {
+    // logout clears the session and redirects the user to the login page
     const { logout } = useAuth();
 
     return (
+        // No onClick on the overlay — banned users cannot click away from this modal
         <div className="ban-modal__overlay">
             <div className="ban-modal__content">
                 <div className="ban-modal__icon">⛔</div>

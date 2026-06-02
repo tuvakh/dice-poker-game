@@ -1,100 +1,87 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { loginUser, createUser, getUser } from "../api/users";
 import { BASE_URL } from "../api/config";
-// This context holds the logged-in user and auth functions (login, logout, register)
+
+// Holds the logged-in user and exposes auth functions to the whole app via useAuth()
 const AuthContext = createContext(null);
 
-// AuthProvider wraps the whole app so every page knows who is logged in
 export function AuthProvider({ children }) {
-    // Check if a user was already saved in sessionStorage
-    // If so, start with them logged in, otherwise start as not logged in
+    // Restore the user from sessionStorage on page refresh; null means not logged in
     const [user, setUser] = useState(() => {
         const saved = sessionStorage.getItem("user");
         return saved ? JSON.parse(saved) : null;
     });
 
-    // State for showing the ban modal
+    // Non-null string means the user is banned; triggers the BanModal overlay
     const [bannedMessage, setBannedMessage] = useState(null);
 
-    // Logs out by clearing the user from both state and sessionStorage
-    function logout() {
-        setUser(null);
-        sessionStorage.removeItem("user");
-        setBannedMessage(null);
-        fetch(`${BASE_URL}/users/logout`, { method: 'POST', credentials: 'include' }).catch(() => { });
-    }
-
-    // Handles user ban: show message
-    function handleBan(message) {
-        setBannedMessage(message);
-    }
-
-    // Periodically check if the logged-in user is still active (not banned)
-    // Runs every 30 seconds while user is logged in
+    // Polls the backend every 30 seconds to check if the logged-in user has been banned or deleted
+    // isMounted prevents state updates if the component unmounts before the async call returns
     useEffect(() => {
         if (!user?.userId) return;
 
         let isMounted = true;
+
         const checkUserStatus = async () => {
             try {
                 const freshUser = await getUser(user.userId);
                 if (!isMounted) return;
-
-                // Check if user was banned since login
                 if (freshUser?.banned && !bannedMessage) {
-                    handleBan("Your account has been banned. Time to reflect on your choices!");
+                    setBannedMessage("Your account has been banned. Time to reflect on your choices!");
                 }
             } catch (error) {
-                // If the server says the user doesn't exist (404), log them out automatically.
-                // This happens when the database is reseeded and the old user ID is gone.
+                // Auto-logout if the user no longer exists (e.g. database was reseeded)
                 if (error?.message?.toLowerCase().includes("not found") || error?.status === 404) {
                     if (isMounted) logout();
                 }
             }
         };
 
-        // Check immediately on mount
         checkUserStatus();
-
-        // Then check every 30 seconds
         const interval = setInterval(checkUserStatus, 30000);
 
         return () => {
             isMounted = false;
             clearInterval(interval);
         };
-    }, [user?.userId, bannedMessage, handleBan]);
+    // handleBan is intentionally excluded from deps — it's recreated every render and would reset the interval
+    }, [user?.userId, bannedMessage]);
 
-    // Sends the username and password to the backend, then saves the returned user to state and sessionStorage
-    // sessionStorage keeps the user logged in even if they refresh the page
+    // login, logout, register are the core auth functions
+
     async function login(username, password) {
         const loggedInUser = await loginUser({ username, password });
         setUser(loggedInUser);
+        // sessionStorage keeps the user logged in across page refreshes (cleared when the tab closes)
         sessionStorage.setItem("user", JSON.stringify(loggedInUser));
     }
 
-    // Creates a new account and immediately logs the user in
+    function logout() {
+        setUser(null);
+        sessionStorage.removeItem("user");
+        setBannedMessage(null);
+        // Tell the backend to clear the refresh token cookie
+        fetch(`${BASE_URL}/users/logout`, { method: 'POST', credentials: 'include' }).catch(() => {});
+    }
+
+    // Creates a new account; if email verification is required, returns a token for the verify page
     async function register(data) {
-        // The backend returns either the created user directly or
-        // an object { newUser, token } when email verification is required.
         const resp = await createUser(data);
+        // Backend returns either the user directly or { newUser, token } when verification is needed
         const payload = resp && resp.newUser ? resp : { newUser: resp };
         const created = payload.newUser;
 
-        // If the account is already verified, log them in.
         if (created?.emailVerified) {
             setUser(created);
             sessionStorage.setItem("user", JSON.stringify(created));
             return { user: created };
         }
 
-        // Otherwise return the token so the caller (Register page) can redirect
-        // the user to the verification UI instead of auto-logging in.
+        // Not verified yet — return the token so the Register page can redirect to the verify UI
         return { user: created, token: payload.token };
     }
 
-    // Merges new data into the existing user object without logging out and back in
-    // Used for example when saving appearance preferences or updating the profile
+    // Merges partial updates into the stored user without a full re-login (used for profile and preferences)
     function updateUserData(updates) {
         setUser(prev => {
             if (!prev) return prev;
@@ -104,16 +91,19 @@ export function AuthProvider({ children }) {
         });
     }
 
+    // Exposed so other components (e.g. API interceptors) can trigger the ban modal directly
+    function handleBan(message) {
+        setBannedMessage(message);
+    }
 
     return (
-        // Make user and all auth functions available to any component that calls useAuth()
         <AuthContext.Provider value={{ user, login, logout, register, updateUserData, bannedMessage, handleBan }}>
             {children}
         </AuthContext.Provider>
     );
 }
 
-// Custom hook: components call useAuth() instead of the longer useContext(AuthContext)
+// Custom hook — shorthand for useContext(AuthContext)
 export function useAuth() {
     return useContext(AuthContext);
 }

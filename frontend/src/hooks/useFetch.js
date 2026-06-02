@@ -1,37 +1,32 @@
 import { useState, useEffect } from "react";
 
-// A reusable hook that handles fetching data from the backend
-// Instead of writing loading/error state in every component, I use this hook and get back both data, loading and error
-
-// fetchFn is the function to call
-// deps re-fetches when any value in the array changes
+// Reusable data-fetching hook that manages loading, error, and data state
+// fetchFn receives an AbortSignal; deps re-triggers the fetch when any value in the array changes
 export function useFetch(fetchFn, deps = []) {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        // Abort stale requests so typing or quick navigation does not waste bandwidth.
+        // AbortController cancels in-flight requests when the component unmounts or deps change
         const controller = new AbortController();
+        // cancelled flag stops state updates if the response arrives after cleanup has run
         let cancelled = false;
 
-        // Reset state before each new fetch so old data doesn't flash on screen
+        // Reset before each fetch so stale data doesn't flash while the new request is in flight
         setLoading(true);
         setError(null);
 
+        // Promise.resolve() wraps the result in case fetchFn returns a plain value instead of a Promise
         Promise.resolve(fetchFn(controller.signal))
-            // If the fetch succeeds, save the result
             .then(result => { if (!cancelled) setData(result); })
-            // If the fetch fails, save the error message to show to the user
             .catch(err => {
+                // AbortError is expected when the request is cancelled — not a real error
                 if (cancelled || err.name === "AbortError") return;
                 setError(err.message);
             })
-            // Always turn off the loading spinner when done, whether it succeeded or failed
             .finally(() => { if (!cancelled) setLoading(false); });
 
-        // This runs when the component unmounts or before the next re-fetch
-        // Setting cancelled = true tells all the handlers above to do nothing
         return () => {
             cancelled = true;
             controller.abort();
