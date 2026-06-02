@@ -44,7 +44,7 @@ export async function getTournament(tournamentId){
         tournament.rounds.map(async (round) => {
             return Promise.all(
                 round.map(async (entry) => {
-                    return await Match.findById(entry.matchId).select("players winner outcome status matchId endedAt");
+                    return await Match.findById(entry.matchId).select("players winner outcome status matchId endedAt").populate('players', 'username userId');
                 })
             );
         })
@@ -163,7 +163,7 @@ export async function knockoutRounds(tournamentId){
 
     tournament.rounds.push(roundMatches);
     await tournament.save();
-    return tournament;
+    return getTournament(tournament.tournamentId);
 }
 
 // Updates editable fields of a tournament (admin only)

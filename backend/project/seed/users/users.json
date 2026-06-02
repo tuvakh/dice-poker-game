@@ -182,5 +182,13 @@
         "age": 22,
         "eloRating": 1500,
         "role": "admin"
+    },
+    {
+        "username": "chacha",
+        "email": "chacha@test.com",
+        "password": "Chacha123!",
+        "age": 22,
+        "eloRating": 1400,
+        "role": "admin"
     }
 ]

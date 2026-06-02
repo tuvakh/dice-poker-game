@@ -2,17 +2,16 @@
 // tournmanet will take rounds instead of every body playing at the same time.
 // Individual tournament detail page
 import { useState, useEffect, useRef } from "react";
-import { useParams, Link, useNavigate } from "react-router";
+import { useParams, useNavigate, Link } from "react-router";
 import { getTournament, joinTournament, leaveTournament, deleteTournament, cancelTournament, startRound } from "../api/tournaments.js";
 import { useAuth } from "../contexts/AuthContext.jsx";
-import { useSoundEffects } from "../hooks/useSoundEffects.js";
 import { getAllComments } from "../api/comments.js";
-
-import CommentList from "../components/CommentList.jsx";
-import CommentForm from "../components/CommentForm.jsx";
+import { useSoundEffects } from "../hooks/useSoundEffects.js";
 import Spinner from "../components/Spinner.jsx";
 import Button from "../components/Button.jsx";
 import ConfirmDialog from "../components/ConfirmDialog.jsx";
+import CommentList from "../components/CommentList.jsx";
+import CommentForm from "../components/CommentForm.jsx";
 
 export default function TournamentPage() {
     const { id } = useParams();
@@ -39,7 +38,7 @@ export default function TournamentPage() {
     // countdown state: seconds remaining until the next round is expected to start
     const [countdownSecs, setCountdownSecs] = useState(null);
 
-    // Fetches tournament data when the page loads or the URL id changes 
+    // Fetches tournament data when the page loads or the URL id changes
     useEffect(() => {
         setLoading(true);
         setError(null);
@@ -53,7 +52,7 @@ export default function TournamentPage() {
     useEffect(() => {
         if (!tournament?._id) return;
         getAllComments({ targetId: tournament._id, targetType: 'tournament' })
-            .then(data => setComments(data.commentList))
+            .then(data => setComments(data.commentList ?? []))
             .catch(() => { });
     }, [tournament?._id]);
 
@@ -129,11 +128,22 @@ export default function TournamentPage() {
         };
     }, [tournament]);
 
+    // Poll every 5 seconds while the tournament is upcoming so both players see each other join
+    // and the auto-start fires on both browsers once 2+ participants are present.
+    useEffect(() => {
+        if (!tournament || tournament.status !== 'upcoming') return;
+        const interval = setInterval(() => {
+            getTournament(id).then(data => setTournament(data)).catch(() => { });
+        }, 5000);
+        return () => clearInterval(interval);
+    }, [tournament?.status, id]);
+
     // Auto-start: when the tournament date arrives and there are enough players, kick off the first round.
     // Any logged-in user viewing the page can trigger this — the backend rejects duplicates gracefully.
+    // ← change 'upcoming' to 'ongoing' here if you want to skip the countdown and test immediately
     useEffect(() => {
         if (!tournament || !user) return;
-        if (tournament.status !== 'upcoming') return;
+        if (tournament.status !== 'upcoming') return; // ← 'upcoming' = auto-start when date arrives
         if ((tournament.participants?.length ?? 0) < 2) return;
         if (autoStartedRef.current) return;
 
@@ -159,11 +169,9 @@ export default function TournamentPage() {
         }
     }, [tournament?.tournamentId, tournament?.status, tournament?.participants?.length, user, id]);
 
-    // Auto-redirect participants to their ongoing match in the latest round.
-    // redirectedRef prevents redirecting again when the user navigates back after the game.
-    //SO this puts users in a game when it starts
+    // Auto-redirect: when a round is ongoing and this user has a match, send them to it.
     useEffect(() => {
-        if (!tournament || !user || tournament.status !== 'ongoing') return;
+        if (!tournament || !user) return;
         if (redirectedRef.current) return;
         const rounds = tournament.rounds ?? [];
         if (rounds.length === 0) return;
@@ -171,7 +179,10 @@ export default function TournamentPage() {
         for (const match of latestRound) {
             if (!match || match.status !== 'ongoing') continue;
             const players = match.players ?? [];
-            const isPlayer = players.some(player => (player._id ?? player)?.toString() === user._id?.toString());
+            const isPlayer = players.some(player =>
+                (player.username && player.username === user.username) ||
+                (player._id ?? player)?.toString() === (user.userId ?? user._id)?.toString()
+            );
             if (isPlayer && match.matchId) {
                 redirectedRef.current = true;
                 // Pass tournamentId in state so Game.jsx can show "Back to tournament"
@@ -348,7 +359,6 @@ export default function TournamentPage() {
                     <Button onClick={() => setShowDeleteConfirm(true)} variant="danger">Delete tournament</Button>
                 </div>
             )}
-
 
             {showCancelConfirm && (
                 <ConfirmDialog
@@ -546,7 +556,7 @@ export default function TournamentPage() {
                 targetType="tournament"
                 onCommentAdded={() =>
                     getAllComments({ targetId: tournament._id, targetType: 'tournament' })
-                        .then(data => setComments(data.commentList))
+                        .then(data => setComments(data.commentList ?? []))
                         .catch(() => { })
                 }
             />

@@ -35,18 +35,26 @@ export default async function seedTournaments(users, categories, trophies) {
             status: "upcoming",
             trophy: trophies[1]._id
         }).save(),
-        // Demo tournament: starts today so it can be played immediately.
-        // Admin clicks "Start Next Round" on the tournament page to kick off matches.
-        // Uses the straights variant with a 30-second timer (categories[6]).
-        // eloMin/eloMax are unset so any player can join.
+        // DEMO TOURNAMENT — edit this to test 
+        // Players: chacha (users[23]) vs asianmaster (users[22])
+        //
+        // To change when the first round fires, edit the date line:
+        //   new Date(Date.now() + 30 * 1000)   → 30 seconds from seed
+        //   new Date(Date.now() + 2 * 60 * 1000) → 2 minutes from seed
+        //   new Date("2026-06-02T14:00:00")    → specific time
+        //
+        // To skip the countdown and test ongoing state immediately, change:
+        //   status: "upcoming"  → the tournament auto-starts when date arrives
+        //   status: "ongoing"   → already started (rounds array will be empty until knockoutRounds runs)
+        
         new Tournament({
             title: "Demo Open — Play Now!",
-            description: "A live demo tournament you can join and play today. Sign in, click 'Start Next Round' as admin to create matches, then jump straight into your game from the bracket.",
-            date: new Date(Date.now() + 30 * 1000),
-            breaks: 5,
-            numberOfRounds: 3,
+            description: "Open tournament — join and it starts automatically once 2 players are in. The date is set to the past so it fires immediately.",
+            date: new Date(Date.now() - 10 * 1000), // ← already in the past so it starts as soon as 2 players join
+            breaks: 1,    // ← 1 minute break between rounds (change to 0 for instant next-round)
+            numberOfRounds: 2,
             gameCategory: categories[6]._id,
-            participants: [users[22]._id, users[0]._id, users[1]._id, users[2]._id, users[3]._id, users[4]._id],
+            participants: [], // ← no pre-seeded players, join via the Join button
             status: "upcoming",
             trophy: trophies[2]._id
         }).save()
