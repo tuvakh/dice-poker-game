@@ -142,15 +142,8 @@ async function requestPasswordReset(email) {
 
     const tokenData = generateVerificationToken();
 
-    const updatedUser = await User.findOneAndUpdate(
-        {
-            email,
-            $or: [
-                { passwordResetTokenExpires: { $exists: false } },
-                { passwordResetTokenExpires: null },
-                { passwordResetTokenExpires: { $lte: new Date() } }
-            ]
-        },
+    await User.findOneAndUpdate(
+        { email },
         {
             $set: {
                 passwordResetToken: tokenData.token,
@@ -165,10 +158,6 @@ async function requestPasswordReset(email) {
         },
         { new: true }
     );
-
-    if (!updatedUser) {
-        return { message: `Reset link sent to ${email}.` };
-    }
 
     try {
         await sendPasswordResetEmail(email, tokenData.token);
@@ -325,7 +314,7 @@ async function resendVerification(email) {
     if (!user || user.emailVerified) {
         return { message: 'a new link has been sent.' };
     }
-    const tokenData = generateEmailVerificationToken();
+    const tokenData = generateVerificationToken();
     user.emailVerificationToken = tokenData.token;
     user.emailVerificationTokenExpires = tokenData.expires;
     user.emailVerificationTokens = [{ token: tokenData.token, expires: tokenData.expires }];
