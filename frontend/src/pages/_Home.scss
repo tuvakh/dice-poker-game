@@ -1,0 +1,31 @@
+.home-activity {
+    &__stats {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--normal-space);
+        margin-block-start: var(--small-space);
+    }
+
+    &__stat {
+        background-color: var(--box-color);
+        border-radius: var(--border-radius);
+        padding: var(--medium-space) var(--big-space);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--mini-space);
+        min-width: 160px;
+    }
+
+    &__label {
+        font-size: 1rem;
+        text-align: center;
+    }
+
+    &__number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--number-color);
+        line-height: 1;
+    }
+}

@@ -32,7 +32,7 @@ export default function AdminComments(){
 
             {loading && !data && <Spinner />}
 
-            <section style={{ marginTop: 16 }}>
+            <section style={{ marginTop: 16, overflowX: "auto" }}>
                 <table className="admin__users">
                     <thead>
                         <tr>
