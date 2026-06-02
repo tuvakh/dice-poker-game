@@ -1,11 +1,12 @@
 import { useRef, useState } from "react";
-import { useNavigate, useSearchParams, Link } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router";
 import { useAuth } from "../contexts/AuthContext.jsx";
-import { resetPassword as apiResetPassword } from "../api/users";
+import { resetPassword as apiResetPassword } from "../api/users.js";
 
 import Button from "../components/Button.jsx";
 import FormField from "../components/FormField.jsx";
 
+// Reads the ?code= param from the email link and submits the new password to the API
 export default function ResetPassword() {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
@@ -16,16 +17,15 @@ export default function ResetPassword() {
     const [password, setPassword] = useState("");
     const [passwordRepeat, setPasswordRepeat] = useState("");
     const [error, setError] = useState(null);
-    const [message, setMessage] = useState("");
+    const [message, setMessage] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const submittingRef = useRef(false);
-
 
     async function handleSubmit(event) {
         event.preventDefault();
         if (submittingRef.current) return;
         setError(null);
-        setMessage("");
+        setMessage(null);
 
         // Validate all inputs before locking the form — avoids showing a disabled button for simple input errors
         if (!code) {
@@ -48,9 +48,10 @@ export default function ResetPassword() {
             return;
         }
 
+        submittingRef.current = true;
+        setIsSubmitting(true);
+
         try {
-            submittingRef.current = true;
-            setIsSubmitting(true);
             const result = await apiResetPassword(code, password);
             setMessage(result.message || "Password reset successfully. Redirecting to login...");
             // Clear cached session so the user must log in fresh with the new password

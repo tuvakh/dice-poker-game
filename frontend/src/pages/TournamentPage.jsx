@@ -1,4 +1,3 @@
-// Individual tournament detail page — round-based format where all participants play simultaneously each round
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router";
 import { getTournament, joinTournament, leaveTournament, deleteTournament, cancelTournament, startRound } from "../api/tournaments.js";
@@ -11,6 +10,7 @@ import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import CommentList from "../components/CommentList.jsx";
 import CommentForm from "../components/CommentForm.jsx";
 
+// Individual tournament detail page — round-based format where all participants play simultaneously each round
 export default function TournamentPage() {
     const { id } = useParams();
     const { user } = useAuth();
@@ -512,8 +512,7 @@ export default function TournamentPage() {
                             {tournament.rounds.map((round, rIdx) => (
                                 <div key={rIdx} className="bracket__round">
                                     <p className="bracket__round-label">Round {rIdx + 1}</p>
-                                    {round.map((entry, mIdx) => {
-                                        const match = entry;
+                                    {round.map((match, mIdx) => {
                                         const players = match?.players ?? [];
                                         const winner = match?.winner;
                                         const matchId = match?.matchId;

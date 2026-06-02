@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { useNavigate, useLocation, Link } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router";
 import { useAuth } from "../contexts/AuthContext.jsx";
 
 import Button from "../components/Button.jsx";
 import FormField from "../components/FormField.jsx";
 
 // Login page — on success navigates to "/", on ban redirects to the ban screen via handleBan
-export default function Login (){
+export default function Login() {
     const navigate = useNavigate();
     const location = useLocation();
     const { login, handleBan } = useAuth();
@@ -31,9 +31,10 @@ export default function Login (){
             // Banned users get a dedicated ban screen rather than a generic error message
             if (err.message.includes("banned") || err.code === "FORBIDDEN") {
                 handleBan(err.message);
+            } else if (err.fieldErrors) {
+                setFieldErrors(err.fieldErrors);
             } else {
-                if (err.fieldErrors) setFieldErrors(err.fieldErrors);
-                else setError(err.message);
+                setError(err.message);
             }
         }
     }

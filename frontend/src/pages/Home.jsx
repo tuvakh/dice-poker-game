@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router";
 
 import Hero from "../components/Hero.jsx";
 import Button from "../components/Button.jsx";
@@ -8,15 +8,14 @@ import TournamentCard from "../components/TournamentCard.jsx";
 import Spinner from "../components/Spinner.jsx";
 
 import { getActivity } from "../api/activity.js";
-import "./_Home.scss";
 import { getAllMatches } from "../api/matches.js";
 import { getAllTournaments } from "../api/tournaments.js";
 import { useAppearance } from "../contexts/AppearanceContext.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
-
 import { filterLobbyMatches } from "../hooks/useLobbyGames.js";
 import { usePolling } from "../hooks/usePolling.js";
 
+import "./_Home.scss";
 
 // Ranks matches by the average ELO of their players so the highest-rated games surface first
 function sortByAverageElo(matches) {
@@ -75,7 +74,7 @@ export default function Home() {
                 if (cancelled) return;
 
                 setLobbyGames(waitingData.matchList);
-                setTournaments(tournamentData.tournamentList.slice(0, 5));
+                setTournaments(tournamentData.tournamentList);
                 setActivity(activityData);
 
                 // Fill the top 5 slots with ongoing games first; backfill with finished games if fewer than 5 are live

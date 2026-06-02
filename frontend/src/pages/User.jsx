@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams } from "react-router";
 import { getUser, updateUser } from "../api/users.js";
 import { getAllMatches } from "../api/matches.js";
 
 import { useAuth } from "../contexts/AuthContext.jsx";
-import { Link } from "react-router-dom";
 
 import Spinner from "../components/Spinner.jsx";
 import FormField from "../components/FormField.jsx";
@@ -90,7 +89,7 @@ export default function User() {
         setFieldErrors({});
 
         try {
-            // I use FormData instead of a plain object because it can carry both
+            // FormData is used instead of a plain object because it carries both
             // text fields and the image file in the same request
             const formData = new FormData();
             if (editData.email) formData.append("email", editData.email);
@@ -200,7 +199,7 @@ export default function User() {
 
                 <div className="container container--stats">
                     <div className="stats">
-                        <h2>Your stats</h2>
+                        <h2>{profile.username}'s stats</h2>
                         {/* Each time control has its own Elo rating */}
                         <ul className="stats__elo-list">
                             <li>Elo (10s): {profile.eloRating10s} <span className="stats__separator">|</span></li>
@@ -230,35 +229,33 @@ export default function User() {
                 </div>
 
                 <div>
-                    <div>
-                        <h2>Recent games</h2>
-                        <div className="lastGames">
-                            {games.length > 0
-                                ? games.map((match, i) => (
-                                    <GameCard key={match.matchId} match={match} index={i} variant="recentGames" />
-                                ))
-                                : <p className="profile__about--empty">No games played yet. Head to the lobby to get started!</p>
-                            }
-                        </div>
-                        {gamesTotalPages > 1 && (
-                            <div className="pagination">
-                                <Button type="button" onClick={() => setGamesPage(prev => Math.max(1, prev - 1))} disabled={gamesPage === 1}>Prev</Button>
-                                {getPageNumbers(gamesPage, gamesTotalPages).map((pageNum, i) =>
-                                    pageNum === '...'
-                                        ? <span key={`ellipsis-${i}`}>...</span>
-                                        : <Button
-                                            key={pageNum}
-                                            type="button"
-                                            className={`btn--chip${gamesPage === pageNum ? " btn--chip--active" : ""}`}
-                                            onClick={() => setGamesPage(pageNum)}
-                                        >
-                                            {pageNum}
-                                        </Button>
-                                )}
-                                <Button type="button" onClick={() => setGamesPage(prev => Math.min(gamesTotalPages, prev + 1))} disabled={gamesPage === gamesTotalPages}>Next</Button>
-                            </div>
-                        )}
+                    <h2>Recent games</h2>
+                    <div className="lastGames">
+                        {games.length > 0
+                            ? games.map((match, i) => (
+                                <GameCard key={match.matchId} match={match} index={i} variant="recentGames" />
+                            ))
+                            : <p className="profile__about--empty">No games played yet. Head to the lobby to get started!</p>
+                        }
                     </div>
+                    {gamesTotalPages > 1 && (
+                        <div className="pagination">
+                            <Button type="button" onClick={() => setGamesPage(prev => Math.max(1, prev - 1))} disabled={gamesPage === 1}>Prev</Button>
+                            {getPageNumbers(gamesPage, gamesTotalPages).map((pageNum, i) =>
+                                pageNum === '...'
+                                    ? <span key={`ellipsis-${i}`}>...</span>
+                                    : <Button
+                                        key={pageNum}
+                                        type="button"
+                                        className={`btn--chip${gamesPage === pageNum ? " btn--chip--active" : ""}`}
+                                        onClick={() => setGamesPage(pageNum)}
+                                    >
+                                        {pageNum}
+                                    </Button>
+                            )}
+                            <Button type="button" onClick={() => setGamesPage(prev => Math.min(gamesTotalPages, prev + 1))} disabled={gamesPage === gamesTotalPages}>Next</Button>
+                        </div>
+                    )}
                 </div>
             </section>
         </>
