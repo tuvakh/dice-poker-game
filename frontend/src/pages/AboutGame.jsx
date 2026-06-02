@@ -1,11 +1,10 @@
 import Hero from "../components/Hero.jsx";
-import rulesHero from "../assets/rules-hero.webp"
 
 // The about Game page explains the rules and how to play Spanish Poker Dice
 export default function AboutGame (){
     return (
         <>
-        <Hero title="About the game" heroImg={rulesHero}>
+        <Hero title="About the game" heroImg="/rules-hero.webp">
             <p>A two-player game of strategy, bluffing, and luck</p>
         </Hero>
 

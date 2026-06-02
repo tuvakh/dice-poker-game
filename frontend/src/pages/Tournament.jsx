@@ -8,8 +8,6 @@ import Hero from "../components/Hero.jsx";
 import Spinner from "../components/Spinner.jsx";
 import Button from "../components/Button.jsx"; 
 
-// TODO: replace with a dedicated tournament hero image
-import tournamentHero from "../assets/lobby-hero.webp";
 
 const STATUS_TABS = [
     { value: "",         label: "All" },
@@ -82,7 +80,7 @@ export default function Tournament() {
 
     return (
         <>
-            <Hero title="Tournaments" heroImg={tournamentHero}>
+            <Hero title="Tournaments" heroImg="/tournament-hero.webp">
                 <p>Compete against other players in organised tournaments.</p>
             </Hero>
 

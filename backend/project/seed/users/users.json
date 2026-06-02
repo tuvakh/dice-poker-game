@@ -146,7 +146,7 @@
     {
         "username": "dicewizard",
         "email": "wizard@test.com",
-        "password": "Dicewizard6!",
+        "password": "dicewizard!",
         "age": 44,
         "eloRating": 1400,
         "role": "user"

@@ -101,7 +101,8 @@ export default function attachWebSocket(server) {
                         folded: false,
                         disconnected: false,
                         timeRemaining: state.timeController * 1000,
-                        rollStartTime: null
+                        rollStartTime: null,
+                        roundWins: 0
                     };
 
                     const joinedCount = Object.keys(state.players).length;
@@ -611,10 +612,11 @@ export default function attachWebSocket(server) {
             }
         }
 
-        // Split pot equally among winners
+        // Split pot equally among winners, and record a round win for each
         const share = Math.floor(state.pot / winners.length);
         for (const userId of winners) {
             state.players[userId].stack += share;
+            state.players[userId].roundWins += 1;
         }
 
         // Reveal all dice to all players
@@ -649,8 +651,11 @@ export default function attachWebSocket(server) {
         gameStates.delete(matchId);
 
         const standings = Object.entries(state.players)
-            .map(([userId, player]) => ({ userId, stack: player.stack }))
-            .sort((playerA, playerB) => playerB.stack - playerA.stack);
+            .map(([userId, player]) => ({ userId, stack: player.stack, roundWins: player.roundWins }))
+            .sort((playerA, playerB) => {
+                if (playerB.stack !== playerA.stack) return playerB.stack - playerA.stack;
+                return playerB.roundWins - playerA.roundWins;
+            });
 
         try {
             // Fetch all players from DB so we have their current ELO
