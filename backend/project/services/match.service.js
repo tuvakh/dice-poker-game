@@ -50,7 +50,7 @@ export async function getAllMatches({ page = 1, limit = 10, status, gameCategory
     // populate() replaces ObjectId references with the actual documents from their collections
     // Only the selected fields are returned for players to avoid exposing sensitive data
     const matchList = await Match.find(filter)
-        .populate('players', 'username userId eloRating')
+        .populate('players', 'username userId eloRating profileImage')
         .populate('gameCategory')
         .sort({ _id: -1 })
         .skip((page - 1) * limit)
@@ -68,7 +68,7 @@ export async function getAllMatches({ page = 1, limit = 10, status, gameCategory
 }
 
 export async function getMatch(matchId) {
-    const match = await Match.findOne({ matchId }).populate('players', 'username userId eloRating').populate('gameCategory');
+    const match = await Match.findOne({ matchId }).populate('players', 'username userId eloRating profileImage').populate('gameCategory');
     if (!match) {
         throw new CustomError(`A match with id ${matchId}? That game never happened`, 404, 'NOT_FOUND');
     }

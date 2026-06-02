@@ -37,7 +37,7 @@ export default function GameCard({ match, index, variant, spectate }) {
                     <span className="game-card__usernames" key={player._id}>
                         {i > 0 && <span className="game-card__vs">vs</span>}
                         {/* inline=true lays the player name and Elo side by side instead of stacked */}
-                        <PlayerInfo user={player} inline={isTopGames || isRecentGames || match.players.length === 1} />
+                        <PlayerInfo user={player} showImage inline={isTopGames || isRecentGames || match.players.length === 1} />
                     </span>
                 ))}
             </h3>

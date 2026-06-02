@@ -143,7 +143,7 @@ const userSchema = new mongoose.Schema({
     // preferences stores the user's appearance settings, saved to the backend for registered users
     preferences: {
         theme: { type: String, enum: ['light', 'dark'], default: 'light' },
-        boardColor: { type: String, default: '#ffffff' },
+        boardColor: { type: String, default: '#d4efe8' },
         soundEnabled: { type: Boolean, default: true },
         lobbyCount: { type: Number, min: 1, max: 20, default: 5 }
     }
