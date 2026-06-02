@@ -86,6 +86,11 @@ const tournamentSchema = new mongoose.Schema({
         min: 0,
         default: 0
     },
+    // createdBy references the admin user who created the tournament
+    createdBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
     // rounds is an array of arrays
     // Each inner array represents one round, and contains the matches played in that round. 
     // When a round is finished, the winners are paired up against each other, and a new inner array is added for the next round.

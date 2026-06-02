@@ -387,6 +387,12 @@ export default function TournamentPage() {
                     <span>Date</span>
                     <strong>{date}</strong>
                 </div>
+                {tournament.createdBy?.username && (
+                    <div className="tournament-detail__info-box">
+                        <span>Created by</span>
+                        <strong>{tournament.createdBy.username}</strong>
+                    </div>
+                )}
                 {tournament.numberOfRounds != null && (
                     <div className="tournament-detail__info-box">
                         <span>Rounds</span>

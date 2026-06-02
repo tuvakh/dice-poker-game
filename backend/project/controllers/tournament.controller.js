@@ -34,7 +34,7 @@ export async function getTournament(req, res, next){
 export async function createTournament(req, res, next){
     try {
         const tournamentData = matchedData(req);
-        const result = await tournamentServices.createTournament(tournamentData);
+        const result = await tournamentServices.createTournament({ ...tournamentData, createdBy: req.userId });
         res.status(201).json(result);
     } catch (error) {
         next(error);

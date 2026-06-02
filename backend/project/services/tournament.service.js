@@ -3,6 +3,7 @@
 
 import { Tournament } from '../models/Tournament.js';
 import { Match } from '../models/Match.js';
+import { User } from '../models/User.js';
 import { CustomError } from '../utils/customError.js';
 
 export async function getAllTournaments({ page = 1, limit = 10, status }){
@@ -15,6 +16,7 @@ export async function getAllTournaments({ page = 1, limit = 10, status }){
     const tournamentList = await Tournament.find(filter)
         .populate('trophy', 'title image')
         .populate('gameCategory', 'numberOfRounds gameRules timeController')
+        .populate('createdBy', 'username')
         .skip((page - 1) * limit)
         .limit(limit);
 
@@ -32,7 +34,8 @@ export async function getTournament(tournamentId){
     const tournament = await Tournament.findOne({ tournamentId })
         .populate('participants', 'username')
         .populate('trophy')
-        .populate('gameCategory');
+        .populate('gameCategory')
+        .populate('createdBy', 'username');
 
      if(!tournament){
         throw new CustomError(`A tournament with the id ${tournamentId} doesn't exist.. Maybe it was cancelled? :(`, 404, "NOT_FOUND");
@@ -82,6 +85,11 @@ export async function leaveTournament(tournamentId, userId){
 }
 
 export async function createTournament(tournamentData){
+    // req.userId is the numeric public-facing ID — resolve it to the MongoDB _id for the ObjectId ref
+    if (tournamentData.createdBy) {
+        const creator = await User.findOne({ userId: tournamentData.createdBy }).select('_id');
+        tournamentData.createdBy = creator?._id ?? undefined;
+    }
     const newTournament = await Tournament.create(tournamentData);
     return newTournament;
 }
@@ -220,6 +228,7 @@ export default {
     joinTournament,
     leaveTournament,
     knockoutRounds,
+    updateTournament,
     deleteTournament,
     cancelTournament
 };
