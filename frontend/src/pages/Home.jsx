@@ -160,6 +160,10 @@ export default function Home() {
                             <span className="home-activity__label">Players active this week</span>
                             <span className="home-activity__number">{activity.activeUsers}</span>
                         </div>
+                        <div className="home-activity__stat">
+                            <span className="home-activity__label">Games played this week</span>
+                            <span className="home-activity__number">{activity.gamesPlayedLastWeek}</span>
+                        </div>
                     </div>
                 </section>
             )}

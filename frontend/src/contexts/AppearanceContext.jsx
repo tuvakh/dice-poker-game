@@ -9,7 +9,7 @@ const AppearanceContext = createContext(null);
 // Default preferences for new visitors who have nothing saved yet
 const defaults = {
     theme: "light",
-    boardColor: "#d4efe8",
+    boardColor: "#abc6ba",
     soundEnabled: true,
     lobbyCount: 5
 };
