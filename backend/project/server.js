@@ -28,10 +28,11 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const server = http.createServer(app); // Express handles HTTP requests
 
-// This limits each IP to 100 requests per 15 minutes to prevent abuse
+// This limits each IP to 200 requests per minute to prevent abuse
+// Normal gameplay uses ~25 req/min (polling + API calls), so this only triggers on actual abuse
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 500,
+    windowMs: 60 * 1000,
+    max: 200,
     handler: async (req, res) => {
         try {
             await Security.create({

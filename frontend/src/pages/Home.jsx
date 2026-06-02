@@ -15,7 +15,6 @@ import { useAuth } from "../contexts/AuthContext.jsx";
 
 import { filterLobbyMatches } from "../hooks/useLobbyGames.js";
 
-import homeHero from "../assets/home-hero.webp";
 
 function sortByAverageElo(matches) {
     return matches
@@ -102,7 +101,7 @@ export default function Home() {
 
     return (
         <>
-            <Hero title="Spanish Dice Poker" heroImg={homeHero}>
+            <Hero title="Spanish Dice Poker" heroImg="/home-hero.webp">
                 <p>Challenge players from around the world in the classic dice game. Roll your hand, hold your best dice, and outplay your opponent.</p>
                 {user && (
                     <Button onClick={() => navigate("/createGame")}>
