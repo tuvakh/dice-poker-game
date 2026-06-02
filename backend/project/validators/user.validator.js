@@ -6,7 +6,7 @@ import { MIN_AGE, MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH } from "../config/con
 // This function validates the numeric userId route parameter
 // .bail() stops the chain if invalid
 // .toInt() converts the string param to a number
-export function validateUserId(){
+function validateUserId(){
     return [
         param("userId")
             .isInt({ min: 1, max: Number.MAX_SAFE_INTEGER })
@@ -17,7 +17,7 @@ export function validateUserId(){
 }
 
 // All query params in this function are optional
-export function validateGetAllUsers(){
+function validateGetAllUsers(){
     return [
         query("page")
             .optional()
@@ -37,7 +37,7 @@ export function validateGetAllUsers(){
 }
 
 // This function validates all required fields for registration
-export function validateCreateUser(){
+function validateCreateUser(){
     return [
         // .escape() on username and email replaces special characters to prevent XSS
         body("username")
@@ -63,9 +63,9 @@ export function validateCreateUser(){
     ];
 }
 
-// This function only checks that email format is valid and password is not empty
+// This function only checks that username and password are not empty
 // The actual password check happens in the user.service using checkPassword()
-export function validateLogin(){
+function validateLogin(){
     return [
         body("username")
             .trim()
@@ -76,7 +76,7 @@ export function validateLogin(){
     ];
 }
 
-export function validateForgotPassword() {
+function validateForgotPassword() {
     return [
         body('email')
             .trim()
@@ -86,7 +86,7 @@ export function validateForgotPassword() {
     ];
 }
 
-export function validateResetPassword() {
+function validateResetPassword() {
     return [
         body('code')
             .trim()
@@ -100,7 +100,7 @@ export function validateResetPassword() {
 
 // All fields are optional since users can update one field at a time
 // Username is not included since it cannot be changed after registration
-export function validateUpdateUser(){
+function validateUpdateUser(){
     return [
         body("password")
             .optional()
@@ -145,7 +145,7 @@ export function validateUpdateUser(){
     ];
 }
 
-export function validateChangeRole(){
+function validateChangeRole(){
     return [
         body('role')
             .notEmpty()
@@ -154,7 +154,7 @@ export function validateChangeRole(){
 }
 
 // Validates the verification token sent by the frontend
-export function validateVerifyEmail(){
+function validateVerifyEmail(){
     return [
         body('token')
             .trim()
@@ -162,7 +162,7 @@ export function validateVerifyEmail(){
     ];
 }
 
-export function validateResendVerification() {
+function validateResendVerification() {
     return [
         body('email')
             .trim()
