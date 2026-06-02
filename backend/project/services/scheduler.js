@@ -1,12 +1,14 @@
 import { User } from '../models/User.js';
 import { applyWeeklyCoinGrant } from '../utils/coins.js';
 
+// Runs once per week (triggered by the server's cron job) to distribute coins to all users.
+// Each user is processed individually so a failure on one account doesn't abort the entire batch.
 export async function grantWeeklyCoinsBatch() {
     try {
         console.log('[Scheduler] Running weekly coin grant batch...');
-        
+
         const users = await User.find({});
-        
+
         if (!users || users.length === 0) {
             console.log('[Scheduler] No users found to grant coins.');
             return;
@@ -15,6 +17,7 @@ export async function grantWeeklyCoinsBatch() {
         let grantedCount = 0;
         let totalCoinsGranted = 0;
 
+        // Process users one at a time; errors are caught per-user so one bad record doesn't stop the rest
         for (const user of users) {
             try {
                 const result = await applyWeeklyCoinGrant(user);

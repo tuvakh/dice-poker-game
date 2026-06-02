@@ -31,6 +31,10 @@ export default function AdminTournamentEdit() {
             getAllTrophies().catch(() => [])
         ]).then(([tournament, catResult, trophyResult]) => {
             if (cancelled) return;
+            if (["ongoing", "finished"].includes(tournament.status)) {
+                navigate(`/tournament/${id}`, { replace: true });
+                return;
+            }
             const categories = Array.isArray(catResult)
                 ? catResult
                 : (catResult.gameCategories || catResult.categoryList || []);
@@ -124,6 +128,7 @@ export default function AdminTournamentEdit() {
                         type="datetime-local"
                         value={date}
                         onChange={event => setDate(event.target.value)}
+                        min={new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)}
                         required
                     />
                 </div>

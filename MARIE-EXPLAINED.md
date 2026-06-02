@@ -1,206 +1,263 @@
 # MARIE-EXPLAINED
 
-This branch contains the work needed to move the project toward a cleaner, exam-safe auth and email flow, while keeping the current app working.
+This file walks through everything that was built in this project, commit by commit, organized into logical phases. It is meant to help you explain what was done and why during an exam.
 
-## What Changed
+---
 
-### 1. Email verification and password reset mail
-- The backend mailer was changed so verification and reset emails are handled through Ethereal for development/testing.
-- The mail flow was adjusted so the backend can send emails during registration and password reset without relying on the old test-site style flow.
-- The email templates still build verification and reset links from `FRONTEND_URL`.
-- I also tested the mail flow locally by sending a verification email and checking that Ethereal preview URLs were produced.
+## Phase 1 — Project Setup (Initial commits)
 
-### 2. Authentication and authorization
-- The old header-based role trust was removed so the server no longer depends on spoofable client headers like `X-User-Role`.
-- Login now uses signed JWT-based auth.
-- The access token is set as an HTTP-only cookie so the browser sends it automatically.
-- The backend middleware now reads the authenticated user from the verified token instead of trusting the client.
-- The password flow was upgraded to use Node crypto-based hashing with support for legacy hashes during migration.
+**Commits:** `e62ebdd`, `01034e3`, `a02bef0`, `f58050b`, `1b43fec`
 
-### 3. Frontend auth cleanup
-- Frontend API requests were updated to use `credentials: 'include'` so cookie-based auth works consistently.
-- Client-side auth storage was simplified so the code no longer keeps stale sessionStorage-based token state in multiple places.
-- The admin and user API modules were cleaned up so they no longer rely on the old bearer/header pattern.
+The project started from a course-provided starter repo. The team:
+- Added all their own backend and frontend files on top of the initial scaffold.
+- Set up REST script files (`.http`) for manually testing every API route (users, matches, tournaments, trophies, comments, leaderboard, queue, activity).
+- Added a `ToDo.md` to track what needed to be built.
+- Connected MongoDB Atlas as the database (`db.config.js`).
+- Documented where the starting code came from and wrote an installation guide.
 
-### 4. Password handling fix
-- A bug was found where passwords were being hashed more than once.
-- That caused login to fail even when the correct password was typed.
-- The duplicate hashing path was removed so passwords are hashed once and can be checked correctly at login.
+The backend was structured with the standard MVC pattern: `models/`, `controllers/`, `services/`, `routes/`, `middleware/`.
 
-### 5. Cleanup of duplicate or confusing code
-- Unused auth helpers and old token-storage logic were removed from the frontend.
-- Redundant password hashing code paths were removed from the backend service layer.
-- The branch was cleaned so the auth flow is easier to reason about and less likely to drift between files.
+---
 
-## Validation I Ran
-- Frontend production build succeeded.
-- Mail delivery was tested locally through Ethereal preview URLs.
-- Password hashing and password comparison were checked locally.
-- The backend server was started and restarted locally during debugging, including fixing port conflicts caused by leftover Node processes.
+## Phase 2 — Core Features
 
-## Notes
-- This branch still keeps some backend refresh-token support for compatibility, but the frontend now follows the cookie-based auth path.
-- The branch also includes the merge of upstream `master`, so the current state is a combination of the earlier feature work and the latest upstream changes.
+### Coin System — `550124c`
+- Added a weekly scheduler that automatically awards coins to all users.
+- Uses a cron-style job on the backend so coins are distributed without any manual trigger.
+- Originally ran monthly, later changed to weekly (`95346a3`).
 
-### 7. Homepage component cleanup
-- The Home page was split across `Home.jsx` (shell) and `HomeDetails.jsx` (content), causing maintenance overhead.
-- Collapsed the logic back into a single `Home.jsx` file with all async data fetching, ELO sorting, and idle-loading deferral included.
-- Removed `HomeDetails.jsx` entirely to simplify imports and state management.
-- The page still displays hero, platform activity, available games, top games, and tournaments.
+### Statistics on Homepage — `20bc691`
+- Added platform-wide activity stats to the homepage: number of games played, active users, etc.
+- Fetched from a dedicated `/activity` backend endpoint.
 
-### 8. Email verification gate removed for existing users
-- Existing account holders were forced through email verification on login even though they already had accounts.
-- Removed the `if (!user.emailVerified)` check from the `loginUser()` function in `user.service.js`.
-- Verification email is still sent on account creation, but it no longer blocks login for existing users.
-- Users can now log in immediately and verify later if they choose.
+### 404 Page — `3564802`
+- Added a custom 404 page component so users who navigate to a non-existent route see a proper error page instead of a blank screen.
 
-### 9. Leaderboard profile pictures
-- Leaderboard was only displaying username initials, ignoring the stored `profileImage` field.
-- Added conditional rendering in `LeaderBoard.jsx`: if a player has a profile image, display it; otherwise show the username initial.
-- Profile images now appear alongside the player rankings, improving user identity recognition.
+### Leaderboard — `202866e`
+- Added a full leaderboard page showing players ranked by ELO.
+- Later deleted and rebuilt (`264e80a`) with profile picture support.
 
-### 10. Profile picture styling refinement
-- Profile pictures were wrapped in a colored avatar badge with gradient background, which cluttered the display.
-- Removed the colored wrapper so only the actual profile images are shown when available.
-- Fallback initial badges are still displayed for users without profile pictures.
+### Forgot Password / Email Verification — `fdbde2a`
+- Added a "forgot password" flow: user submits email → backend sends a reset link → user clicks link → sets new password.
+- Added email verification on account registration so new users confirm their email before logging in.
+- Used Ethereal (fake SMTP) for dev/test so emails don't actually send but can be previewed.
 
-### 11. Profile picture and avatar sizing consistency
-- Profile pictures and fallback initials were rendering at different sizes, creating visual misalignment.
-- Added CSS rule in `_LeaderBoard.scss` to ensure both profile images and fallback badges are exactly 3rem × 3rem.
-- Styling now uses `.leaderboard-list__player .player-info__image { width: 3rem; height: 3rem; flex-shrink: 0; }` to match the avatar badge sizing.
+### View All Games — `c3d3b4c`
+- Fixed the "view all games" page to show all available games with proper pagination (max 10 per page).
 
-### 12. Seed data generation for testing
-- Created 10 finished matches where BeevieKu wins all games as test data.
-- Updated `match.seed.js` to find BeevieKu by username, assign them as the winner in all 10 finished matches, and adjust ELO deltas accordingly (+24 for BeevieKu, -24 for opponent).
-- Executed `npm run seed` to populate the database with these test games.
-- Enables easier testing of win streaks and leaderboard positioning.
+### Admin Pages — `697fb65`
+- Added admin-only dashboard pages for managing users, games, tournaments, and trophies.
+- Admin routes protected behind role-based middleware.
 
-### 13. Waiting game player count display on game cards
-- Game cards in Lobby, Home, LeaderBoard, and Tournament pages didn't indicate how many players were still needed to start a game.
-- Added `GameCard.jsx` logic to calculate `currentPlayers` from `match.players.length` and `requiredPlayers` from `match.maxPlayers`.
-- Only shown for waiting-status games (not displayed in "topGames" or "recentGames" variants to keep those contexts clean).
-- Display format: `{currentPlayers}/{requiredPlayers} players` (e.g., "1/2 players").
-- Added corresponding CSS styling in `main.css` with `.game-card__waiting`, `.game-card__waiting-text`, and `.game-card__waiting-count` classes.
+---
 
-### 14. Waiting player count display on in-game waiting screen
-- When players were inside a waiting game, they saw "Waiting for other players to join..." but no indication of how many had joined.
-- Added player count display to the `Game.jsx` waiting overlay: `{match.players.length}/{match.maxPlayers ?? 2} players`.
-- Added `game__waiting-count` CSS class in `_Game.scss` to style the count as smaller text (1.2rem font-size, regular weight, normal text color).
-- Now when waiting for opponents to join or waiting to start, players see clear feedback like "Waiting for other players to join... 1/2 players".
+## Phase 3 — Game Board and WebSocket Engine
 
-### 15. JWT access and refresh token implementation
-- Upgraded from single 7-day access token to a production-ready access + refresh token system.
-- **Access token** (1 hour expiry): Short-lived token used for all API requests, stored in HTTP-only cookie.
-- **Refresh token** (30 days expiry): Long-lived token stored both in HTTP-only cookie AND database for revocation capability.
-- Updated `utils/jwt.js` to split `generateToken()` into `generateAccessToken()` and `generateRefreshToken()` with different expiries and type identifiers.
-- Login endpoint now generates both tokens, sets both as HTTP-only cookies with appropriate max-age values.
-- User model updated with `refreshToken` field to store the refresh token in database (enables logout/revocation).
-- Created `/users/refresh` endpoint to exchange expired access tokens for new ones without requiring re-login.
-- Frontend `fetchWithAuth()` now automatically detects 401 responses and attempts token refresh before failing.
-- Prevents infinite refresh loops with `isRefreshing` flag that queues retry requests.
-- If refresh fails, redirects user to login and clears session storage.
+This was the most complex feature block. Multiple commits across the `game-board` branch.
 
-### 16. Removed X-User-Role header completely
-- The insecure `X-User-Role` header has been entirely removed from the codebase.
-- Previously, any client could spoof this header in browser DevTools to claim admin privileges.
-- Replaced with JWT signature verification - tokens cannot be forged without the server's secret key.
-- Removed `getAuthHeaders()` function from `api/config.js` that was spreading the header.
-- Updated all 8 API modules to use `fetchWithAuth()` with automatic cookie-based credential handling instead.
-- Backend middleware (`role.js`) now reads user role from verified JWT token in `accessToken` cookie, not headers.
-- This closes a critical security vulnerability where admins could be impersonated via modified headers.
+### WebSocket Server — `0d63228`, `3d41aad`
+- Built a full WebSocket server (`ws` package) that handles real-time game state.
+- Game events: rolling dice, betting, scoring, the chess-clock timer, and the ready flow.
+- Each connected client joins a room keyed to their match ID.
 
-### 17. MD5 password hashing with global and per-user salt
-- Upgraded password security with defense-in-depth salting using Node's `crypto` module.
-- **Global salt**: Shared APP_SALT from environment variables, prevents database-wide rainbow table attacks.
-- **Per-user salt**: Unique 128-bit random salt (16 bytes → 32 hex chars) generated per user on account creation.
-- Implemented three new hash functions in `utils/hash.js`:
-  - `generateSalt()`: Creates `crypto.randomBytes(16)` for each user.
-  - `hashPassword(password, userSalt)`: MD5 hashes `password + global_salt + user_salt` in sequence.
-  - `checkPassword(password, hashedPassword, userSalt)`: Verifies by re-hashing with same salts.
-- User model updated with `passwordSalt` field (hex string) stored in database.
-- Pre-validate hook modified to automatically generate salt for new users and hash passwords with salt on every save.
-- Updated `loginUser()` and `resetPassword()` to pass user's salt to password verification functions.
-- Even if two users have identical passwords, their hashed values differ due to unique per-user salts.
-- Database breach no longer yields useful password hashes without knowing per-user salts (which are stored separately).
-- Password reset automatically uses existing user salt (doesn't create new one), maintaining login capability.
+### Multiplayer Match Data Model — `cfa4cca`
+- Extended the `Match` model with: `coinWager` (betting amount), ELO delta fields, and time controls per player.
 
-## Validation I Ran
-- Frontend production build succeeded after each major change (3.14s - 3.16s typical).
-- Backend syntax validation: All JWT, hash, and auth modules pass `node --check`.
-- Hash function cryptographic tests: Salt generation (128-bit entropy), MD5 output format, multi-salt combination all verified.
-- Token refresh mechanism: Prevents infinite loops, handles 401 interception, redirects on failure.
-- No X-User-Role header found anywhere in codebase - completely removed.
-- All API modules updated to use `fetchWithAuth()` with credentials handling.
+### Matchmaking Queue and Wager Locking — `07e2745`
+- Added a matchmaking queue on the backend so players can wait for an opponent.
+- Wager amounts are locked once both players join so they cannot be changed mid-game.
 
-## Notes
-- The `GameCard` component reuses across 5+ page contexts with conditional variant props to control styling and link text.
-- Profile picture sizing uses targeted CSS scoping to avoid unintended cascading effects.
-- Token refresh happens transparently to users: expired access tokens are silently renewed when making API calls.
-- Per-user salts are cryptographically random using Node's secure `randomBytes()` not Math.random().
-- Existing users in production may need migration: either add random salts to existing records or force password reset on next login (optional based on security posture).
-- JWT secret (APP_SALT for passwords) must be kept secure in environment variables in production.
-- Seed data updates are incremental; subsequent runs reset all data atomically.
-- All changes maintain backward compatibility and don't break existing features.
+### Multiplayer Game Page — `4c696dd`
+- Built the main in-game React page with live WebSocket integration.
+- Shows both players' boards, the active timer, and the betting UI side by side.
 
-## Summary
+### Dice Poker Board Web Components — `fbe7062`
+- Added `dice-poker-board` and `dice-poker-die` as native Web Components so the dice visuals are self-contained and reusable.
 
-### Complete Feature List (This Session + Earlier Work)
+### Lobby and Home Updated — `530219e`
+- Updated lobby and home pages to reflect multiplayer game categories and time controls.
 
-**Security & Authentication (foundation):**
-1. JWT-based authentication with signed tokens (replaces X-User-Role header spoofing)
-2. Access tokens (1 hour) + Refresh tokens (30 days) for production-ready token management
-3. HTTP-only cookies prevent XSS attacks on JWT tokens
-4. Automatic token refresh on client side - users never see 401 "please log in again" on expired tokens
-5. Email verification setup with Ethereal for dev/testing
-6. MD5 password hashing with defense-in-depth: global APP_SALT + per-user 128-bit random salt
-7. Password reset flow with 30-day expiring tokens
+### Leaving a Game — `753c916`, `4a70cd0`, `d64cb80`
+- Fixed the leave-game flow: when a player leaves, the game continues with the remaining player auto-rolling.
+- The timer for the player who left stops immediately so the other player is not penalized.
+- The leaver forfeits their wager and the opponent is credited.
 
-**User Experience Improvements:**
-8. Homepage restructured into single clean component (removed split HomeDetails)
-9. Email verification no longer blocks login for existing users
-10. Leaderboard shows profile pictures instead of just initials, with fallback styling
-11. Profile pictures display at consistent 3rem × 3rem sizing
-12. Game cards show waiting player counts (e.g., "1/2 players") for transparency
-13. In-game waiting screen displays current player count
+### Merge Queue into Lobby — `945a305`, `d448ab8`
+- Removed the separate queue page entirely and folded it into the lobby.
+- Fixed an authorization bug: users are now automatically logged out if they close the browser tab.
 
-**Testing & Development:**
-14. Seed system generates 10 test matches with BeevieKu as winner for ELO testing
-15. All frontend API modules updated to use cookie-based auth with credentials handling
+### ELO and Coins Auto-Update — `160f46b`
+- Fixed so ELO rating and coin balance update in real-time on the frontend when a match ends, without needing a page refresh.
 
-### Technical Achievements
+---
 
-**Backend** (7 files modified):
-- JWT utilities with separate access/refresh token generation
-- User model: added `passwordSalt` field, pre-validate hook generates salt on creation
-- User service: stores refresh tokens in DB, verifies both JWT and DB storage for revocation
-- Controllers: login generates both tokens, new `/users/refresh` endpoint for silent token renewal
-- Routes: added refresh endpoint, middleware verifies access tokens from cookies
-- Hash utility: MD5 with global + per-user salt, crypto-based random salt generation
-- Password flows: login, registration, reset all use salted password hashing
+## Phase 4 — Tournaments
 
-**Frontend** (8 API modules updated):
-- Automatic token refresh on 401 responses with infinite loop prevention
-- Removed all X-User-Role header spreading
-- All API calls now go through `fetchWithAuth()` with credentials: 'include'
-- Transparent user experience: refresh happens silently without logout
+### Tournament Page — `2ef9e43`, `c0e8ee0`, `153a9a2`
+- Added a Tournaments listing page showing all active and upcoming tournaments.
+- Added background music and a sound toggle across the site (later removed — `bc9d901`).
+- Users can join or leave tournaments from the listing page.
+- Anonymous users cannot join.
 
-### Security Improvements Made
+### Individual Tournament Page — `bb421a8`
+- Each tournament gets its own detail page showing participants, bracket status, and match schedule.
 
-✅ **Killed the X-User-Role header vulnerability** - No more spoofing admin role via DevTools
-✅ **JWT-based auth** - Tokens are signed, can't be forged without server secret
-✅ **HTTP-only cookies** - Tokens can't be accessed by JavaScript (XSS protection)
-✅ **Per-user password salts** - Rainbow tables don't work without knowing individual salts
-✅ **Global APP_SALT** - Database breach doesn't yield useful hashes
-✅ **Automatic token refresh** - Users stay logged in seamlessly, no UX friction
-✅ **Refresh token revocation** - Tokens stored in DB can be invalidated (logout works)
-✅ **Proper password reset** - Uses database lookup + token verification, not guessable
+### Search on Tournament List — `ff4a01d`
+- Added a search bar to filter tournaments by name on the tournament listing page.
 
-### What This Means for Exam Safety
+### Tournament Admin Features — `2222c55`, `9dd5b10`, `b3eb380`
+- Admin can create, edit, and delete tournaments from the admin dashboard.
+- Added a dedicated tournament-admin page with tournament management components.
+- Added arrows/navigation for tournament pages (`9039c55`).
 
-- **Authentication is now exam-safe**: Uses industry-standard JWT patterns (access + refresh tokens)
-- **Password security is robust**: Uses proper salting with crypto module
-- **No security shortcuts taken**: HTTP-only cookies, signed tokens, revocable refresh tokens
-- **Code is clean and maintainable**: Split concerns (utils, services, controllers, routes, middleware)
-- **Backward compatible**: Old auth patterns completely removed, new patterns used everywhere
+### Tournament Hero Fix — `6c0e0da`
+- Fixed the hero banner section on the tournament page that was broken after a merge.
 
-Together, these 17 improvements transform the app from using insecure client headers to a production-ready authentication system with proper token management, secure password hashing, and excellent user experience.
+### Tournament Bugs — `8098138`, `7945c2d`
+- Fixed several small bugs: bracket display issues, player joining edge cases, tournament state management.
+
+---
+
+## Phase 5 — Authentication and Security
+
+This phase replaced the insecure original auth with a production-ready system.
+
+### Removed X-User-Role Header — `a4496ac` and later cleanup
+- The original code sent a `X-User-Role: admin` HTTP header from the client to claim admin privileges.
+- Any user could open DevTools and add that header to get admin access — a critical vulnerability.
+- Removed `getAuthHeaders()` from `api/config.js` and stripped the header from all 8 API modules.
+- Backend `role.js` middleware was updated to read the user's role from the verified JWT token instead.
+
+### JWT Authentication — `3990ac0`, `27079d0`
+- Replaced the old bearer token pattern with signed JWTs.
+- Tokens are stored in HTTP-only cookies so JavaScript cannot access them (XSS protection).
+- Backend middleware verifies the token signature — tokens cannot be forged without the server secret key.
+
+### Access + Refresh Token System — (commits in FIX--Email-verificaton and later merges)
+- Upgraded from a single 7-day token to a two-token system:
+  - **Access token** (1 hour): sent with every request via HTTP-only cookie.
+  - **Refresh token** (30 days): also HTTP-only cookie, stored in the database so it can be revoked on logout.
+- Added `/users/refresh` endpoint: when the access token expires, the frontend silently calls this endpoint to get a new one without the user needing to log in again.
+- Frontend `fetchWithAuth()` intercepts 401 responses and automatically retries after refreshing the token.
+- An `isRefreshing` flag prevents infinite refresh loops.
+
+### Email Verification Gate Removed for Existing Users
+- New accounts still get a verification email on registration.
+- Removed the gate that blocked existing users from logging in if they hadn't verified yet.
+- Existing users can log in and verify later.
+
+### MD5 Password Hashing with Salting
+- Upgraded from plain/unsalted hashing to a defence-in-depth approach:
+  - **Global salt** (`APP_SALT` env var): applied to all passwords, so a database dump alone is not enough.
+  - **Per-user salt**: a unique 128-bit random salt (`crypto.randomBytes(16)`) generated per user on registration and stored in the `passwordSalt` field on their record.
+  - Even if two users share the same password, the stored hashes are different.
+- Implemented in `utils/hash.js`: `generateSalt()`, `hashPassword()`, `checkPassword()`.
+- Pre-validate hook on the User model automatically salts and hashes the password on every save.
+- `loginUser()` and `resetPassword()` pass the stored salt to the verification function.
+
+---
+
+## Phase 6 — UX and Polish
+
+### Confirmation Message — `65259b7`, `e6dc2fe`, `358ff4f`
+- Added a confirmation modal that appears when a user tries to take a destructive action (e.g., leave game, delete something).
+- Fixed a bug where the confirmation message was scrollable when it should have been fixed/modal.
+
+### Betting Timer — `84a3f79`, `f0dac12`, `1cd2b35`
+- Added a visible countdown timer to the betting phase so players know how long they have to place a wager.
+- Fixed a timer overlap bug where two timers would run simultaneously.
+
+### Comments with Timestamps — `d497727`
+- Admin comments on matches now show the date and time they were posted.
+
+### Sound Effects and Dice Animation — `b1bb933`
+- Added sound effects for dice rolls and other game events.
+- Added a dice roll animation so the dice visually "tumble" before showing the result.
+- Background music was added then later removed in favour of just sound effects.
+
+### Trophies and Badges — `40e79b9`, `bc9d901`
+- Admin can add trophy images to tournaments.
+- Trophy images are displayed in the tournament page and in the user profile.
+- Images migrated to `.webP` format for better performance.
+
+### Automatic Logout — `40e79b9`
+- Users are automatically logged out when they close the browser or after inactivity.
+
+### Profile Picture on Leaderboard — `0d0ad1d`
+- The leaderboard previously only showed a user's initials.
+- Updated `LeaderBoard.jsx` to display the stored `profileImage` when available, falling back to initials.
+- Both profile images and initial badges are sized consistently at `3rem × 3rem` via `_LeaderBoard.scss`.
+
+### Player Count on Game Cards — `951bd18`
+- Game cards in the lobby and home page now show how many players have joined vs. how many are needed (e.g. "1/2 players").
+- Only shown for waiting-status games; not shown in "top games" or "recent games" contexts.
+
+### Player Count on In-Game Waiting Screen
+- When waiting for opponents, the in-game overlay now shows the current player count (e.g. "Waiting... 1/2 players").
+
+### Homepage Cleanup
+- Collapsed the split `Home.jsx` + `HomeDetails.jsx` structure back into a single `Home.jsx` with all data fetching, ELO sorting, and idle-loading deferral.
+
+### Caching Fix — `ffa5c7f`
+- Fixed an issue where the whole page was being cached, causing stale data to appear after navigating.
+
+---
+
+## Phase 7 — Styling (Multiple PRs)
+
+PRs #20 through #30 were all styling branches. Key work:
+
+- Styled the gameboard, 404 page, lobby, leaderboard, home, and tournament pages.
+- Cleaned up double leave-button display issue (`66db423`).
+- Fixed gameboard styling regressions across multiple merges (`93843b2`).
+- Added arrow navigation for tournament pages.
+- Converted images to `.webP` for performance.
+- Overall visual polish and responsiveness.
+
+---
+
+## Phase 8 — Performance and Optimization
+
+**Commits:** `4f77469`, `1318ef3`
+
+- Tried several approaches to reduce initial load time and bundle size.
+- Converted images to `.webP` format.
+- Added lazy loading / deferred loading for non-critical sections of the homepage.
+
+---
+
+## Phase 9 — Seed Data and Testing
+
+- Created `match.seed.js` to generate 10 finished test matches where a specific test user wins all games.
+- ELO deltas set to `+24` for winner, `-24` for opponent.
+- Makes it easy to test leaderboard ranking and win streak display.
+- Run with `npm run seed`.
+
+---
+
+## Summary of the Full Commit History
+
+| Phase | Key commits | What it built |
+|---|---|---|
+| Setup | `e62ebdd` → `a02bef0` | Scaffold, REST scripts, MongoDB, ToDo |
+| Core features | `550124c`, `202866e`, `fdbde2a`, `c3d3b4c`, `697fb65` | Coins, leaderboard, forgot password, admin pages |
+| Game board | `0d63228`, `4c696dd`, `753c916`, `160f46b` | WebSocket engine, multiplayer, leaving game, ELO |
+| Tournaments | `2ef9e43`, `bb421a8`, `2222c55`, `b3eb380` | Tournament listing, individual pages, admin management |
+| Auth & Security | `a4496ac`, `3990ac0`, `fdbde2a` and FIX-Email branch | JWT cookies, refresh tokens, salted passwords, removed X-User-Role |
+| UX & Polish | `65259b7`, `84a3f79`, `b1bb933`, `40e79b9`, `0d0ad1d`, `951bd18` | Confirmation dialogs, timers, sounds, trophies, profile pics, player counts |
+| Styling PRs | PRs #20–#30 | Visual polish across all pages |
+| Performance | `4f77469`, `1318ef3`, `ffa5c7f` | webP images, lazy loading, cache fix |
+| Seed data | match.seed.js commits | Test data for ELO and leaderboard testing |
+
+---
+
+## Security Changes — Quick Reference for Exam
+
+| What was vulnerable | How it was fixed |
+|---|---|
+| `X-User-Role` header — anyone could claim admin | Removed entirely; role now comes from signed JWT |
+| Tokens stored in localStorage — XSS could steal them | Moved to HTTP-only cookies |
+| Single long-lived token (7 days) | Split into access (1hr) + refresh (30 days) with DB revocation |
+| Passwords not properly salted | Added global APP_SALT + per-user 128-bit random salt via `crypto.randomBytes` |
+| Frontend reading role from client state | Backend middleware reads role from verified token only |
+| No automatic refresh — users get logged out mid-session | `fetchWithAuth()` auto-retries on 401 with token refresh |

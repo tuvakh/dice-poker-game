@@ -8,10 +8,12 @@ import ConfirmDialog from "../../components/ConfirmDialog.jsx";
 export default function AdminUsers(){
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState("");
-    const [confirmAction, setConfirmAction] = useState(null); // { message, onConfirm }
+    const [confirmAction, setConfirmAction] = useState(null);
     const limit = 10;
+    // 250 ms debounce so the search API isn't called on every keystroke while the user is still typing
     const debouncedSearch = useDebouncedValue(search, 250);
 
+    // Re-fetches whenever the page or debounced search term changes; abort signal cancels stale requests
     const { data, loading, error } = useFetch((signal) => getUsers({ page, limit, search: debouncedSearch }, signal), [page, debouncedSearch]);
 
     if (error) return <p className="status status--error">{error}</p>;
@@ -44,6 +46,7 @@ export default function AdminUsers(){
                                 <td>{userItem.username}</td>
                                 <td>{userItem.email}</td>
                                 <td>
+                                    {/* Full page reload after role change ensures all cached auth state reflects the new role */}
                                     <select defaultValue={userItem.role} onChange={async (event) => {
                                         await changeRole(userItem.userId, event.target.value);
                                         window.location.reload();

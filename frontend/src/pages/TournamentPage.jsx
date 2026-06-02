@@ -115,6 +115,7 @@ export default function TournamentPage() {
                 startRound(id)
                     .then(updated => setTournament(updated))
                     .catch(() => {
+                        nextRoundFiredRef.current = false;
                         getTournament(id).then(updated => setTournament(updated)).catch(() => { });
                     });
             }
@@ -155,7 +156,7 @@ export default function TournamentPage() {
             startRound(id)
                 .then(updated => setTournament(updated))
                 .catch(() => {
-                    // If another user already started it, just re-fetch the latest state
+                    autoStartedRef.current = false;
                     getTournament(id).then(updated => setTournament(updated)).catch(() => { });
                 });
         };
@@ -177,7 +178,7 @@ export default function TournamentPage() {
         if (rounds.length === 0) return;
         const latestRound = rounds[rounds.length - 1];
         for (const match of latestRound) {
-            if (!match || match.status !== 'ongoing') continue;
+            if (!match || match.status === 'finished') continue;
             const players = match.players ?? [];
             const isPlayer = players.some(player =>
                 (player.username && player.username === user.username) ||
@@ -352,7 +353,12 @@ export default function TournamentPage() {
                 <div className="tournament-detail__admin">
                     {tournament.status !== 'cancelled' && (
                         <>
-                            <Button onClick={() => navigate(`/admin/tournaments/${tournament.tournamentId}/edit`)}>Edit tournament</Button>
+                            {tournament.status === 'upcoming' && (
+                                <Button onClick={() => navigate(`/admin/tournaments/${tournament.tournamentId}/edit`)}>Edit tournament</Button>
+                            )}
+                            {tournament.status === 'ongoing' && (tournament.rounds?.length ?? 0) < (tournament.numberOfRounds ?? 0) && (
+                                <Button onClick={handleStartRound}>Start next round</Button>
+                            )}
                             <Button onClick={() => setShowCancelConfirm(true)} variant="danger">Cancel tournament</Button>
                         </>
                     )}
@@ -509,7 +515,7 @@ export default function TournamentPage() {
                                 <div key={rIdx} className="bracket__round">
                                     <p className="bracket__round-label">Round {rIdx + 1}</p>
                                     {round.map((entry, mIdx) => {
-                                        const match = entry?.matchId ?? entry;
+                                        const match = entry;
                                         const players = match?.players ?? [];
                                         const winner = match?.winner;
                                         const matchId = match?.matchId;

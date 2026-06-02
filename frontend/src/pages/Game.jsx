@@ -559,10 +559,11 @@ export default function Game() {
                                 ) : (
                                     gamePhase === 'cancelled' && <p>Not all players were ready in time.</p>
                                 )}
-                                {tournamentId && (
+                                {tournamentId ? (
                                     <Button onClick={() => navigate(`/tournament/${tournamentId}`)}>Back to tournament</Button>
+                                ) : (
+                                    <Button onClick={() => navigate('/')}>Back to homepage</Button>
                                 )}
-                                <Button onClick={() => navigate('/')}>Back to homepage</Button>
                             </div>
                         )}
                     </div>

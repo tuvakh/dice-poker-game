@@ -13,6 +13,7 @@ export default async function seedTournaments(users, categories, trophies) {
     await Tournament.deleteMany({});
 
     const tournaments = await Promise.all([
+        // Already finished — played in spring, safe to browse without triggering auto-start
         new Tournament({
             title: "Spring Championship",
             description: "First tournament of the year",
@@ -21,13 +22,14 @@ export default async function seedTournaments(users, categories, trophies) {
             numberOfRounds: 3,
             gameCategory: categories[0]._id,
             participants: [users[0]._id, users[1]._id, users[2]._id, users[3]._id],
-            status: "upcoming",
+            status: "finished",
             trophy: trophies[0]._id
         }).save(),
+        // Upcoming — date is one week from now so it stays upcoming until then
         new Tournament({
             title: "Summer Slam",
             description: "Hot summer tournament",
-            date: "2026-06-01T10:00:00.000Z",
+            date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
             breaks: 15,
             numberOfRounds: 5,
             gameCategory: categories[6]._id,
@@ -35,23 +37,12 @@ export default async function seedTournaments(users, categories, trophies) {
             status: "upcoming",
             trophy: trophies[1]._id
         }).save(),
-        // DEMO TOURNAMENT — edit this to test 
-        // Players: chacha (users[23]) vs asianmaster (users[22])
-        //
-        // To change when the first round fires, edit the date line:
-        //   new Date(Date.now() + 30 * 1000)   → 30 seconds from seed
-        //   new Date(Date.now() + 2 * 60 * 1000) → 2 minutes from seed
-        //   new Date("2026-06-02T14:00:00")    → specific time
-        //
-        // To skip the countdown and test ongoing state immediately, change:
-        //   status: "upcoming"  → the tournament auto-starts when date arrives
-        //   status: "ongoing"   → already started (rounds array will be empty until knockoutRounds runs)
-        
+        // Demo tournament: date is in the past so it auto-starts as soon as 2+ players have joined
         new Tournament({
             title: "Demo Open — Play Now!",
-            description: "Open tournament — join and it starts automatically once 2 players are in. The date is set to the past so it fires immediately.",
-            date: new Date(Date.now() - 10 * 1000), // ← already in the past so it starts as soon as 2 players join
-            breaks: 1,    // ← 1 minute break between rounds (change to 0 for instant next-round)
+            description: "A live demo tournament — join and it starts automatically once 2 players are in.",
+            date: new Date(Date.now() - 10 * 1000),
+            breaks: 1,
             numberOfRounds: 2,
             gameCategory: categories[6]._id,
             participants: [], // ← no pre-seeded players, join via the Join button
