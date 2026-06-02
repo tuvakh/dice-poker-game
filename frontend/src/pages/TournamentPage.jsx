@@ -435,7 +435,7 @@ export default function TournamentPage() {
                     <div className="tournament-detail__trophy">
                         {tournament.trophy.image && (
                             <img
-                                src={tournament.trophy.image}
+                                src={tournament.trophy.image?.startsWith('data:') ? tournament.trophy.image : `/${tournament.trophy.image}`}
                                 alt={tournament.trophy.title ?? "Trophy"}
                                 className="tournament-detail__trophy-img"
                             />

@@ -8,7 +8,7 @@ export default function TrophyBadge({ trophy }) {
 
     return (
         <div className="trophy-badge">
-            <img className="trophy-img" src={`/${trophy.image}`} alt={trophy.title} />
+            <img className="trophy-img" src={trophy.image?.startsWith('data:') ? trophy.image : `/${trophy.image}`} alt={trophy.title} />
         </div>
     );
 }
