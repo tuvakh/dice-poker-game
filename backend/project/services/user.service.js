@@ -348,6 +348,16 @@ export async function verifyRefreshToken(token) {
     return decoded;
 }
 
+export async function resendVerification(email) {
+    const user = await User.findOne({ email });
+    // Return a neutral message whether the user exists or not to prevent enumeration
+    if (!user || user.emailVerified) {
+        return { message: 'If that email is pending verification, a new link has been sent.' };
+    }
+    await resendVerificationEmail(user);
+    return { message: 'If that email is pending verification, a new link has been sent.' };
+}
+
 export default {
     getAllUsers,
     getUser,
@@ -361,5 +371,6 @@ export default {
     verifyRefreshToken,
     verifyEmailToken,
     requestPasswordReset,
-    resetPassword
+    resetPassword,
+    resendVerification
 };

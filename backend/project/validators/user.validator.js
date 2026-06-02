@@ -162,6 +162,16 @@ export function validateVerifyEmail(){
     ];
 }
 
+export function validateResendVerification() {
+    return [
+        body('email')
+            .trim()
+            .escape()
+            .isEmail().withMessage('Not a valid email.')
+            .bail()
+    ];
+}
+
 export default {
     validateUserId,
     validateGetAllUsers,
@@ -171,5 +181,6 @@ export default {
     validateChangeRole,
     validateVerifyEmail,
     validateForgotPassword,
-    validateResetPassword
+    validateResetPassword,
+    validateResendVerification
 };

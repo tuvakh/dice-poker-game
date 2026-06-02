@@ -57,6 +57,15 @@ export async function forgotPassword(email) {
     return handleResponse(res);
 }
 
+// Resends the verification email — always returns a neutral message to prevent email enumeration
+export async function resendVerificationEmail(email) {
+    const res = await fetchWithAuth(`${BASE_URL}/users/resend-verification`, {
+        method: 'POST',
+        body: JSON.stringify({ email })
+    });
+    return handleResponse(res);
+}
+
 // Resets the password using the code from the email link
 export async function resetPassword(code, password) {
     const res = await fetchWithAuth(`${BASE_URL}/users/reset-password`, {

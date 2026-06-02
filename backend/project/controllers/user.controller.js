@@ -216,6 +216,16 @@ export async function logoutUser(req, res) {
     res.status(200).json({ message: 'Logged out' });
 }
 
+export async function resendVerification(req, res, next) {
+    try {
+        const { email } = matchedData(req);
+        const result = await userServices.resendVerification(email);
+        res.status(200).json(result);
+    } catch (error) {
+        next(error);
+    }
+}
+
 // This exports the functions as a default objects, so routes can import them in one line
 export default {
     getAllUsers,
@@ -230,5 +240,6 @@ export default {
     forgotPassword,
     resetPassword,
     refreshToken,
-    logoutUser
+    logoutUser,
+    resendVerification
 };

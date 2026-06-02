@@ -21,6 +21,8 @@ userApiRouter.post('/users/forgot-password', userValidator.validateForgotPasswor
 userApiRouter.post('/users/reset-password', userValidator.validateResetPassword(), validate, userController.resetPassword);
 // Verify email using token sent to user's inbox
 userApiRouter.post('/users/verify-email', userValidator.validateVerifyEmail(), validate, userController.verifyEmail);
+// Resend the verification email to a given address
+userApiRouter.post('/users/resend-verification', userValidator.validateResendVerification(), validate, userController.resendVerification);
 // Clears JWT cookies so the browser can no longer authenticate with old tokens
 userApiRouter.post('/users/logout', userController.logoutUser);
 

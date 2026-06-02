@@ -1,9 +1,11 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import { forgotPassword as requestPasswordReset } from "../api/users";
 
 import Button from "../components/Button.jsx";
 import FormField from "../components/FormField.jsx";
+
+const RESEND_COOLDOWN = 30;
 
 // Sends a password reset email; always shows a neutral message to prevent email enumeration
 export default function ForgotPassword() {
@@ -11,28 +13,40 @@ export default function ForgotPassword() {
     const [error, setError] = useState(null);
     const [message, setMessage] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [sent, setSent] = useState(false);
+    const [cooldown, setCooldown] = useState(0);
     // submittingRef prevents a second submission if the user clicks faster than the state update cycle
     const submittingRef = useRef(false);
 
-    // Always shows a neutral success message whether or not the account exists
-    // to prevent email enumeration (an attacker fishing for valid addresses)
-    async function handleSubmit(event) {
-        event.preventDefault();
+    useEffect(() => {
+        if (cooldown <= 0) return;
+        const id = setTimeout(() => setCooldown(c => c - 1), 1000);
+        return () => clearTimeout(id);
+    }, [cooldown]);
+
+    async function sendRequest() {
         if (submittingRef.current) return;
         setError(null);
-        setMessage(null);
         submittingRef.current = true;
         setIsSubmitting(true);
 
         try {
             const result = await requestPasswordReset(email);
             setMessage(result.message || "If that email exists, a reset link has been sent.");
+            setSent(true);
+            setCooldown(RESEND_COOLDOWN);
         } catch (err) {
             setError(err.message);
         } finally {
             submittingRef.current = false;
             setIsSubmitting(false);
         }
+    }
+
+    function handleSubmit(event) {
+        event.preventDefault();
+        setMessage(null);
+        sendRequest();
     }
 
     return (
@@ -49,7 +63,19 @@ export default function ForgotPassword() {
                 </FormField>
                 {message && <p className="status status--success">{message}</p>}
                 {error && <p className="status status--error">{error}</p>}
-                <Button type="submit" disabled={isSubmitting}>{isSubmitting ? "Sending..." : "Send reset link"}</Button>
+                {!sent ? (
+                    <Button type="submit" disabled={isSubmitting}>
+                        {isSubmitting ? "Sending..." : "Send reset link"}
+                    </Button>
+                ) : (
+                    <Button
+                        type="button"
+                        disabled={isSubmitting || cooldown > 0}
+                        onClick={() => { setMessage(null); sendRequest(); }}
+                    >
+                        {isSubmitting ? "Sending..." : cooldown > 0 ? `Resend in ${cooldown}s` : "Resend email"}
+                    </Button>
+                )}
                 <p>
                     <Link to="/login">Back to login</Link>
                 </p>
