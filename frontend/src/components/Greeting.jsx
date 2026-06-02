@@ -4,7 +4,7 @@ import ProfileImage from "./ProfileImage.jsx";
 
 // Shows a greeting for logged-in users, or login/register links for anonymous users
 export default function Greeting() {
-    const { user, logout } = useAuth();
+    const { user } = useAuth();
 
     // Logged-in: show avatar linking to profile, username greeting, and logout button
     if (user) {
@@ -15,7 +15,6 @@ export default function Greeting() {
                     <span>Hello, {user.username}</span>
                </Link>
                 <span className="greeting__coins">Coins: {user.coins ?? 0}</span>
-                <Link className="greeting__button" to="/" onClick={logout}>Log out</Link>
             </div>
         );
     }

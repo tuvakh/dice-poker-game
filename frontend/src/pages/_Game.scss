@@ -247,7 +247,23 @@
     &__comments {
         grid-area: right;
         padding: var(--normal-space);
+        padding-block-start: 0;
         background-color: var(--box-color);
+        display: flex;
+        flex-direction: column;
+        max-height: 90vh;
+        position: sticky;
+        top: 0;
+
+        .comments-list {
+            flex: 1;
+            overflow-y: auto;
+            min-height: 0;
+        }
+
+        .comments-form {
+            flex-shrink: 0;
+        }
 
         button {
             display: block;

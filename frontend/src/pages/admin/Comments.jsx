@@ -8,7 +8,7 @@ import ConfirmDialog from "../../components/ConfirmDialog.jsx";
 export default function AdminComments(){
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState("");
-    const [confirmDelete, setConfirmDelete] = useState(null); // commentId to delete
+    const [confirmDelete, setConfirmDelete] = useState(null);
     const limit = 10;
     const debouncedSearch = useDebouncedValue(search, 250);
 
@@ -25,7 +25,7 @@ export default function AdminComments(){
                         aria-label="Search comments"
                         placeholder="Search comments"
                         value={search}
-                        onChange={e => { setSearch(e.target.value); setPage(1); }}
+                        onChange={event => { setSearch(event.target.value); setPage(1); }}
                     />
                 </div>
             </header>
@@ -45,7 +45,7 @@ export default function AdminComments(){
                     </thead>
                     <tbody>
                         {[...(data?.commentList || [])]
-                            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                            .sort((commentA, commentB) => new Date(commentB.createdAt) - new Date(commentA.createdAt))
                             .map(comment => (
                             <tr key={comment.commentId}>
                                 <td style={{ whiteSpace: "nowrap", color: "#666", fontSize: "0.82rem" }}>
@@ -77,7 +77,12 @@ export default function AdminComments(){
             {confirmDelete && (
                 <ConfirmDialog
                     message="Delete this comment? This cannot be undone."
-                    onConfirm={async () => { setConfirmDelete(null); await deleteComment(confirmDelete); window.location.reload(); }}
+                    confirmLabel="Yes, delete"
+                    onConfirm={
+                        async () => { setConfirmDelete(null); 
+                        await deleteComment(confirmDelete); 
+                        window.location.reload(); 
+                    }}
                     onCancel={() => setConfirmDelete(null)}
                 />
             )}

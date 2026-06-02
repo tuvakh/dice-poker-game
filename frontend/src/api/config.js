@@ -58,7 +58,7 @@ export async function fetchWithAuth(url, options = {}) {
     });
 
     // If we get a 401, try refreshing the access token once
-    if (res.status === 401 && !isRefreshing) {
+    if (res.status === 401 && !isRefreshing && !url.includes('/users/login') && !url.includes('/users/refresh')) {
         const refreshed = await refreshAccessToken();
 
         if (refreshed) {
