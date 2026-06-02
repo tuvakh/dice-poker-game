@@ -10,8 +10,11 @@ export default function ForgotPassword() {
     const [error, setError] = useState(null);
     const [message, setMessage] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
+    // submittingRef prevents a second submission if the user clicks faster than the state update cycle
     const submittingRef = useRef(false);
 
+    // Always shows a neutral success message whether or not the account exists
+    // to prevent email enumeration (an attacker fishing for valid addresses)
     async function handleSubmit(event) {
         event.preventDefault();
         if (submittingRef.current) return;

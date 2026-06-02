@@ -1,16 +1,18 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { verifyEmail as apiVerifyEmail } from "../api/users";
-import Button from "../components/Button.jsx";
 
 export default function VerifyEmail() {
     const [searchParams] = useSearchParams();
     const token = searchParams.get('code');
     const navigate = useNavigate();
 
-    const [status, setStatus] = useState(token ? 'verifying' : 'error'); // 'verifying' | 'success' | 'error'
+    // Start in 'verifying' if a token is present, 'error' immediately if the URL has no code
+    const [status, setStatus] = useState(token ? 'verifying' : 'error');
     const [message, setMessage] = useState(token ? '' : 'No verification token provided.');
 
+    // Send the token to the backend once on mount; redirect to login on success, show error on failure.
+    // The redirect timer is cleaned up if the component unmounts before it fires.
     useEffect(() => {
         if (!token) {
             return;
