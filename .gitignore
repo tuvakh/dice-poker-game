@@ -1,9 +1,8 @@
 extra.md
 TODO.txt
 .DS_Store
-.claude
+
 .node_modules
 .env
-frontend/src/styles/main.css
-frontend/src/styles/main.css.map
+
 
