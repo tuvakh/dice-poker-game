@@ -57,8 +57,8 @@ export default function Lobby() {
     // Logged in: hide games the user already joined, and hide games where their Elo is out of range
     const baseFiltered = filterLobbyMatches(lobbyGames, user);
 
-    const roundsOptions = Array.from(new Set(categories.map(c => c.numberOfRounds))).sort((a, b) => a - b);
-    const secondsOptions = Array.from(new Set(categories.map(c => c.timeController))).sort((a, b) => a - b);
+    const roundsOptions = Array.from(new Set(categories.map(category => category.numberOfRounds))).sort((roundA, roundB) => roundA - roundB);
+    const secondsOptions = Array.from(new Set(categories.map(category => category.timeController))).sort((secondsA, secondsB) => secondsA - secondsB);
 
     // Apply UI filters on top of baseFiltered
     const filteredGames = baseFiltered.filter(match => {

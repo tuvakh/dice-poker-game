@@ -425,10 +425,13 @@ export default function Game() {
 
     const displayPot = bettingState?.pot ?? match?.coinWager ?? 0;
     const isPreGame = match?.status === 'ongoing' && gamePhase === null && !roundResult && !forfeitBy;
-    const sortedStandings = standings ? [...standings].sort((standingA, standingB) => standingB.stack - standingA.stack) : [];
-    const topStack = sortedStandings[0]?.stack;
-    const isTie = sortedStandings.filter(entry => entry.stack === topStack).length > 1;
-    const isWinner = sortedStandings[0]?.userId === user?._id;
+    const sortedStandings = standings ? [...standings].sort((standingA, standingB) => {
+        if (standingB.stack !== standingA.stack) return standingB.stack - standingA.stack;
+        return (standingB.roundWins ?? 0) - (standingA.roundWins ?? 0);
+    }) : [];
+    const topStanding = sortedStandings[0];
+    const isTie = sortedStandings.filter(entry => entry.stack === topStanding?.stack && (entry.roundWins ?? 0) === (topStanding?.roundWins ?? 0)).length > 1;
+    const isWinner = topStanding?.userId === user?._id;
 
     if (error) return <p className="status status--error">{error}</p>;
     if (!match) return <Spinner />;
@@ -540,12 +543,13 @@ export default function Game() {
                                             {sortedStandings.map((entry, i) => {
                                                 const playerName = match.players.find(player => player?._id === entry.userId)?.username ?? 'Unknown';
                                                 const isMe = entry.userId === user?._id;
+                                                const isTopEntry = entry.stack === topStanding?.stack && (entry.roundWins ?? 0) === (topStanding?.roundWins ?? 0);
                                                 const coinDisplay = entry.stack >= 0
-                                                    ? `+ ${entry.stack} coin${entry.stack !== 1 ? 's' : ''}`
-                                                    : `- ${Math.abs(entry.stack)} coin${Math.abs(entry.stack) !== 1 ? 's' : ''}`;
+                                                    ? `+${entry.stack} coin${entry.stack !== 1 ? 's' : ''}`
+                                                    : `-${Math.abs(entry.stack)} coin${Math.abs(entry.stack) !== 1 ? 's' : ''}`;
                                                 return (
                                                     <li key={entry.userId} className={isMe ? 'game__standings-me' : ''}>
-                                                        {i + 1}. {entry.stack === topStack && '🎉 '}{playerName} {coinDisplay}
+                                                        {i + 1}. {isTopEntry && !isTie && '🎉 '}{playerName} {coinDisplay}
                                                     </li>
                                                 );
                                             })}
