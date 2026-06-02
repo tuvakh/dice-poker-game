@@ -2,7 +2,7 @@
 
 import { Trophy } from '../models/Trophy.js';
 
-// The image filename is passed in from the controller after multer saves the file to uploads/.
+// The image is passed in as a base64 data URL, converted from the uploaded buffer in the controller.
 // If tournamentId is provided, the trophy is linked to that tournament
 // and will be automatically awarded to the winner when the tournament final is recorded.
 export async function createTrophy(trophyData){

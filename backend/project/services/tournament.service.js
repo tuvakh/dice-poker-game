@@ -1,4 +1,3 @@
-// Chanya
 // This service handles tournament creation, joining, and round progression.
 
 import { Tournament } from '../models/Tournament.js';
@@ -109,7 +108,7 @@ export async function joinTournament(tournamentId, userId){
 
 // Points-based format: ALL participants play every round.
 // Winner is determined by total wins accumulated across all rounds (not knockout).
-export async function knockoutRounds(tournamentId){
+export async function startNextRound(tournamentId){
     const tournament = await Tournament.findOne({ tournamentId });
     if(!tournament){
         throw new CustomError(`A tournament with id the ${tournamentId} don't exist.. Maybe it was cancelled? :(`, 404, "NOT_FOUND");
@@ -169,6 +168,7 @@ export async function knockoutRounds(tournamentId){
     return getTournament(tournament.tournamentId);
 }
 
+
 // Updates editable fields of a tournament (admin only)
 // Only the fields that are provided in the update object are changed
 export async function updateTournament(tournamentId, updates){
@@ -219,7 +219,7 @@ export default {
     createTournament,
     joinTournament,
     leaveTournament,
-    knockoutRounds,
+    startNextRound,
     deleteTournament,
     cancelTournament
 };

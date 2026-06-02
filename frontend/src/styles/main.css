@@ -375,7 +375,7 @@ input[type=range] {
     justify-content: center;
     align-items: center;
     gap: var(--small-space);
-    margin-block-start: var(--norma-sapce);
+    margin-block-start: var(--normal-space);
     padding-top: var(--small-space);
     border-top: 1px solid var(--secondary-color);
   }
@@ -409,7 +409,7 @@ input[type=range] {
   text-decoration: underline;
 }
 
-.button, .greeting__button, .all-games-btn {
+.button, .greeting__button {
   background-color: var(--button-color);
   border: 0.1rem solid var(--button-border-color);
   border-radius: 50px;
@@ -419,20 +419,20 @@ input[type=range] {
   font-weight: normal;
   cursor: pointer;
 }
-.button--danger, .greeting__button--danger, .all-games-btn--danger {
+.button--danger, .greeting__button--danger {
   background-color: #a91756;
   border-color: #e679a8;
   color: #ffd4e7;
   margin-block-start: 0.5rem;
 }
-.button--danger:hover, .greeting__button--danger:hover, .all-games-btn--danger:hover {
+.button--danger:hover, .greeting__button--danger:hover {
   background-color: #7a2020;
 }
-.button--plain, .greeting__button--plain, .all-games-btn--plain {
+.button--plain, .greeting__button--plain {
   background-color: white;
   color: #333;
 }
-.button:disabled, .greeting__button:disabled, .all-games-btn:disabled {
+.button:disabled, .greeting__button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -703,6 +703,11 @@ input[type=range] {
   flex-direction: column;
   gap: 0.25rem;
   font-size: 0.85rem;
+}
+.tournament-card__meta span {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 .tournament-card__status {
   display: inline-block;

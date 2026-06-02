@@ -1,4 +1,3 @@
-// Chanya
 // This controller only handles the HTTP request and response, while the actual logic lives in the service files.
 // matchedData(req) gives us the fields that passed validation, instead of raw data from the request.
 
@@ -42,11 +41,11 @@ export async function createTournament(req, res, next){
 }
 
 // This function makes it possible for users to join tournaments
-// Only registered users can join tournaments
+// userId comes from the verified JWT token, not the request body
 export async function joinTournament(req, res, next){
     try {
-        const { tournamentId, userId } = matchedData(req);
-        const result = await tournamentServices.joinTournament(tournamentId, userId);
+        const { tournamentId } = matchedData(req);
+        const result = await tournamentServices.joinTournament(tournamentId, req.mongoId);
         res.status(201).json(result);
     } catch (error) {
         next(error);
@@ -54,22 +53,23 @@ export async function joinTournament(req, res, next){
 }
 
 // This function allows a user to leave a tournament at any point (unless it's finished or cancelled)
+// userId comes from the verified JWT token, not the request body
 export async function leaveTournament(req, res, next){
     try {
-        const { tournamentId, userId } = matchedData(req);
-        const result = await tournamentServices.leaveTournament(tournamentId, userId);
+        const { tournamentId } = matchedData(req);
+        const result = await tournamentServices.leaveTournament(tournamentId, req.mongoId);
         res.status(200).json(result);
     } catch (error) {
         next(error);
     }
 }
 
-// This function advances the tournament by randomly pairing ALL participants into matches for the next round.
+// Randomly pairs ALL participants into matches for the next round.
 // Points-based format — all participants play every round, winner determined by total wins.
-export async function knockoutRounds(req, res, next){
+export async function startNextRound(req, res, next){
     try {
         const { tournamentId } = matchedData(req);
-        const result = await tournamentServices.knockoutRounds(tournamentId);
+        const result = await tournamentServices.startNextRound(tournamentId);
         res.status(200).json(result);
     } catch (error) {
         next(error);
@@ -116,7 +116,7 @@ export default {
     updateTournament,
     joinTournament,
     leaveTournament,
-    knockoutRounds,
+    startNextRound,
     deleteTournament,
     cancelTournament
 };

@@ -16,7 +16,7 @@ commentApiRouter.post('/comments', requireUser, commentValidator.validateCreateC
 // Admins can delete any comments they want
 commentApiRouter.delete('/comments/:commentId', requireAdmin, commentValidator.validateDeleteComment(), validate, commentController.deleteComment);
 
-// Admins can search and moderate all comments
+// Public — used to load comments on game and tournament pages; also used by the admin comment moderation page
 commentApiRouter.get('/comments', commentValidator.validateGetAllComments(), validate, commentController.getAllComments);
 
 export default commentApiRouter;

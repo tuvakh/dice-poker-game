@@ -46,14 +46,14 @@
             padding-block: var(--mini-space);
             width: 100%;
             text-align: center;
-                background-color: var(--primary-color);
+            background-color: var(--primary-color);
 
             &--mobile-user {
                 display: flex;
                 justify-content: center;
                 align-items: center;
                 gap: var(--small-space);
-                margin-block-start: var(--norma-sapce);
+                margin-block-start: var(--normal-space);
                 padding-top: var(--small-space);
                 border-top: 1px solid var(--secondary-color);
             }

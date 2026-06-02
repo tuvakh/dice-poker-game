@@ -25,9 +25,8 @@ export const MATCH_STATUS = ["waiting", "ongoing", "finished"];
 export const USER_ROLE = ["user", "admin"];
 export const COMMENT_TARGET = ["match", "tournament"];
 
-export const LEADERBOARD_SORT_OPTIONS = ["wins", "winPercentage", "matches", "elo"];
-
 export const WEEKLY_COIN_GRANT = 100; // Coins awarded to the user once per week on login
+export const TOURNAMENT_WIN_BONUS = 500; // Extra coins awarded to the tournament winner
 
 export const REVEAL_DELAY_MS = 3000; // Pause before revealing hands at round end
 

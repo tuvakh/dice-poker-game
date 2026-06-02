@@ -18,9 +18,11 @@ export async function getAllComments(req, res, next) {
 
 // Creates a new comment and broadcasts it via WebSocket to all current viewers
 // Only registered users can post comments (enforced in comment.routes.js with requireUser)
+// userId comes from the verified JWT token, not the request body
 export async function createComment(req, res, next) {
     try {
         const commentData = matchedData(req);
+        commentData.userId = req.mongoId;
         const result = await commentServices.createComment(commentData);
         // Broadcast after save succeeds — avoids sending a WS event for a comment that failed
         if (commentData.targetType === 'match') broadcastMatchComment(commentData.targetId, result);

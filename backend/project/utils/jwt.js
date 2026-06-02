@@ -1,19 +1,24 @@
 import jwt from 'jsonwebtoken';
 
-const SECRET_KEY = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+// Fail hard at startup if JWT_SECRET is missing — a missing secret would silently sign tokens with a known fallback
+if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET environment variable is not set');
+const SECRET_KEY = process.env.JWT_SECRET;
 const ACCESS_TOKEN_EXPIRY = '1h'; // Short-lived access token (1 hour)
 const REFRESH_TOKEN_EXPIRY = '30d'; // Long-lived refresh token (30 days)
 
 /**
  * Generate an access token (short-lived, for API requests)
  * @param {Object} user - User object with userId and role
+ * @param {string} [ip] - Client IP recorded at login, compared on every request to detect session hijacking
  * @returns {string} JWT access token
  */
-export function generateAccessToken(user) {
+export function generateAccessToken(user, ip) {
     const payload = {
         userId: user.userId,
+        _id: user._id.toString(),
         username: user.username,
         role: user.role || 'user', // 'admin' or 'user'
+        ip: ip ?? null,
         type: 'access' // Token type identifier
     };
     return jwt.sign(payload, SECRET_KEY, { expiresIn: ACCESS_TOKEN_EXPIRY });

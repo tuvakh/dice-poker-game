@@ -87,37 +87,27 @@ export function validateCreateTournament(){
     ]
 };
 
-// This function validates both the route param and the request body for joining
+// userId is not accepted from the body — it is injected from the verified JWT in the controller
 export function validateJoinTournament(){
     return [
         param("tournamentId")
             .isInt({ min: 1 })
             .withMessage("Tournament IDs are supposed to be integers larger than 0")
-            .toInt(),
-        // userId must be a valid MongoDB ObjectId to identify the user joining
-        body("userId")
-            .notEmpty()
-            .withMessage("UserId is required")
-            .isMongoId()
-            .withMessage("userId must be a valid MongoDB ID")
+            .toInt()
     ];
 }
 
+// userId is not accepted from the body — it is injected from the verified JWT in the controller
 export function validateLeaveTournament(){
     return [
         param("tournamentId")
             .isInt({ min: 1 })
             .withMessage("Tournament IDs are supposed to be integers larger than 0")
-            .toInt(),
-        body("userId")
-            .notEmpty()
-            .withMessage("UserId is required")
-            .isMongoId()
-            .withMessage("userId must be a valid MongoDB ID")
+            .toInt()
     ];
 }
 
-export function validateKnockoutRounds(){
+export function validateStartNextRound(){
     return [
         param("tournamentId")
             .isInt({ min: 1 })
@@ -154,6 +144,6 @@ export default {
     validateCreateTournament,
     validateJoinTournament,
     validateLeaveTournament,
-    validateKnockoutRounds,
+    validateStartNextRound,
     validateUpdateTournament
 };

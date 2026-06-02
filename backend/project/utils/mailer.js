@@ -37,8 +37,4 @@ export async function sendVerificationEmail(toEmail, token) {
     });
 }
 
-export async function getMailer() {
-    return transporter;
-}
-
-export default { getMailer, sendVerificationEmail, sendPasswordResetEmail };
+export default { sendVerificationEmail, sendPasswordResetEmail };

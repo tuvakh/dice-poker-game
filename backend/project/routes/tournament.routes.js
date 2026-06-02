@@ -1,4 +1,3 @@
-// Chanya
 // This routes handles tournament creation, joining, and round progression.
 
 import express from "express";
@@ -17,9 +16,9 @@ tournamentApiRouter.post('/tournaments/:tournamentId/join', requireUser, tournam
 // Only registered users can leave — allowed at any point until finished/cancelled
 tournamentApiRouter.delete('/tournaments/:tournamentId/leave', requireUser, tournamentValidator.validateLeaveTournament(), validate, tournamentController.leaveTournament);
 
-// Remaining participants gets paired together for the next round (points-based — all players play every round)
+// Randomly pairs all participants for the next round (points-based — all players play every round)
 // requireUser (not requireAdmin) so the frontend can auto-start when the tournament date arrives
-tournamentApiRouter.put('/tournaments/:tournamentId/knockoutRounds', requireUser, tournamentValidator.validateKnockoutRounds(), validate, tournamentController.knockoutRounds);
+tournamentApiRouter.put('/tournaments/:tournamentId/nextRound', requireUser, tournamentValidator.validateStartNextRound(), validate, tournamentController.startNextRound);
 
 // Admin delete — permanently removes a tournament
 tournamentApiRouter.delete('/tournaments/:tournamentId', requireAdmin, tournamentValidator.validateTournamentId(), validate, tournamentController.deleteTournament);

@@ -1,4 +1,3 @@
-// Chanya
 // This model represents a tournament with participants, rounds, and a trophy.
 
 import mongoose from "mongoose";

@@ -38,7 +38,7 @@ export default function Game() {
     // tournamentId is passed via navigation state when coming from a tournament page
     const tournamentId = location.state?.tournamentId ?? null;
     const { preferences } = useAppearance();
-    const { playClick, playJoin, playHold } = useSoundEffects();
+    const { playClick, playJoin, playHold, playRoundEnd } = useSoundEffects();
 
     // Match data fetched from the backend and comments loaded for the sidebar
     const [match, setMatch] = useState(null);
@@ -169,6 +169,7 @@ export default function Game() {
 
         // All required players have joined: show the Ready button
         if (message.type === 'all-joined') {
+            playJoin();
             setGamePhase('ready');
             setReadyTimeLeft(30);
             readyTimerRef.current = setInterval(() => {
@@ -309,7 +310,7 @@ export default function Game() {
         // Game over: show standings and refresh coins/ELO
         if (message.type === 'game-end') {
             setGamePhase('ended');
-            playJoin();
+            playRoundEnd();
             setStandings(message.standings);
             if (user) refreshUserStats(user.userId, updateUserData);
             if (message.forfeitBy) setForfeitBy(message.forfeitBy);

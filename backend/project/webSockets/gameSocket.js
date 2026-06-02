@@ -6,6 +6,7 @@ import { evaluateHand, compareHands, calculateEloDeltas } from '../utils/handEva
 import { User } from '../models/User.js';
 import { Match } from '../models/Match.js';
 import { REVEAL_DELAY_MS } from '../config/constants.js';
+import { verifyToken } from '../utils/jwt.js';
 
 // objectIdToRoom maps a match's MongoDB _id → the Set of clients in that game room (used for comment broadcasts)
 // tournamentRooms maps a tournament's MongoDB _id → clients watching that tournament
@@ -52,14 +53,34 @@ export default function attachWebSocket(server) {
     const tournamentClients = new Map();
 
     // This fires every time a new browser connects via WebSocket.
-    wss.on('connection', (ws) => {
+    // The access token cookie is verified here so game actions can't be spoofed.
+    wss.on('connection', (ws, req) => {
+        const cookieHeader = req.headers.cookie || '';
+        const cookieMatch = cookieHeader.match(/(?:^|;\s*)accessToken=([^;]+)/);
+        const token = cookieMatch ? decodeURIComponent(cookieMatch[1]) : null;
+        const decoded = token ? verifyToken(token) : null;
+        // _id is the MongoDB ObjectId stored in the token payload (added in jwt.js)
+        ws.verifiedUserId = decoded?._id ?? null;
+
         // This fires every time that client sends a message.
         ws.on('message', (data) => {
-            const message = JSON.parse(data);
+            let message;
+            try {
+                message = JSON.parse(data);
+            } catch {
+                return;
+            }
 
             // The client tells us what kind of event this is via message.type.
             if (message.type === 'join') {
-                const { matchId, userId } = message;
+                // userId comes from the verified JWT, not the message — prevents impersonation
+                const userId = ws.verifiedUserId;
+                if (!userId) {
+                    ws.send(JSON.stringify({ type: 'error', message: 'Authentication required to join a game' }));
+                    return;
+                }
+
+                const { matchId } = message;
 
                 if (!rooms.has(matchId)) rooms.set(matchId, new Set());
                 rooms.get(matchId).add(ws);
@@ -88,6 +109,12 @@ export default function attachWebSocket(server) {
 
                 const state = gameStates.get(matchId);
                 const isRejoin = !!state.players[userId];
+
+                // Reject new joins once the game is already full
+                if (!isRejoin && Object.keys(state.players).length >= state.requiredPlayers) {
+                    ws.send(JSON.stringify({ type: 'error', message: 'This game is already full' }));
+                    return;
+                }
 
                 if (!isRejoin) {
                     state.players[userId] = {
@@ -259,7 +286,7 @@ export default function attachWebSocket(server) {
 
                 // Player bets: must be higher than the current highest bet
                 if (action === 'bet' || action === 'raise') {
-                    if (amount <= 0 || amount > player.stack || amount <= state.highestBet) return;
+                    if (!Number.isFinite(amount) || amount <= 0 || amount > player.stack || amount <= state.highestBet) return;
                     player.bet = amount;
                     player.stack -= amount;
                     state.pot += amount;
