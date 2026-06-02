@@ -3,18 +3,17 @@ import { getUsers, banUser, unbanUser, changeRole } from "../../api/adminUsers.j
 import { useFetch } from "../../hooks/useFetch.js";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue.js";
 import Spinner from "../../components/Spinner.jsx";
-import ConfirmDialog from "../../components/ConfirmDialog.jsx";
 import Button from "../../components/Button.jsx";
 
+// Admin page for searching, banning, and changing the role of registered users
 export default function AdminUsers() {
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState("");
-    const [confirmAction, setConfirmAction] = useState(null);
     const limit = 10;
-    // 250 ms debounce so the search API isn't called on every keystroke while the user is still typing
+    // 250 ms debounce so the API is not called on every keystroke
     const debouncedSearch = useDebouncedValue(search, 250);
 
-    // Re-fetches whenever the page or debounced search term changes; abort signal cancels stale requests
+    // Abort signal cancels any in-flight request when page or search term changes
     const { data, loading, error } = useFetch((signal) => getUsers({ page, limit, search: debouncedSearch }, signal), [page, debouncedSearch]);
 
     if (error) return <p className="status status--error">{error}</p>;
@@ -23,9 +22,7 @@ export default function AdminUsers() {
         <div>
             <header>
                 <h1>User Administration</h1>
-                <div style={{ marginTop: 8 }}>
-                    <input style={{ marginBottom: 20, padding: 5 }} aria-label="Search username" placeholder="Search username" value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} />
-                </div>
+                <input style={{ marginBottom: 20, padding: 5 }} aria-label="Search username" placeholder="Search username" value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} />
             </header>
 
             {loading && !data && <Spinner />}
@@ -46,8 +43,10 @@ export default function AdminUsers() {
                             <td>{userItem.username}</td>
                             <td>{userItem.email}</td>
                             <td>
+                                {/* Role change takes effect immediately on select — no separate save step */}
                                 <select style={{ paddingBlock: 8, paddingInline: 4, borderRadius: 8, border: "none" }} defaultValue={userItem.role} onChange={async (event) => {
                                     await changeRole(userItem.userId, event.target.value);
+                                    // Full reload so the table reflects the new role without threading state updates
                                     window.location.reload();
                                 }}>
                                     <option value="user">user</option>
@@ -57,9 +56,10 @@ export default function AdminUsers() {
                             <td>{userItem.banned ? 'Yes' : 'No'}</td>
                             <td>
                                 {userItem.banned ? (
-                                    <Button onClick={async () => { await unbanUser(userItem.userId); window.location.reload(); variant="danger"}}>Unban</Button>
-                                ) : (                                    
-                                    <Button onClick={async () => { await banUser(userItem.userId); window.location.reload(); variant="danger"}}>Ban</Button>
+                                    // Full reload so the banned status and row styling update immediately
+                                    <Button variant="danger" onClick={async () => { await unbanUser(userItem.userId); window.location.reload(); }}>Unban</Button>
+                                ) : (
+                                    <Button variant="danger" onClick={async () => { await banUser(userItem.userId); window.location.reload(); }}>Ban</Button>
                                 )}
                             </td>
                         </tr>
@@ -68,18 +68,10 @@ export default function AdminUsers() {
             </table>
 
             <div className="pagination" style={{ marginTop: 12 }}>
-                <button className="btn" disabled={!data || data.page === 1} onClick={() => setPage(prev => Math.max(1, prev - 1))}>Prev</button>
+                <Button disabled={!data || data.page === 1} onClick={() => setPage(prev => Math.max(1, prev - 1))}>Prev</Button>
                 <span style={{ margin: '0 8px' }}>Page {data?.page || 1} of {data?.totalPages || 1}</span>
-                <button className="btn" disabled={!data || data.page === data.totalPages} onClick={() => setPage(prev => Math.min(data.totalPages || 1, prev + 1))}>Next</button>
+                <Button disabled={!data || data.page === data.totalPages} onClick={() => setPage(prev => Math.min(data.totalPages || 1, prev + 1))}>Next</Button>
             </div>
-
-            {confirmAction && (
-                <ConfirmDialog
-                    message={confirmAction.message}
-                    onConfirm={() => { setConfirmAction(null); confirmAction.onConfirm(); }}
-                    onCancel={() => setConfirmAction(null)}
-                />
-            )}
         </div>
     );
 }

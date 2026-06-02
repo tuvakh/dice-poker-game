@@ -5,35 +5,30 @@ import { useAuth } from "../contexts/AuthContext.jsx";
 import Button from "../components/Button.jsx";
 import FormField from "../components/FormField.jsx";
 
-// The user types their username and password and clicks Login
-// If it works, they get sent to the homepage. 
-// If not, an error message shows up.
+// Login page — on success navigates to "/", on ban redirects to the ban screen via handleBan
 export default function Login (){
     const navigate = useNavigate();
     const location = useLocation();
     const { login, handleBan } = useAuth();
 
-    // These hold what the user is currently typing in each input
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
 
-    // error shows a general message
-    // fieldErrors shows a message under a specific input 
+    // fieldErrors maps field names to messages shown under each input; error is a fallback for general failures
     const [error, setError] = useState(null);
     const [fieldErrors, setFieldErrors] = useState({});
+    // infoMessage is passed via navigation state (e.g. "Please log in to continue") from protected routes
     const infoMessage = location.state?.message ?? "";
 
     async function handleSubmit(event) {
-        // Prevent the browser from reloading the page when the form is submitted
         event.preventDefault();
-        // Clear old errors so they don't show while the new request is in progress
         setError(null);
         setFieldErrors({});
         try {
             await login(username, password);
             navigate("/");
         } catch (err) {
-            // Check if the error is due to banned account
+            // Banned users get a dedicated ban screen rather than a generic error message
             if (err.message.includes("banned") || err.code === "FORBIDDEN") {
                 handleBan(err.message);
             } else {

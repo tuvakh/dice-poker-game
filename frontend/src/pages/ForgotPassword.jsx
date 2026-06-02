@@ -1,14 +1,15 @@
 import { useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { forgotPassword as requestPasswordReset } from "../api/users";
 
 import Button from "../components/Button.jsx";
 import FormField from "../components/FormField.jsx";
 
+// Sends a password reset email; always shows a neutral message to prevent email enumeration
 export default function ForgotPassword() {
     const [email, setEmail] = useState("");
     const [error, setError] = useState(null);
-    const [message, setMessage] = useState("");
+    const [message, setMessage] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     // submittingRef prevents a second submission if the user clicks faster than the state update cycle
     const submittingRef = useRef(false);
@@ -19,7 +20,7 @@ export default function ForgotPassword() {
         event.preventDefault();
         if (submittingRef.current) return;
         setError(null);
-        setMessage("");
+        setMessage(null);
         submittingRef.current = true;
         setIsSubmitting(true);
 

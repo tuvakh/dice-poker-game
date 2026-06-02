@@ -21,6 +21,14 @@ import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import '../components/dice-poker-board.js';
 import '../components/dice-poker-die.js';
 
+// Pulls fresh coin/ELO values from the server and merges them into auth context
+function refreshUserStats(userId, updateUserData) {
+    getUser(userId).then(freshUser => updateUserData({
+        coins: freshUser.coins,
+        eloRating: freshUser.eloRating
+    }));
+}
+
 // The individual game page shows players, game board, and comments sidebar
 export default function Game() {
     const navigate = useNavigate();
@@ -60,10 +68,8 @@ export default function Game() {
 
     // standings is the final score list shown after the game ends
     // forfeitBy is the userId of a player who disconnected mid-game, triggering a forfeit
-    // playerLeftNotice is a non-critical notice shown while the game is still running
     const [standings, setStandings] = useState(null);
     const [forfeitBy, setForfeitBy] = useState(null);
-    const [playerLeftNotice, setPlayerLeftNotice] = useState(null);
     const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
 
     const [readyTimeLeft, setReadyTimeLeft] = useState(null);
@@ -71,7 +77,8 @@ export default function Game() {
     const [canRoll, setCanRoll] = useState(false);
     const [roundResult, setRoundResult] = useState(null);
     const readyTimerRef = useRef(null);
-    const [rollCount, setRollCount] = useState(0);
+    // useRef instead of useState — the count never needs to trigger a re-render
+    const rollCountRef = useRef(0);
 
     const [betTimeLeft, setBetTimeLeft] = useState(null);
     const betTimerRef = useRef(null);
@@ -116,7 +123,6 @@ export default function Game() {
         setBetTimeLeft(null);
         wsRef.current?.send(JSON.stringify({ type: 'bet', action, amount }));
     }
-
 
     // Closes the WebSocket if the game is ongoing (triggers forfeit), or calls the REST leave endpoint if still waiting
     const handleLeave = async () => {
@@ -177,9 +183,8 @@ export default function Game() {
             }, 1000);
         }
 
-        // A player disconnected mid-game: show a notice so the remaining player knows
+        // A player disconnected mid-game: the board web component shows the notice directly
         if (message.type === 'player-disconnected') {
-            setPlayerLeftNotice(message.userId);
             boardRef.current?.showPlayerLeft(message.userId);
         }
 
@@ -189,7 +194,7 @@ export default function Game() {
             setReadyTimeLeft(null);
             setRoundResult(null);
             setCanRoll(true);
-            setRollCount(0);
+            rollCountRef.current = 0;
             setTimedOut(false);
             setGamePhase('rolling');
             playClick();
@@ -231,10 +236,8 @@ export default function Game() {
             if (board) {
                 board.setDice(user?._id, message.yourDice, true);
             }
-            setRollCount(prev => {
-                if (prev + 1 >= 3) boardRef.current?.handleDoneRolling();
-                return prev + 1;
-            });
+            rollCountRef.current += 1;
+            if (rollCountRef.current >= 3) boardRef.current?.handleDoneRolling();
         }
 
         // Another player re-rolled: show which of their dice are held (not the actual faces)
@@ -308,12 +311,7 @@ export default function Game() {
             setGamePhase('ended');
             playJoin();
             setStandings(message.standings);
-            if (user) {
-                getUser(user.userId).then(freshUser => updateUserData({
-                    coins: freshUser.coins,
-                    eloRating: freshUser.eloRating
-                }));
-            }
+            if (user) refreshUserStats(user.userId, updateUserData);
             if (message.forfeitBy) setForfeitBy(message.forfeitBy);
         }
     }
@@ -348,12 +346,7 @@ export default function Game() {
         if (!user || !match.players.some(player => String(player?._id ?? player) === String(user._id))) return;
 
         // Refresh coin balance immediately when entering an ongoing wager game
-        if (match.coinWager > 0) {
-            getUser(user.userId).then(freshUser => updateUserData({
-                coins: freshUser.coins,
-                eloRating: freshUser.eloRating
-            }));
-        }
+        if (match.coinWager > 0) refreshUserStats(user.userId, updateUserData);
 
         // Connect to the WebSocket server
         const ws = new WebSocket('ws://localhost:3000');
@@ -383,7 +376,8 @@ export default function Game() {
 
         // Close the connection when leaving the page
         return () => ws.close();
-    }, [match?.status]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [match?.status]); // intentional: only open/close the socket when status changes, not on every render
 
     // Re-registers board event listeners every time gamePhase changes
     useEffect(() => {
@@ -437,6 +431,12 @@ export default function Game() {
     if (!match) return <Spinner />;
 
     const isPlayer = !!user && match.players.some(player => player?._id === user._id);
+    const infoBarContent = match.gameCategory && (
+        <>
+            <span>{match.gameCategory.timeController}s · {match.gameCategory.numberOfRounds} rounds · {match.gameCategory.gameRules === 'straights_allowed' ? 'Straights allowed' : 'No straights'}</span>
+            <strong>Pot: {displayPot} {displayPot === 1 ? 'coin' : 'coins'}</strong>
+        </>
+    );
 
     return (
         <>
@@ -458,8 +458,7 @@ export default function Game() {
 
                     {!isPreGame && match.status !== 'waiting' && match.gameCategory && gamePhase !== 'ended' && gamePhase !== 'cancelled' && (
                         <div className="game__info-bar game__info-bar--standalone">
-                            <span>{match.gameCategory.timeController}s · {match.gameCategory.numberOfRounds} rounds · {match.gameCategory.gameRules === 'straights_allowed' ? 'Straights allowed' : 'No straights'}</span>
-                            <strong>Pot: {displayPot} {displayPot === 1 ? 'coin' : 'coins'}</strong>
+                            {infoBarContent}
                         </div>
                     )}
 
@@ -467,8 +466,7 @@ export default function Game() {
                         {/* Info bar inside the box only when waiting */}
                         {(match.status === 'waiting' || isPreGame) && match.gameCategory && (
                             <div className="game__info-bar">
-                                <span>{match.gameCategory.timeController}s · {match.gameCategory.numberOfRounds} rounds · {match.gameCategory.gameRules === 'straights_allowed' ? 'Straights allowed' : 'No straights'}</span>
-                                <strong>Pot: {displayPot} {displayPot === 1 ? 'coin' : 'coins'}</strong>
+                                {infoBarContent}
                             </div>
                         )}
 
@@ -595,7 +593,6 @@ export default function Game() {
                             </div>
                         </div>
                     )}
-
 
                     {gamePhase === 'betting' && bettingState && !forfeitBy && (
                         <div className="game__bet-controls">

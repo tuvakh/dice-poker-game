@@ -1,4 +1,3 @@
-//Chanya
 import { useMemo, useState, useEffect } from "react";
 import { getAllTournaments } from "../api/tournaments.js";
 import { useSoundEffects } from "../hooks/useSoundEffects.js";
@@ -34,14 +33,14 @@ export default function Tournament() {
     const [error, setError] = useState(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [sortBy, setSortBy] = useState("date-desc");
-    const [visibleCount, setVisibleCount] = useState(6); // Chanya
+    const [visibleCount, setVisibleCount] = useState(6);
     const { playClick } = useSoundEffects();
 
     useEffect(() => {
         setLoading(true);
         setError(null);
         // Reset visible count when the status tab changes so the user starts fresh
-        setVisibleCount(6); // Chanya
+        setVisibleCount(6);
         const params = statusFilter ? { status: statusFilter } : {};
         getAllTournaments(params)
             .then(data => setTournaments(data.tournamentList ?? []))

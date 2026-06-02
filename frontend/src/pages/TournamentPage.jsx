@@ -1,6 +1,4 @@
-//Chanya
-// tournmanet will take rounds instead of every body playing at the same time.
-// Individual tournament detail page
+// Individual tournament detail page — round-based format where all participants play simultaneously each round
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router";
 import { getTournament, joinTournament, leaveTournament, deleteTournament, cancelTournament, startRound } from "../api/tournaments.js";

@@ -5,41 +5,37 @@ import { useAuth } from "../contexts/AuthContext.jsx";
 import Button from "../components/Button.jsx";
 import FormField from "../components/FormField.jsx";
 
-// The registration page collects user details and creates a new account
+// Registration page — success shows a "check your inbox" message rather than auto-logging in (email verification required)
 export default function Register (){
     const { register } = useAuth();
-    
-    // Form field states
+
     const [email, setEmail] = useState("");
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [passwordRepeat, setPasswordRepeat] = useState("");
     const [dateOfBirth, setDateOfBirth] = useState("");
     const [agreeToTerms, setAgreeToTerms] = useState(false);
-    
-    // error shows a general message
-    // fieldErrors shows a message under a specific input 
-    const [error, setError] = useState(null); 
+
+    // fieldErrors maps field names to messages shown under each input; error is a fallback for general failures
+    const [error, setError] = useState(null);
     const [fieldErrors, setFieldErrors] = useState({});
     const [successMessage, setSuccessMessage] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
+    // submittingRef prevents a double-submit if the user clicks faster than the state update cycle
     const submittingRef = useRef(false);
 
     async function handleSubmit(event) {
         event.preventDefault();
         if (submittingRef.current) return;
-        // Clear previous errors
         setError(null);
         setFieldErrors({});
         setSuccessMessage("");
 
-        // Validate that both password fields match before submitting
         if (password !== passwordRepeat) {
             setFieldErrors({ passwordRepeat: "Passwords do not match" });
             return;
         }
-        
-        // Ensure user has agreed to terms and conditions
+
         if (!agreeToTerms) {
             setError("You must agree to the terms and conditions");
             return;
@@ -49,14 +45,12 @@ export default function Register (){
         setIsSubmitting(true);
 
         try {
-            // Calculate age from date of birth since the backend stores age as a number
+            // Backend stores age as a number, so we derive it from the date of birth here
             const age = new Date().getFullYear() - new Date(dateOfBirth).getFullYear();
             await register({email, username, password, age});
             setSuccessMessage("Check your inbox and click the verification link before logging in.");
         } catch (err) {
-            // Handle field-specific errors from backend validation
             if (err.fieldErrors) setFieldErrors(err.fieldErrors);
-            // Handle general error messages
             else setError(err.message);
         } finally {
             submittingRef.current = false;
