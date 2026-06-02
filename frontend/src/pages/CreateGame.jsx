@@ -56,6 +56,11 @@ export default function CreateGame() {
                 category.timeController === formData.timeController
             );
 
+            if (!category) {
+                setError("No matching game category found. Please try different settings.");
+                return;
+            }
+
             const match = await createMatch({
                 gameCategoryId: category._id,
                 players: [user._id],

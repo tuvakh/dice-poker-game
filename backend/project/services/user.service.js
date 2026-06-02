@@ -83,31 +83,6 @@ function generatePasswordResetToken() {
     return { token, expires };
 }
 
-async function resendVerificationEmail(user) {
-    const hasValidVerificationToken =
-        user.emailVerificationToken && user.emailVerificationTokenExpires && user.emailVerificationTokenExpires > new Date();
-    const tokenData = hasValidVerificationToken
-        ? { token: user.emailVerificationToken, expires: user.emailVerificationTokenExpires }
-        : generateEmailVerificationToken();
-
-    user.emailVerificationToken = tokenData.token;
-    user.emailVerificationTokenExpires = tokenData.expires;
-
-    if (!Array.isArray(user.emailVerificationTokens)) {
-        user.emailVerificationTokens = [];
-    }
-
-    const tokenAlreadyStored = user.emailVerificationTokens.some((entry) => entry.token === tokenData.token);
-    if (!tokenAlreadyStored) {
-        user.emailVerificationTokens.push({ token: tokenData.token, expires: tokenData.expires });
-    }
-
-    await user.save();
-    await sendVerificationEmail(user.email, tokenData.token);
-
-    return tokenData;
-}
-
 export async function createUser(userObj) {
     const { username, email, password, age, role } = userObj;
 

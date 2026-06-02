@@ -57,21 +57,24 @@ export async function recordMatch(req, res, next){
 }
 
 // This function adds a user to an existing waiting match
+// userId comes from the verified JWT token, not the request body
 export async function joinMatch(req, res, next) {
     try {
-        const { matchId, userId } = matchedData(req);
-        const result = await matchServices.joinMatch(matchId, userId);
+        const { matchId } = matchedData(req);
+        const result = await matchServices.joinMatch(matchId, req.mongoId);
         res.status(200).json(result);
-    // next(error) forwards the error (if any) to middleware/error.js      
+    // next(error) forwards the error (if any) to middleware/error.js
     } catch (error) {
         next(error);
     }
 }
 
+// This function removes a user from a waiting match before it starts
+// userId comes from the verified JWT token, not the request body
 export async function leaveMatch(req, res, next) {
     try {
-        const { matchId, userId } = matchedData(req);
-        const result = await matchServices.leaveMatch(matchId, userId);
+        const { matchId } = matchedData(req);
+        const result = await matchServices.leaveMatch(matchId, req.mongoId);
         res.status(200).json(result);
     } catch (error) {
         next(error);

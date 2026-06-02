@@ -13,21 +13,18 @@ export async function getTournament(id) {
     return handleResponse(res);
 }
 
-// Registers a user for a tournament
-// userId is sent in the request body so the backend knows who is joining
-export async function joinTournament(id, userId) {
+// Registers the authenticated user for a tournament — userId comes from the JWT cookie server-side
+export async function joinTournament(id) {
     const res = await fetchWithAuth(`${BASE_URL}/tournaments/${id}/join`, {
-        method: "POST",
-        body: JSON.stringify({ userId })
+        method: "POST"
     });
     return handleResponse(res);
 }
 
-// Removes a user from a tournament — allowed at any point until the tournament is finished/cancelled
-export async function leaveTournament(id, userId) {
+// Removes the authenticated user from a tournament — userId comes from the JWT cookie server-side
+export async function leaveTournament(id) {
     const res = await fetchWithAuth(`${BASE_URL}/tournaments/${id}/leave`, {
-        method: "DELETE",
-        body: JSON.stringify({ userId })
+        method: "DELETE"
     });
     return handleResponse(res);
 }
@@ -66,9 +63,9 @@ export async function cancelTournament(id) {
     return handleResponse(res);
 }
 
-// Starts the next round of a tournament — creates matches and transitions to ongoing
+// Starts the next round of a tournament — randomly pairs all participants
 export async function startRound(id) {
-    const res = await fetchWithAuth(`${BASE_URL}/tournaments/${id}/knockoutRounds`, {
+    const res = await fetchWithAuth(`${BASE_URL}/tournaments/${id}/nextRound`, {
         method: "PUT"
     });
     return handleResponse(res);

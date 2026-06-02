@@ -38,7 +38,7 @@ export default function Game() {
     // tournamentId is passed via navigation state when coming from a tournament page
     const tournamentId = location.state?.tournamentId ?? null;
     const { preferences } = useAppearance();
-    const { playClick, playJoin, playHold } = useSoundEffects();
+    const { playClick, playJoin, playHold, playRoundEnd } = useSoundEffects();
 
     // Match data fetched from the backend and comments loaded for the sidebar
     const [match, setMatch] = useState(null);
@@ -133,7 +133,7 @@ export default function Game() {
             return;
         }
         try {
-            await leaveMatch(match.matchId, user._id);
+            await leaveMatch(match.matchId);
             navigate('/');
         } catch (err) {
             setError(err.message);
@@ -169,6 +169,7 @@ export default function Game() {
 
         // All required players have joined: show the Ready button
         if (message.type === 'all-joined') {
+            playJoin();
             setGamePhase('ready');
             setReadyTimeLeft(30);
             readyTimerRef.current = setInterval(() => {
@@ -309,7 +310,7 @@ export default function Game() {
         // Game over: show standings and refresh coins/ELO
         if (message.type === 'game-end') {
             setGamePhase('ended');
-            playJoin();
+            playRoundEnd();
             setStandings(message.standings);
             if (user) refreshUserStats(user.userId, updateUserData);
             if (message.forfeitBy) setForfeitBy(message.forfeitBy);
@@ -327,7 +328,7 @@ export default function Game() {
 
         if (!isPlayer && match.status === "waiting") {
             hasJoined.current = true;
-            joinMatch(match.matchId, user._id).finally(fetchMatch);
+            joinMatch(match.matchId).finally(fetchMatch);
         }
     }, [match]);
 
@@ -355,12 +356,11 @@ export default function Game() {
         ws.onopen = () => {
             const requiredPlayers = match.maxPlayers ?? 2;
 
-            // Join the game room
+            // Join the game room 
             ws.send(JSON.stringify({
                 type: 'join',
                 matchId: String(match.matchId),
                 matchObjectId: match._id,
-                userId: user?._id,
                 requiredPlayers,
                 totalRounds: match.gameCategory?.numberOfRounds ?? 3,
                 timeController: match.gameCategory?.timeController ?? 10,
@@ -412,7 +412,7 @@ export default function Game() {
     useEffect(() => {
         return () => {
             if (matchRef.current?.status === 'waiting' && user) {
-                leaveMatch(matchRef.current.matchId, user._id).catch(() => { });
+                leaveMatch(matchRef.current.matchId).catch(() => { });
             }
         };
     }, []);

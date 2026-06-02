@@ -1,7 +1,6 @@
 # Tuva's Tasks — What Was Done and How
 
-This document explains everything I was responsible for in the exam project.
-It's written so teammates can understand it too, for the oral exam.
+
 
 ---
 

@@ -34,7 +34,7 @@ const userSchema = new mongoose.Schema({
         unique: true,
         required: true
     },
-    // The password is stored as an MD5 hash with per-user salt
+    // The password is hashed with scrypt and a random per-user salt (see utils/hash.js)
     password: {
         type: String,
         trim: true,

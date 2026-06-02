@@ -45,8 +45,7 @@ export function validateGetAllComments(){
 }
 
 // This function validates the body fields required to create a comment
-// targetId and userId must be valid MongoDB ObjectIds so they can reference documents
-// targetType must be one of the allowed values imported from constants.js
+// userId is not accepted from the body — it is injected from the verified JWT in the controller
 export function validateCreateComment(){
     return [
         body("targetId")
@@ -61,12 +60,7 @@ export function validateCreateComment(){
             .withMessage("targetType must be 'match' or 'tournament'"),
         body("comment")
             .notEmpty()
-            .withMessage(`comment is required`),
-        body("userId")
-            .notEmpty()
-            .withMessage(`userId is required`)
-            .isMongoId()
-            .withMessage("userId must be a valid MongoDB ObjectId")
+            .withMessage(`comment is required`)
     ]
 }
 

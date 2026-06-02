@@ -2,25 +2,42 @@
 // Uses access tokens for API requests, refresh tokens to get new access tokens
 
 import { verifyToken, getRoleFromToken } from "../utils/jwt.js";
+import { Security } from "../models/Security.js";
+
 
 // This function verifies JWT access token from cookies on every request
 // It defaults to "anonymous" if no valid token is found
-export function setUserRole(req, res, next) {
+// If the request IP differs from the IP recorded at login, the incident is logged and 401 is returned
+export async function setUserRole(req, res, next) {
     const accessToken = req.cookies.accessToken;
-    
+
     if (accessToken) {
         const decoded = verifyToken(accessToken);
         if (decoded) {
+            if (decoded.ip && decoded.ip !== req.ip) {
+                try {
+                    await Security.create({
+                        type: 'ip-mismatch',
+                        ip: req.ip,
+                        userAgent: req.headers['user-agent']
+                    });
+                } catch (err) {
+                    console.error('Failed to log IP mismatch incident:', err);
+                }
+                return res.status(401).json({ error: 'UNAUTHORIZED', message: 'Session invalid' });
+            }
             req.userRole = getRoleFromToken(decoded);
             req.userId = decoded.userId;
+            req.mongoId = decoded._id;
             req.username = decoded.username;
             return next();
         }
     }
-    
+
     // No valid access token found
     req.userRole = "anonymous";
     req.userId = null;
+    req.mongoId = null;
     next();
 }
 

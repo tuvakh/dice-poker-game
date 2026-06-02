@@ -94,15 +94,13 @@ export function validateRecordMatch(){
     ];
 }
 
+// userId is not accepted from the body — it is injected from the verified JWT in the controller
 export function validateJoinMatch() {
     return [
         param("matchId")
             .isInt({ min: 1 })
             .withMessage("matchId must be a positive integer")
-            .toInt(),
-        body("userId")
-            .optional()
-            .isMongoId().withMessage("userId must be a valid MongoDB ObjectId")
+            .toInt()
     ];
 }
 

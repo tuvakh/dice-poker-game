@@ -19,7 +19,7 @@ export default function CommentForm({ targetId, targetType, onCommentAdded }) {
         setFieldErrors({});
 
         try {
-            await createComment({ userId: user._id, comment: text, targetId, targetType });
+            await createComment({ comment: text, targetId, targetType });
             setText("");
             // Guard: parent doesn't always pass a callback, but when it does, call it to re-fetch comments
             if (onCommentAdded) onCommentAdded();

@@ -5,6 +5,7 @@ import { User } from '../models/User.js';
 import { GameCategory } from '../models/GameCategory.js';
 import { Tournament } from '../models/Tournament.js';
 import { CustomError } from '../utils/customError.js';
+import { TOURNAMENT_WIN_BONUS } from '../config/constants.js';
 
 async function lockWager(playerIds, coinWager) {
     if (coinWager <= 0) return;
@@ -207,7 +208,6 @@ export async function recordMatch(matchId, matchData) {
                 }
                 // Coin bonus for winning the tournament
                 if (winnerId) {
-                    const TOURNAMENT_WIN_BONUS = 500;
                     await User.findByIdAndUpdate(winnerId, { $inc: { coins: TOURNAMENT_WIN_BONUS } });
                 }
             }
