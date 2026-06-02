@@ -445,7 +445,7 @@ export default function Game() {
 
     return (
         <>
-            {!user && (
+            {!user && match.status === 'ongoing' && (
                 <div className="spectator-banner">
                     <p>You&apos;re spectating. <Link to="/login">Log in</Link> or <Link to="/register">register</Link> to play.</p>
                 </div>
