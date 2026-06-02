@@ -37,13 +37,13 @@ export default async function seedTournaments(users, categories, trophies) {
             status: "upcoming",
             trophy: trophies[1]._id
         }).save(),
-        // Demo tournament: starts 2 minutes after seeding so there is time to join before it auto-starts
+        // Demo tournament: date is in the past so it auto-starts as soon as 2+ players have joined
         new Tournament({
             title: "Demo Open — Play Now!",
-            description: "A live demo tournament you can join and play. It starts automatically 2 minutes after the server seeds the database.",
-            date: new Date(Date.now() + 2 * 60 * 1000),
-            breaks: 5,
-            numberOfRounds: 3,
+            description: "A live demo tournament — join and it starts automatically once 2 players are in.",
+            date: new Date(Date.now() - 10 * 1000),
+            breaks: 1,
+            numberOfRounds: 2,
             gameCategory: categories[6]._id,
             participants: [], // ← no pre-seeded players, join via the Join button
             status: "upcoming",

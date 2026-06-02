@@ -176,6 +176,9 @@ export async function updateTournament(tournamentId, updates){
     if(!tournament){
         throw new CustomError(`A tournament with id ${tournamentId} doesn't exist.`, 404, "NOT_FOUND");
     }
+    if (["ongoing", "finished"].includes(tournament.status)) {
+        throw new CustomError("You can't edit a tournament that has already started or finished.", 400, "BAD_REQUEST");
+    }
     const allowed = ["title", "description", "date", "breaks", "numberOfRounds", "gameCategory", "eloMin", "eloMax", "buyIn", "trophy"];
     for (const key of allowed) {
         if (updates[key] !== undefined) tournament[key] = updates[key];

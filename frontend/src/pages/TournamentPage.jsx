@@ -113,9 +113,9 @@ export default function TournamentPage() {
             if (remaining === 0 && !nextRoundFiredRef.current) {
                 nextRoundFiredRef.current = true;
                 startRound(id)
-                    .then(() => getTournament(id))
                     .then(updated => setTournament(updated))
                     .catch(() => {
+                        nextRoundFiredRef.current = false;
                         getTournament(id).then(updated => setTournament(updated)).catch(() => { });
                     });
             }
@@ -154,10 +154,9 @@ export default function TournamentPage() {
         const fire = () => {
             autoStartedRef.current = true;
             startRound(id)
-                .then(() => getTournament(id))
                 .then(updated => setTournament(updated))
                 .catch(() => {
-                    // Round may have already been started by another viewer — re-fetch current state
+                    autoStartedRef.current = false;
                     getTournament(id).then(updated => setTournament(updated)).catch(() => { });
                 });
         };
@@ -354,7 +353,12 @@ export default function TournamentPage() {
                 <div className="tournament-detail__admin">
                     {tournament.status !== 'cancelled' && (
                         <>
-                            <Button onClick={() => navigate(`/admin/tournaments/${tournament.tournamentId}/edit`)}>Edit tournament</Button>
+                            {tournament.status === 'upcoming' && (
+                                <Button onClick={() => navigate(`/admin/tournaments/${tournament.tournamentId}/edit`)}>Edit tournament</Button>
+                            )}
+                            {tournament.status === 'ongoing' && (tournament.rounds?.length ?? 0) < (tournament.numberOfRounds ?? 0) && (
+                                <Button onClick={handleStartRound}>Start next round</Button>
+                            )}
                             <Button onClick={() => setShowCancelConfirm(true)} variant="danger">Cancel tournament</Button>
                         </>
                     )}
