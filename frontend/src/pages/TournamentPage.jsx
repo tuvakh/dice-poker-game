@@ -113,6 +113,7 @@ export default function TournamentPage() {
             if (remaining === 0 && !nextRoundFiredRef.current) {
                 nextRoundFiredRef.current = true;
                 startRound(id)
+                    .then(() => getTournament(id))
                     .then(updated => setTournament(updated))
                     .catch(() => {
                         getTournament(id).then(updated => setTournament(updated)).catch(() => { });
@@ -153,9 +154,10 @@ export default function TournamentPage() {
         const fire = () => {
             autoStartedRef.current = true;
             startRound(id)
+                .then(() => getTournament(id))
                 .then(updated => setTournament(updated))
                 .catch(() => {
-                    // If another user already started it, just re-fetch the latest state
+                    // Round may have already been started by another viewer — re-fetch current state
                     getTournament(id).then(updated => setTournament(updated)).catch(() => { });
                 });
         };
@@ -177,7 +179,7 @@ export default function TournamentPage() {
         if (rounds.length === 0) return;
         const latestRound = rounds[rounds.length - 1];
         for (const match of latestRound) {
-            if (!match || match.status !== 'ongoing') continue;
+            if (!match || match.status === 'finished') continue;
             const players = match.players ?? [];
             const isPlayer = players.some(player =>
                 (player.username && player.username === user.username) ||
@@ -509,7 +511,7 @@ export default function TournamentPage() {
                                 <div key={rIdx} className="bracket__round">
                                     <p className="bracket__round-label">Round {rIdx + 1}</p>
                                     {round.map((entry, mIdx) => {
-                                        const match = entry?.matchId ?? entry;
+                                        const match = entry;
                                         const players = match?.players ?? [];
                                         const winner = match?.winner;
                                         const matchId = match?.matchId;

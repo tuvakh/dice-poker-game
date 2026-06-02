@@ -124,6 +124,7 @@ export default function AdminTournamentEdit() {
                         type="datetime-local"
                         value={date}
                         onChange={event => setDate(event.target.value)}
+                        min={new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)}
                         required
                     />
                 </div>

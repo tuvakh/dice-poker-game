@@ -44,7 +44,10 @@ export async function getTournament(tournamentId){
         tournament.rounds.map(async (round) => {
             return Promise.all(
                 round.map(async (entry) => {
-                    return await Match.findById(entry.matchId).select("players winner outcome status matchId endedAt").populate('players', 'username userId');
+                    return await Match.findById(entry.matchId)
+                        .select("players winner outcome status matchId endedAt")
+                        .populate('players', 'username _id')
+                        .populate('winner', 'username _id');
                 })
             );
         })
