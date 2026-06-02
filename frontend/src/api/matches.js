@@ -31,20 +31,18 @@ export async function createMatch(data) {
     return handleResponse(res);
 }
 
-// Adds a player to an existing waiting match
-// userId is required. Anonymous users cannot join matches
-export async function joinMatch(id, userId) {
+// Adds the authenticated user to an existing waiting match — userId comes from the JWT cookie server-side
+export async function joinMatch(id) {
     const res = await fetchWithAuth(`${BASE_URL}/matches/${id}/join`, {
-        method: "POST",
-        body: JSON.stringify({ userId })
+        method: "POST"
     });
     return handleResponse(res);
 }
 
-export async function leaveMatch(id, userId) {
+// Removes the authenticated user from a waiting match — userId comes from the JWT cookie server-side
+export async function leaveMatch(id) {
     const res = await fetchWithAuth(`${BASE_URL}/matches/${id}/leave`, {
-        method: "DELETE",
-        body: JSON.stringify({ userId })
+        method: "DELETE"
     });
     return handleResponse(res);
 }

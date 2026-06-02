@@ -49,7 +49,7 @@ export default function AboutGame (){
             <p>When creating a game you choose three things that define the variant: how long the match is, whether straights are allowed, and how much time each player gets per turn.</p>
             <p><strong>Best of 3, 5, or 7</strong> — the first player to win the required number of rounds wins the match.</p>
             <p><strong>No straights</strong> — straights are removed from the rankings entirely, making Five of a Kind and Four of a Kind easier to aim for.</p>
-            <p><strong>Time controls</strong> — each turn has a limit of 3, 10, or 30 seconds. The 3-second mode is ultra fast and reflex-based, while 30 seconds gives you more room to think. Running out of time counts as an automatic loss for that round.</p>
+            <p><strong>Time controls</strong> — each player has a total time budget of 10, 30, or 90 seconds across all their rolls in the match. If the timer runs out, all remaining dice are rolled automatically with no holds.</p>
         </section>
 
         </>

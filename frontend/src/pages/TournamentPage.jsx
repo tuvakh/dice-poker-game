@@ -196,7 +196,7 @@ export default function TournamentPage() {
         setJoining(true);
         setJoinError(null);
         try {
-            await joinTournament(id, user._id);
+            await joinTournament(id);
             playJoin();
             // Re-fetch so the participants list matches exactly what the DB returns,
             // ensuring alreadyIn computes correctly on this render and after refresh.
@@ -215,7 +215,7 @@ export default function TournamentPage() {
         setLeaving(true);
         setLeaveError(null);
         try {
-            await leaveTournament(id, user._id);
+            await leaveTournament(id);
             setJoined(false);
             // Optimistic update: remove the user from the local participants list
             setTournament(prev => prev
