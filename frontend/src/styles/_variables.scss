@@ -8,10 +8,11 @@
     --text-color: #000000;
     --fake-link-color: #ab06a0;
     --info-color: #c0457e;
-    --elo-color: #c75e1d;
+    --elo-color: #b75e27;
     --copyright-color: #bfe3d7;
     --number-color: #b43a73;
     --error-color: #b50758;
+    --success-color: #2f733b;
 
     --die-bg-color: #ffffff;
     --die-face-color-red: #e40f0f;
@@ -30,7 +31,7 @@
 [data-theme="dark"] {
     --primary-color: #203B33;
     --secondary-color: #598276;
-    --tertiary-color: #131212;
+    --tertiary-color: #201717;
     --box-color: #900A49;
     --button-color: #BC1E68;
     --button-border-color: #E78BB6;
@@ -42,4 +43,5 @@
     --copyright-color: #a3a3a3;
     --number-color: #E78BB6;
     --error-color: #ffcee5;
+    --success-color: #98d2a2;
 }

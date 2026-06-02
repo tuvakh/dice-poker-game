@@ -15,6 +15,7 @@ import { useAppearance } from "../contexts/AppearanceContext.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
 
 import { filterLobbyMatches } from "../hooks/useLobbyGames.js";
+import { usePolling } from "../hooks/usePolling.js";
 
 
 // Ranks matches by the average ELO of their players so the highest-rated games surface first
@@ -30,7 +31,7 @@ function sortByAverageElo(matches) {
 // Defers the data fetch until the browser is idle so the initial paint isn't blocked by API calls.
 // Falls back to setTimeout(0) in environments that don't support requestIdleCallback.
 function getIdleDelaySetter(setReady) {
-    if (typeof window === "undefined") return () => {};
+    if (typeof window === "undefined") return () => { };
 
     if (typeof window.requestIdleCallback === "function") {
         const idleId = window.requestIdleCallback(() => setReady(true));
@@ -98,6 +99,13 @@ export default function Home() {
         return () => { cancelled = true; };
     }, [ready, preferences.lobbyCount]);
 
+    usePolling((signal) => {
+        if (!ready) return;
+        getAllMatches({ status: "waiting", limit: preferences.lobbyCount }, signal)
+            .then(data => setLobbyGames(data.matchList))
+            .catch(err => { if (err?.name !== "AbortError") setError("Failed to load games."); });
+    }, 8000, ready);
+
     if (!ready) return null;
     if (loading) return <Spinner />;
     if (error) return <p className="status status--error">{error}</p>;
@@ -116,22 +124,6 @@ export default function Home() {
                 )}
                 <Link to="/aboutGame">Learn how to play</Link>
             </Hero>
-
-            {activity && (
-                <section className="home-details__section home-activity">
-                    <h2>Platform activity</h2>
-                    <div className="home-activity__stats">
-                        <div className="home-activity__stat">
-                            <span className="home-activity__label">Games live right now</span>
-                            <span className="home-activity__number">{activity.ongoingMatches}</span>
-                        </div>
-                        <div className="home-activity__stat">
-                            <span className="home-activity__label">Players active this week</span>
-                            <span className="home-activity__number">{activity.activeUsers}</span>
-                        </div>
-                    </div>
-                </section>
-            )}
 
             <section className="home-details__section">
                 <h2>Games available for joining</h2>
@@ -156,6 +148,22 @@ export default function Home() {
                     {tournaments.map(tournament => <TournamentCard key={tournament.tournamentId} tournament={tournament} />)}
                 </div>
             </section>
+
+            {activity && (
+                <section className="home-details__section home-activity">
+                    <h2>Platform activity</h2>
+                    <div className="home-activity__stats">
+                        <div className="home-activity__stat">
+                            <span className="home-activity__label">Games live right now</span>
+                            <span className="home-activity__number">{activity.ongoingMatches}</span>
+                        </div>
+                        <div className="home-activity__stat">
+                            <span className="home-activity__label">Players active this week</span>
+                            <span className="home-activity__number">{activity.activeUsers}</span>
+                        </div>
+                    </div>
+                </section>
+            )}
         </>
     );
 }

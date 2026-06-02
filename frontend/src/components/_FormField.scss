@@ -3,9 +3,10 @@
     flex-direction: column;
     width: 100%;
     &__error {
-        color: red;
+        color: var(--error-color);
         font-size: 0.8rem;
         margin-top: 0.25rem;
+        font-weight: bold;
     }
     &--inline {
         flex-direction: row-reverse;

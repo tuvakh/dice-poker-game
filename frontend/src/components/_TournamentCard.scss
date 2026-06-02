@@ -23,17 +23,34 @@
 
     &__status {
         display: inline-block;
-        font-size: 0.7rem;
+        font-size: 0.6rem;
+        font-weight: bold;
         text-transform: uppercase;
         letter-spacing: 0.1em;
-        padding: 2px 8px;
+        padding: 4px 10px;
         border-radius: 4px;
         width: fit-content;
 
-        &--upcoming  { background: #1a3a1a; color: #4caf50; }
+        &--upcoming {
+            background: #d6690a;
+            color: #fff8f3;
+        }
+
         &--active,
-        &--ongoing   { background: #2e1a00; color: #ff9800; }
+        &--ongoing {
+            background: #d55886;
+            color: #fff0f5;
+        }
+
         &--completed,
-        &--finished  { background: var(--box-color); color: var(--text-color); }
+        &--finished {
+            background: #3b6856;
+            color: #eafff6;
+        }
+
+        &--cancelled {
+            background: #930b0b;
+            color: rgb(255, 239, 239);
+        }
     }
 }

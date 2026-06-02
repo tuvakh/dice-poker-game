@@ -21,9 +21,10 @@ class DicePokerBoard extends HTMLElement {
         this.shadowRoot.innerHTML = `
         <style>
             :host {
-                display: block; 
-                padding: 1rem; 
-                width: 100%; 
+                display: block;
+                padding: 1rem;
+                width: 100%;
+                color: #fff;
             }
 
             .players {
@@ -48,7 +49,6 @@ class DicePokerBoard extends HTMLElement {
                 font-weight: bold;
                 text-align: center;
                 font-size: 0.95rem;
-                color: #c0392b;
             }
 
             .player-name {
@@ -93,7 +93,6 @@ class DicePokerBoard extends HTMLElement {
             }
 
             .hand-result.winner {
-                color: #2a8c4a;
                 font-size: 1.05rem;
             }
         </style>
