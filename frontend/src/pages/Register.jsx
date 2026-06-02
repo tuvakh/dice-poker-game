@@ -1,9 +1,12 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import { useAuth } from "../contexts/AuthContext.jsx";
+import { resendVerificationEmail } from "../api/users.js";
 
 import Button from "../components/Button.jsx";
 import FormField from "../components/FormField.jsx";
+
+const RESEND_COOLDOWN = 30;
 
 // Registration page — success shows a "check your inbox" message rather than auto-logging in (email verification required)
 export default function Register() {
@@ -21,8 +24,17 @@ export default function Register() {
     const [fieldErrors, setFieldErrors] = useState({});
     const [successMessage, setSuccessMessage] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [resendMessage, setResendMessage] = useState(null);
+    const [isResending, setIsResending] = useState(false);
+    const [cooldown, setCooldown] = useState(0);
     // submittingRef prevents a double-submit if the user clicks faster than the state update cycle
     const submittingRef = useRef(false);
+
+    useEffect(() => {
+        if (cooldown <= 0) return;
+        const id = setTimeout(() => setCooldown(c => c - 1), 1000);
+        return () => clearTimeout(id);
+    }, [cooldown]);
 
     async function handleSubmit(event) {
         event.preventDefault();
@@ -49,12 +61,27 @@ export default function Register() {
             const age = new Date().getFullYear() - new Date(dateOfBirth).getFullYear();
             await register({email, username, password, age});
             setSuccessMessage("Check your inbox and click the verification link before logging in.");
+            setCooldown(RESEND_COOLDOWN);
         } catch (err) {
             if (err.fieldErrors) setFieldErrors(err.fieldErrors);
             else setError(err.message);
         } finally {
             submittingRef.current = false;
             setIsSubmitting(false);
+        }
+    }
+
+    async function handleResend() {
+        setResendMessage(null);
+        setIsResending(true);
+        try {
+            const result = await resendVerificationEmail(email);
+            setResendMessage(result.message || "Verification email resent.");
+            setCooldown(RESEND_COOLDOWN);
+        } catch (err) {
+            setResendMessage(err.message);
+        } finally {
+            setIsResending(false);
         }
     }
 
@@ -114,8 +141,19 @@ export default function Register() {
 
                 {error && <p className="status status--error">{error}</p>}
                 {successMessage && <p className="status status--success">{successMessage}</p>}
+                {resendMessage && <p className="status status--success">{resendMessage}</p>}
 
-                <Button type="submit" disabled={isSubmitting}>{isSubmitting ? "Registering..." : "Register"}</Button>
+                {!successMessage ? (
+                    <Button type="submit" disabled={isSubmitting}>{isSubmitting ? "Registering..." : "Register"}</Button>
+                ) : (
+                    <Button
+                        type="button"
+                        disabled={isResending || cooldown > 0}
+                        onClick={handleResend}
+                    >
+                        {isResending ? "Sending..." : cooldown > 0 ? `Resend in ${cooldown}s` : "Resend verification email"}
+                    </Button>
+                )}
             </form>
         </section>
     );
