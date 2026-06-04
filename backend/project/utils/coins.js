@@ -1,8 +1,6 @@
 import { WEEKLY_COIN_GRANT } from "../config/constants.js";
 
-// Grants 100 coins per missed calendar week since the last grant date.
 export async function applyWeeklyCoinGrant(user, now = new Date()) {
-    // Backward compatibility: initialize wallet fields for users created before coins existed.
     const hasCoins = Number.isFinite(user.coins);
     const hasLastGrant = user.lastWeeklyCoinGrantAt instanceof Date || typeof user.lastWeeklyCoinGrantAt === 'string';
 
