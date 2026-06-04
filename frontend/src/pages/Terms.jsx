@@ -1,4 +1,3 @@
-// The terms and conditions page is just static content outlining the rules and agreements for using the platform
 export default function Terms() {
     return (
         <section className="information-page">

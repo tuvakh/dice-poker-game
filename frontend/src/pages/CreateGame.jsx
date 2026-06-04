@@ -10,13 +10,11 @@ import TimeControlSelector from "../components/TimeControlSelector.jsx";
 import Button from "../components/Button.jsx";
 import FormField from "../components/FormField.jsx";
 
-// The create game page lets the user pick their game settings and submit to create a new match
 export default function CreateGame() {
     const navigate = useNavigate();
     const { user } = useAuth();
     const [error, setError] = useState(null);
 
-    // All form values start with sensible defaults — each selector only updates its own field
     const [formData, setFormData] = useState({
         numberOfRounds: 3,
         gameRules: "straights_allowed",
@@ -26,7 +24,6 @@ export default function CreateGame() {
         numberOfPlayers: 2
     });
 
-    // Not logged in: show a message instead of the form
     if (!user) {
         return (
             <section className="create-game">
@@ -37,18 +34,15 @@ export default function CreateGame() {
         );
     }
 
-    // Called by each selector component when the user changes a setting
     function handleChange(field, value) {
         setFormData(prev => ({ ...prev, [field]: value }));
     }
 
-    // Finds the matching game category and creates a new match with the selected settings
     async function handleSubmit(event) {
         event.preventDefault();
         setError(null);
 
         try {
-            // Fetch all game categories and find the one matching the user's selection
             const categories = await getAllGameCategories();
             const category = categories.find(category =>
                 category.numberOfRounds === formData.numberOfRounds &&
@@ -66,7 +60,6 @@ export default function CreateGame() {
                 players: [user._id],
                 coinWager: formData.coinWager,
                 maxPlayers: formData.numberOfPlayers,
-                // desiredOpponentElo is optional — only included if the user entered a positive number
                 ...(Number(formData.desiredOpponentElo) > 0 && { desiredOpponentElo: Number(formData.desiredOpponentElo) })
             });
 
@@ -99,7 +92,6 @@ export default function CreateGame() {
                     </select>
                 </FormField>
 
-                {/* Two optional fields side by side */}
                 <div className="form__inputs">
                     <FormField label="Desired opponent Elo">
                         <input

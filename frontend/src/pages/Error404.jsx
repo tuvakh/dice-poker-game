@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 
-// Rendered by the router for any path that doesn't match a defined route
 export default function NotFound() {
     return (
         <div className="not-found">

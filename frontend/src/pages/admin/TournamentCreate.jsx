@@ -5,7 +5,6 @@ import { createTrophy } from "../../api/trophies.js";
 import { getAllGameCategories } from "../../api/gameCategories.js";
 import Spinner from "../../components/Spinner.jsx";
 
-// Admin form for creating a new tournament with optional trophy, elo restrictions, and buy-in
 export default function AdminTournamentCreate() {
     const navigate = useNavigate();
     const [title, setTitle] = useState("");
@@ -22,18 +21,15 @@ export default function AdminTournamentCreate() {
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState(null);
 
-    // Trophy fields are separate from the main form state because they go through a different API call
     const [newTrophyTitle, setNewTrophyTitle] = useState("");
     const [newTrophyFile, setNewTrophyFile] = useState(null);
     const [newTrophyPreview, setNewTrophyPreview] = useState(null);
 
-    // Load game categories on mount; also pre-selects the first category so the field is never blank on submit
     useEffect(() => {
         let cancelled = false;
         getAllGameCategories()
             .then(catResult => {
                 if (!cancelled) {
-                    // API can return either an array or an object with a named list property
                     const categories = Array.isArray(catResult)
                         ? catResult
                         : (catResult.gameCategories || catResult.categoryList || []);
@@ -52,14 +48,12 @@ export default function AdminTournamentCreate() {
         setError(null);
 
         try {
-            // Trophy must be created first — createTournament needs the trophy ID in the same request
             let trophyId = "";
             if (newTrophyFile && newTrophyTitle.trim()) {
                 const created = await createTrophy({ title: newTrophyTitle.trim(), image: newTrophyFile });
                 trophyId = created._id;
             }
 
-            // Optional fields (elo range, buy-in, trophy) are only sent when the admin actually set them
             const created = await createTournament({
                 title,
                 description,
@@ -80,7 +74,6 @@ export default function AdminTournamentCreate() {
         }
     }
 
-    // Creates a local object URL for the image preview; the real upload happens on form submit
     function handleTrophyFileChange(event) {
         const file = event.target.files[0];
         if (!file) return;
@@ -127,7 +120,6 @@ export default function AdminTournamentCreate() {
                         type="datetime-local"
                         value={date}
                         onChange={event => setDate(event.target.value)}
-                        // Subtracts the timezone offset so the min is the current local time, not UTC
                         min={new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)}
                         required
                     />
@@ -228,7 +220,6 @@ export default function AdminTournamentCreate() {
                             value={newTrophyTitle}
                             onChange={event => setNewTrophyTitle(event.target.value)}
                         />
-                        {/* Hidden file input triggered by clicking the styled label */}
                         <label className="trophy-upload__file-label">
                             {newTrophyPreview
                                 ? <img className="trophy-upload__preview" src={newTrophyPreview} alt="preview" />

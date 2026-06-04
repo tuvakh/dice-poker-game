@@ -3,7 +3,6 @@ import { useAuth } from "../../contexts/AuthContext.jsx";
 import logo from "../../assets/logo.png";
 import Button from "../../components/Button.jsx";
 
-// Shared shell for all /admin/* routes: sidebar nav + main content area rendered via <Outlet />
 export default function AdminLayout() {
     const { logout } = useAuth();
 

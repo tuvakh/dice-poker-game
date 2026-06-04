@@ -1,4 +1,3 @@
-// Shows the copyright notice; the end year is computed dynamically so it never goes stale
 export default function Copyright() {
     return (
         <div className="copyright">

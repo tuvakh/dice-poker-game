@@ -1,6 +1,5 @@
 import { BASE_URL, handleResponse, fetchWithAuth } from "./config.js";
 
-// Fetches a list of comments, with optional filters for target, search, and pagination
 export async function getAllComments({ page, limit, search, targetId, targetType } = {}, signal) {
     const params = new URLSearchParams();
     if (page) params.append("page", page);
@@ -13,7 +12,6 @@ export async function getAllComments({ page, limit, search, targetId, targetType
     return handleResponse(res);
 }
 
-// Creates a new comment
 export async function createComment(data) {
     const res = await fetchWithAuth(`${BASE_URL}/comments`, {
         method: "POST",
@@ -22,7 +20,6 @@ export async function createComment(data) {
     return handleResponse(res);
 }
 
-// Deletes a comment by commentId (admin only)
 export async function deleteComment(commentId) {
     const res = await fetchWithAuth(`${BASE_URL}/comments/${commentId}`, {
         method: "DELETE"

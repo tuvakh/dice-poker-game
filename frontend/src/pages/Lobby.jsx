@@ -12,7 +12,6 @@ import Button from "../components/Button.jsx";
 import { filterLobbyMatches } from "../hooks/useLobbyGames.js";
 import { usePolling } from "../hooks/usePolling.js";
 
-// The lobby page shows all the waiting games this user is allowed to join
 export default function Lobby() {
     const { user } = useAuth();
     const [lobbyGames, setLobbyGames] = useState([]);
@@ -27,7 +26,6 @@ export default function Lobby() {
 
     const [visibleCount, setVisibleCount] = useState(6);
 
-    // Fetches waiting games — signal from usePolling cancels the request on cleanup
     function fetchGames(signal) {
         getAllMatches({ status: "waiting", limit: 30 }, signal)
             .then(data => setLobbyGames(data.matchList))
@@ -40,7 +38,6 @@ export default function Lobby() {
 
     usePolling(fetchGames, 8000);
 
-    // Load game categories for filter chips
     useEffect(() => {
         let mounted = true;
         getAllGameCategories()
@@ -55,13 +52,11 @@ export default function Lobby() {
     if (loading) return <Spinner />;
     if (fetchError) return <p className="status status--error">{fetchError}</p>;
 
-    // Logged in: hide games the user already joined, and hide games where their Elo is out of range
     const baseFiltered = filterLobbyMatches(lobbyGames, user);
 
     const roundsOptions = Array.from(new Set(categories.map(category => category.numberOfRounds))).sort((roundA, roundB) => roundA - roundB);
     const secondsOptions = Array.from(new Set(categories.map(category => category.timeController))).sort((secondsA, secondsB) => secondsA - secondsB);
 
-    // Apply UI filters on top of baseFiltered
     const filteredGames = baseFiltered.filter(match => {
         const matchCategory = typeof match.gameCategory === 'object' ? match.gameCategory : null;
 

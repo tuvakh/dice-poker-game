@@ -7,7 +7,6 @@ import FormField from "../components/FormField.jsx";
 
 const RESEND_COOLDOWN = 30;
 
-// Sends a password reset email; always shows a neutral message to prevent email enumeration
 export default function ForgotPassword() {
     const [email, setEmail] = useState("");
     const [error, setError] = useState(null);
@@ -15,7 +14,6 @@ export default function ForgotPassword() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [sent, setSent] = useState(false);
     const [cooldown, setCooldown] = useState(0);
-    // submittingRef prevents a second submission if the user clicks faster than the state update cycle
     const submittingRef = useRef(false);
 
     useEffect(() => {
