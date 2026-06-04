@@ -10,7 +10,6 @@ import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import CommentList from "../components/CommentList.jsx";
 import CommentForm from "../components/CommentForm.jsx";
 
-// Individual tournament detail page — round-based format where all participants play simultaneously each round
 export default function TournamentPage() {
     const { id } = useParams();
     const { user } = useAuth();
@@ -28,15 +27,13 @@ export default function TournamentPage() {
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [showCancelConfirm, setShowCancelConfirm] = useState(false);
     const wsRef = useRef(null);
-    const redirectedRef = useRef(false); // prevents redirect loop when navigating back from game
-    const autoStartedRef = useRef(false);     // prevents duplicate first-round auto-start
-    const nextRoundFiredRef = useRef(false);  // prevents duplicate next-round auto-start
+    const redirectedRef = useRef(false);
+    const autoStartedRef = useRef(false); 
+    const nextRoundFiredRef = useRef(false); 
     const [comments, setComments] = useState([]);
 
-    // countdown state: seconds remaining until the next round is expected to start
     const [countdownSecs, setCountdownSecs] = useState(null);
 
-    // Fetches tournament data when the page loads or the URL id changes
     useEffect(() => {
         setLoading(true);
         setError(null);
@@ -46,7 +43,6 @@ export default function TournamentPage() {
             .finally(() => setLoading(false));
     }, [id]);
 
-    // Fetch comments once the tournament's _id is known
     useEffect(() => {
         if (!tournament?._id) return;
         getAllComments({ targetId: tournament._id, targetType: 'tournament' })
@@ -54,7 +50,6 @@ export default function TournamentPage() {
             .catch(() => { });
     }, [tournament?._id]);
 
-    // Open a WebSocket room so new comments appear in real time
     useEffect(() => {
         if (!tournament?._id) return;
         const ws = new WebSocket('ws://localhost:3000');
@@ -71,8 +66,6 @@ export default function TournamentPage() {
         return () => ws.close();
     }, [tournament?._id]);
 
-    // Countdown to next round: runs when a round is done but more rounds remain.
-    // Calculates expected start time from the latest match endedAt + break minutes.
     useEffect(() => {
         if (!tournament || tournament.status !== 'ongoing') return;
 
@@ -80,7 +73,6 @@ export default function TournamentPage() {
         const latestRound = rounds[rounds.length - 1];
         if (!latestRound) return;
 
-        // Check all matches in the latest round are finished
         const allDone = latestRound.every(match => match?.status === 'finished');
         const roundsLeft = (tournament.numberOfRounds ?? 0) - rounds.length;
 
@@ -89,7 +81,6 @@ export default function TournamentPage() {
             return;
         }
 
-        // Find the most recent endedAt across all matches in the latest round
         const latestEndedAt = latestRound.reduce((maxTime, match) => {
             const endTime = match?.endedAt ? new Date(match.endedAt).getTime() : 0;
             return endTime > maxTime ? endTime : maxTime;
@@ -100,11 +91,8 @@ export default function TournamentPage() {
             return;
         }
 
-        // Next round expected at: last match end + break minutes
         const nextRoundAt = latestEndedAt + (tournament.breaks ?? 0) * 60 * 1000;
 
-        // Tick every second and update the displayed countdown.
-        // When it reaches zero, auto-start the next round.
         const tick = () => {
             const remaining = Math.max(0, Math.floor((nextRoundAt - Date.now()) / 1000));
             setCountdownSecs(remaining);
@@ -120,15 +108,12 @@ export default function TournamentPage() {
         };
         tick();
         const interval = setInterval(tick, 1000);
-        // Reset nextRoundFiredRef on cleanup so the FOLLOWING round's break can also auto-start
         return () => {
             clearInterval(interval);
             nextRoundFiredRef.current = false;
         };
     }, [tournament]);
 
-    // Poll every 5 seconds while the tournament is upcoming so both players see each other join
-    // and the auto-start fires on both browsers once 2+ participants are present.
     useEffect(() => {
         if (!tournament || tournament.status !== 'upcoming') return;
         const interval = setInterval(() => {
@@ -137,12 +122,10 @@ export default function TournamentPage() {
         return () => clearInterval(interval);
     }, [tournament?.status, id]);
 
-    // Auto-start: when the tournament date arrives and there are enough players, kick off the first round.
-    // Any logged-in user viewing the page can trigger this — the backend rejects duplicates gracefully.
-    // ← change 'upcoming' to 'ongoing' here if you want to skip the countdown and test immediately
+
     useEffect(() => {
         if (!tournament || !user) return;
-        if (tournament.status !== 'upcoming') return; // ← 'upcoming' = auto-start when date arrives
+        if (tournament.status !== 'upcoming') return; 
         if ((tournament.participants?.length ?? 0) < 2) return;
         if (autoStartedRef.current) return;
 
@@ -168,7 +151,6 @@ export default function TournamentPage() {
         }
     }, [tournament?.tournamentId, tournament?.status, tournament?.participants?.length, user, id]);
 
-    // Auto-redirect: when a round is ongoing and this user has a match, send them to it.
     useEffect(() => {
         if (!tournament || !user) return;
         if (redirectedRef.current) return;
@@ -184,7 +166,6 @@ export default function TournamentPage() {
             );
             if (isPlayer && match.matchId) {
                 redirectedRef.current = true;
-                // Pass tournamentId in state so Game.jsx can show "Back to tournament"
                 navigate(`/game/${match.matchId}`, { state: { tournamentId: tournament.tournamentId } });
                 return;
             }
@@ -198,8 +179,6 @@ export default function TournamentPage() {
         try {
             await joinTournament(id);
             playJoin();
-            // Re-fetch so the participants list matches exactly what the DB returns,
-            // ensuring alreadyIn computes correctly on this render and after refresh.
             const updated = await getTournament(id);
             setTournament(updated);
             setJoined(true);
@@ -217,7 +196,6 @@ export default function TournamentPage() {
         try {
             await leaveTournament(id);
             setJoined(false);
-            // Optimistic update: remove the user from the local participants list
             setTournament(prev => prev
                 ? { ...prev, participants: prev.participants.filter(participant => (participant._id ?? participant)?.toString() !== user._id?.toString()) }
                 : prev
@@ -229,7 +207,6 @@ export default function TournamentPage() {
         }
     }
 
-    // Admin: permanently delete the tournament and go back to the list
     async function handleDelete() {
         try {
             await deleteTournament(id);
@@ -239,7 +216,6 @@ export default function TournamentPage() {
         }
     }
 
-    // Admin: starts the next round, creating matches for all participants
     async function handleStartRound() {
         try {
             const updated = await startRound(id);
@@ -249,7 +225,6 @@ export default function TournamentPage() {
         }
     }
 
-    // Admin: mark the tournament as cancelled so players know it will not run
     async function handleCancel() {
         try {
             const updated = await cancelTournament(id);
@@ -272,9 +247,6 @@ export default function TournamentPage() {
 
     const participantCount = tournament.participants?.length ?? 0;
 
-    // Build a win-count table from the standings data returned by the backend.
-    // standings = [{ round: N, winners: [userObj, ...] }, ...]
-    // Each winner entry means that player won their match in that round.
     const winMap = {};
     for (const roundData of (tournament.standings ?? [])) {
         for (const winner of (roundData.winners ?? [])) {
@@ -284,22 +256,16 @@ export default function TournamentPage() {
             winMap[winnerId].wins++;
         }
     }
-    // Include all participants so players with 0 wins still appear
     for (const participant of (tournament.participants ?? [])) {
         const participantId = (participant._id ?? participant)?.toString();
         if (participantId && !winMap[participantId]) winMap[participantId] = { username: participant.username ?? '?', wins: 0 };
     }
     const standingsList = Object.values(winMap).sort((entryA, entryB) => entryB.wins - entryA.wins);
 
-    // alreadyIn checks the fetched data so returning visitors who were already registered see the right UI
-    // joined is set when the user joins in this browser session (optimistic)
-    // Username comparison is used because participants are populated objects with plain string usernames,
-    // while _id ObjectId serialisation can vary across Mongoose versions causing string mismatches.
     const alreadyIn = user && tournament.participants?.some(participant =>
         participant.username && participant.username === user.username
     );
 
-    // Players can leave as long as the tournament has not finished or been cancelled
     const canLeave = (joined || alreadyIn) && !["finished", "cancelled"].includes(tournament.status);
 
     return (
@@ -312,7 +278,6 @@ export default function TournamentPage() {
                 {tournament.status}
             </span>
 
-            {/* Join button: only visible for upcoming tournaments to users who are not yet registered */}
             {tournament.status === "upcoming" && !joined && !alreadyIn && (
                 <div className="tournament-detail__join-area">
                     {user ? (
@@ -325,7 +290,6 @@ export default function TournamentPage() {
                 </div>
             )}
 
-            {/* Leave button: visible whenever the player is registered and the tournament is not over */}
             {canLeave && (
                 <div className="tournament-detail__join-area">
                     <p className="status status--success">You&apos;re registered!</p>
@@ -337,7 +301,6 @@ export default function TournamentPage() {
             {joinError && <p className="status status--error">{joinError}</p>}
             {leaveError && <p className="status status--error">{leaveError}</p>}
 
-            {/* Leave confirmation popup */}
             {showLeaveConfirm && (
                 <ConfirmDialog
                     message="Are you sure you want to leave this tournament?"
@@ -346,7 +309,6 @@ export default function TournamentPage() {
                 />
             )}
 
-            {/* Admin controls: delete and cancel are only shown to admin users */}
             {user?.role === 'admin' && tournament.status !== 'finished' && (
                 <div className="tournament-detail__admin">
                     {tournament.status !== 'cancelled' && (
@@ -381,7 +343,6 @@ export default function TournamentPage() {
                 />
             )}
 
-            {/* Tournament info grid: shows key details at a glance */}
             <div className="tournament-detail__info-grid">
                 <div className="tournament-detail__info-box">
                     <span>Date</span>
@@ -409,7 +370,6 @@ export default function TournamentPage() {
                     <span>Participants</span>
                     <strong>{participantCount}</strong>
                 </div>
-                {/* eloMin and eloMax restrict which players can join based on their rating */}
                 {tournament.eloMin != null && (
                     <div className="tournament-detail__info-box">
                         <span>Min Elo</span>
@@ -422,7 +382,6 @@ export default function TournamentPage() {
                         <strong>{tournament.eloMax}</strong>
                     </div>
                 )}
-                {/* buyIn is how many coins each participant must spend to enter */}
                 {tournament.buyIn > 0 && (
                     <div className="tournament-detail__info-box">
                         <span>Buy-in</span>
@@ -446,9 +405,6 @@ export default function TournamentPage() {
                 </>
             )}
 
-            {/* Trophy section: only shows if a trophy is linked to this tournament.
-                Images are stored as filenames (e.g. "spring-trophy.png") in the Trophy model.
-                They live in /frontend/public/ so the browser can reach them at /<filename> */}
             {(tournament.trophy?.title || tournament.trophy?.image) && (
                 <>
                     <h2>Trophy</h2>
@@ -465,7 +421,6 @@ export default function TournamentPage() {
                 </>
             )}
 
-            {/* Countdown: shown when the current round is done but there are more rounds to play */}
             {countdownSecs !== null && (
                 <div className="tournament-detail__countdown">
                     <p>
@@ -477,7 +432,6 @@ export default function TournamentPage() {
                 </div>
             )}
 
-            {/* Participants list */}
             <h2>Participants ({participantCount})</h2>
             {participantCount === 0 ? (
                 <p>No participants yet — be the first!</p>
@@ -491,7 +445,6 @@ export default function TournamentPage() {
                 </ul>
             )}
 
-            {/* Standings: shown for ongoing and finished tournaments once at least one round has been played */}
             {["ongoing", "finished"].includes(tournament.status) && standingsList.length > 0 && (
                 <>
                     <h2>Standings</h2>
@@ -507,9 +460,6 @@ export default function TournamentPage() {
                 </>
             )}
 
-            {/* Bracket: rounds is a 2D array where rounds[roundIndex][matchIndex] holds a match.
-                All players participate every round (points-based format).
-                The bracket links directly to each game so players can jump in. */}
             {tournament.rounds?.length > 0 && (
                 <>
                     <h2>Bracket</h2>
@@ -546,7 +496,6 @@ export default function TournamentPage() {
                                                 )}
                                             </div>
                                         );
-                                        // Wrap with a link so players can navigate directly to their game
                                         return matchId
                                             ? <Link key={matchIndex} to={`/game/${matchId}`} onClick={playClick} style={{ textDecoration: "none" }}>{card}</Link>
                                             : card;

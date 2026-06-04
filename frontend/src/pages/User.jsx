@@ -12,19 +12,13 @@ import TrophyBadge from "../components/TrophyBadge.jsx";
 import ProfileImage from "../components/ProfileImage.jsx";
 import GameCard from "../components/GameCard.jsx";
 
-// The user profile page shows a user's avatar, bio, stats, trophies, and recent games
-// If you're viewing your own profile, you also get an edit button
 export default function User() {
-    // id comes from the URL
     const { id } = useParams();
     const [profile, setProfile] = useState(null);
 
-    // Holds the image file the user picks when uploading a new profile photo
     const [profileImageFile, setProfileImageFile] = useState(null);
     const [profileImagePreview, setProfileImagePreview] = useState(null);
     const { user, updateUserData } = useAuth();
-
-    // editData holds what's currently typed in the edit form
     const [editData, setEditData] = useState({ email: "", aboutMe: "", password: "" });
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -38,7 +32,6 @@ export default function User() {
     const [gamesPage, setGamesPage] = useState(1);
     const [gamesTotalPages, setGamesTotalPages] = useState(1);
 
-    // Load the profile when the page opens, or if the id in the URL changes
     useEffect(() => {
         getUser(id)
             .then(data => {
@@ -67,12 +60,10 @@ export default function User() {
     if (error) return <p className="status status--error">{error}</p>;
     if (!profile) return <p className="status status--error">User not found.</p>;
 
-    // Updates one field in the edit form without wiping the others
     function handleChange(field, value) {
         setEditData(prev => ({ ...prev, [field]: value }));
     }
 
-    // When the user clicks "Edit profile", pre-fill the form with their current data
     function openEdit() {
         setEditData({ email: profile.email ?? "", aboutMe: profile.aboutMe ?? "", password: "" });
         setSaveError(null);
@@ -81,7 +72,6 @@ export default function User() {
         setIsEditing(true);
     }
 
-    // Saves the edited profile when the form is submitted
     async function handleSave(event) {
         event.preventDefault();
         setSaveError(null);
@@ -89,8 +79,6 @@ export default function User() {
         setFieldErrors({});
 
         try {
-            // FormData is used instead of a plain object because it carries both
-            // text fields and the image file in the same request
             const formData = new FormData();
             if (editData.email) formData.append("email", editData.email);
             formData.append("aboutMe", editData.aboutMe);
@@ -99,12 +87,9 @@ export default function User() {
 
             await updateUser(id, formData);
 
-            // Re-fetch the profile so the page shows the freshly saved data
             const updated = await getUser(id);
             setProfile(updated);
 
-            // If the user just edited their own profile, also update the header avatar
-            // Use in-memory preview for instant feedback, but rely on the server-stored image
             if (user?.userId === profile.userId) {
                 updateUserData({ profileImage: updated.profileImage, coins: updated.coins });
             }
@@ -132,25 +117,21 @@ export default function User() {
                 <div className="profile">
                     <div className="profile__edit">
                         <ProfileImage src={profile.profileImage} username={profile.username} size="medium" />
-                        {/* Only show the edit button if you're looking at your own profile */}
                         {user?.userId === profile.userId && !isEditing && (
                             <Button className="profile__edit-button" onClick={openEdit}>Edit profile</Button>
                         )}
                     </div>
                     <div className="profile__info">
                         <h1>{profile.username}</h1>
-                        {/* Email is private, so it's only shown it to the profile owner */}
                         {user?.userId === profile.userId && (
                             <p className="profile__email">{profile.email}</p>
                         )}
-                        {/* If the user hasn't written a bio, show a placeholder */}
                         <p className={`profile__about${!profile.aboutMe ? " profile__about--empty" : ""}`}>
                             {profile.aboutMe || "No description yet."}
                         </p>
                     </div>
                 </div>
 
-                {/* Edit form only shows up when the owner clicks "Edit profile" */}
                 {user?.userId === profile.userId && isEditing && (
                     <form onSubmit={handleSave} className="form userPage__form">
                         {saveError && <p className="status status--error">{saveError}</p>}
@@ -160,7 +141,6 @@ export default function User() {
                             <input aria-label="Email" value={editData.email} placeholder="Your email" onChange={event => handleChange("email", event.target.value)} type="email" />
                         </FormField>
 
-                        {/* maxLength stops the user from typing more than 160 characters */}
                         <FormField label="About me" error={fieldErrors.aboutMe}>
                             <input aria-label="About me" value={editData.aboutMe} placeholder="Write a description about yourself" maxLength={160} onChange={event => handleChange("aboutMe", event.target.value)} />
                         </FormField>
@@ -169,7 +149,6 @@ export default function User() {
                             <input aria-label="New password" value={editData.password} placeholder="Want to change your password?" onChange={event => handleChange("password", event.target.value)} type="password" />
                         </FormField>
 
-                        {/* accept="image/*" restricts the file picker to image files only */}
                         <FormField label="Profile image">
                             <input
                                 type="file"
@@ -182,7 +161,6 @@ export default function User() {
                                     reader.onload = () => {
                                         const dataUrl = reader.result;
                                         setProfileImagePreview(dataUrl);
-                                        // Do not save images to localStorage or filesystem per user request
                                     };
                                     reader.readAsDataURL(file);
                                 }}
@@ -200,7 +178,6 @@ export default function User() {
                 <div className="container container--stats">
                     <div className="stats">
                         <h2>{profile.username}'s stats</h2>
-                        {/* Each time control has its own Elo rating */}
                         <ul className="stats__elo-list">
                             <li>Elo (10s): {profile.eloRating10s} <span className="stats__separator">|</span></li>
                             <li>Elo (30s): {profile.eloRating30s} <span className="stats__separator">|</span></li>

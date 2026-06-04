@@ -1,4 +1,3 @@
-// The privacy policy page is just static content outlining data collection and usage practices
 export default function Privacy() {
     return (
         <section className="information-page">
