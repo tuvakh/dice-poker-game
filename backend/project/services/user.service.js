@@ -1,5 +1,3 @@
-// This service handles user registration, login, profile retrieval, updates, and banning.
-
 import { User } from '../models/User.js';
 import { Match } from '../models/Match.js';
 import { checkPassword, hashPassword } from '../utils/hash.js';
@@ -10,12 +8,9 @@ import crypto from 'crypto';
 import { sendPasswordResetEmail, sendVerificationEmail } from '../utils/mailer.js';
 
 async function getAllUsers({ page = 1, limit = 10, search = '' }) {
-    // Only search by username if a search term was provided
-    // otherwise return all users
     const searchUsers = search ? { username: { $regex: search, $options: 'i' } } : {};
 
     const userList = await User.find(searchUsers)
-        // This exclude password from the response so it's never exposed to the client
         .select('-password')
         .skip((page - 1) * limit)
         .limit(limit);
@@ -32,13 +27,11 @@ async function getAllUsers({ page = 1, limit = 10, search = '' }) {
 }
 
 async function getUser(userId) {
-    // populate() replaces trophy ObjectIds with the full trophy objects including image and title
     const user = await User.findOne({ userId }).select('-password').populate('trophies');
     if (!user) {
         throw new CustomError(`A user with the id ${userId}? Never heard of them!`, 404, 'NOT_FOUND');
     }
 
-    // Lazy weekly grant: users receive missing weekly rewards when they log in or open profile.
     await applyWeeklyCoinGrant(user);
 
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
@@ -57,7 +50,7 @@ async function getUser(userId) {
 
 function generateVerificationToken() {
     const token = crypto.randomBytes(32).toString('hex');
-    const expires = new Date(Date.now() + 1000 * 60 * 15); // Token expires in 15 minutes
+    const expires = new Date(Date.now() + 1000 * 60 * 15);
     return { token, expires };
 }
 
@@ -191,44 +184,37 @@ async function resetPassword(code, password) {
         throw new CustomError('Invalid or expired reset code', 404, 'NOT_FOUND');
     }
 
-    user.password = password; // Set to plaintext - will be hashed by pre-validate hook
+    user.password = password;
     user.passwordResetToken = null;
     user.passwordResetTokenExpires = null;
     user.passwordResetTokens = [];
 
-    await user.save(); // This triggers the pre-validate hook that hashes the password
+    await user.save();
 
     user.password = undefined;
     return { message: 'Password reset successfully' };
 }
 
 async function loginUser(username, password) {
-    // Case-insensitive search so "TUVA", "tuva", and "Tuva" all find the same account
     const user = await User.findOne({ username: { $regex: `^${username}$`, $options: 'i' } });
     if (!user) {
         throw new CustomError(`We don't know anyone with the username, STRANGER DANGER! ${username}!`, 404, 'NOT_FOUND');
     }
-    // prevent banned users from logging in
     if (user.banned) throw new CustomError('This account has been banned. Now go to the  skamme krok and reflect on your choices', 403, 'FORBIDDEN');
 
-    // checkPassword hashes the input with the user's salt and compares it to the stored hash
     const correctPassword = await checkPassword(password, user.password);
 
     if (!correctPassword) {
         throw new CustomError("Nope, that's not the right password. Try again!", 401, 'UNAUTHORIZED');
     }
 
-    // Grant weekly reward on successful login.
     await applyWeeklyCoinGrant(user);
 
-    // This removes the password from the user object before returning
-    // This avoids exposing it in the response
     user.password = undefined;
     return user;
 }
 
 async function updateUser(userId, updateObj) {
-    // Hash password before update if provided, since findOneAndUpdate bypasses the pre-save hook
     if (updateObj.password) {
         updateObj.password = await hashPassword(updateObj.password);
     }
@@ -246,19 +232,16 @@ async function updateUser(userId, updateObj) {
     return user;
 }
 
-// Handles user banning
 async function banUser(userId) {
     const user = await User.findOneAndUpdate({ userId }, { banned: true }, { new: true });
     if (!user) {
         throw new CustomError(`A user with the id ${userId}? Never heard of them, must be a ghost`, 404, 'NOT_FOUND');
     }
 
-    // This sets the password to undefined so it's not included in the response
     user.password = undefined;
     return user;
 }
 
-// Unban a user (admin only)
 async function unbanUser(userId) {
     const user = await User.findOneAndUpdate({ userId }, { banned: false }, { new: true });
     if (!user) {
@@ -268,7 +251,6 @@ async function unbanUser(userId) {
     return user;
 }
 
-// Change a user's role (admin only)
 async function changeUserRole(userId, role) {
     if (!['user', 'admin'].includes(role)) {
         throw new CustomError('Invalid role', 400, 'BAD_REQUEST');
@@ -280,7 +262,6 @@ async function changeUserRole(userId, role) {
     return user;
 }
 
-// Save refresh token to database (for logout/revocation/validation)
 async function saveRefreshToken(userId, token) {
     const user = await User.findOne({ userId });
     if (!user) {
@@ -291,15 +272,12 @@ async function saveRefreshToken(userId, token) {
     return user;
 }
 
-// Verify refresh token - checks both JWT validity and storage in DB
 async function verifyRefreshToken(token) {
-    // First verify it's a valid JWT
     const decoded = verifyToken(token);
     if (!decoded || decoded.type !== 'refresh') {
         return null;
     }
 
-    // Then check it matches the stored token (ensures logout/revocation works)
     const user = await User.findOne({ userId: decoded.userId });
     if (!user || user.refreshToken !== token) {
         return null;
@@ -310,7 +288,7 @@ async function verifyRefreshToken(token) {
 
 async function resendVerification(email) {
     const user = await User.findOne({ email });
-    // Return a neutral message whether the user exists or not to prevent enumeration
+
     if (!user || user.emailVerified) {
         return { message: 'a new link has been sent.' };
     }

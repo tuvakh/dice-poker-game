@@ -5,11 +5,9 @@ import { Security } from "../models/Security.js";
 export async function getStats() {
     const totalUsers = await User.countDocuments({});
 
-    // Matches that started within the last 24 hours
     const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const activeMatches24h = await Match.countDocuments({ startedAt: { $gte: since24h } });
 
-    // Users who registered within the last 7 days
     const since7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const newSignups7d = await User.countDocuments({ createdAt: { $gte: since7d } });
 

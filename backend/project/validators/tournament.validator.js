@@ -1,12 +1,6 @@
-// Chanya
-// This validator file validates incoming data for tournament endpoints using express-validator.
-
 import { param, body, query } from "express-validator";
 import { TOURNAMENT_STATUS } from "../config/constants.js";
 
-// This function validates the numeric tournamentId route parameter
-// .bail() stops the chain if the param is invalid so later validators don't run on bad data
-// .toInt() converts the string param to a number so it can be compared as an integer
 function validateTournamentId(){
     return [
         param("tournamentId")
@@ -17,7 +11,6 @@ function validateTournamentId(){
     ];
 }
 
-// All query params in this function are optional — they only apply if the client sends them
 function validateGetAllTournaments(){
     return [
         query("page")
@@ -30,7 +23,6 @@ function validateGetAllTournaments(){
             .isInt({ min: 1, max: 100 })
             .withMessage("Limit must be between 1 and 100")
             .toInt(),
-        // status must be one of the allowed values imported from constants.js
         query("status")
             .optional()
             .isIn(TOURNAMENT_STATUS)
@@ -49,7 +41,6 @@ function validateCreateTournament(){
         body("date")
             .notEmpty()
             .withMessage(`Date is required`),
-        // breaks is optional — not all tournaments need breaks between rounds
         body("breaks")
             .optional()
             .isInt()
@@ -58,13 +49,11 @@ function validateCreateTournament(){
             .notEmpty()
             .isInt()
             .withMessage("numberOfRounds must be an integer"),
-        // gameCategory must be a valid MongoDB ObjectId to reference an existing game category
         body("gameCategory")
             .notEmpty()
             .withMessage(`Game category is required`)
             .isMongoId()
             .withMessage("gameCategory must be a valid MongoDB ID"),
-        // eloMin, eloMax, buyIn are optional — only validated if provided
         body("eloMin")
             .optional()
             .isInt({ min: 0 })
@@ -87,7 +76,6 @@ function validateCreateTournament(){
     ]
 };
 
-// userId is not accepted from the body — it is injected from the verified JWT in the controller
 function validateJoinTournament(){
     return [
         param("tournamentId")
@@ -97,7 +85,6 @@ function validateJoinTournament(){
     ];
 }
 
-// userId is not accepted from the body — it is injected from the verified JWT in the controller
 function validateLeaveTournament(){
     return [
         param("tournamentId")
@@ -116,7 +103,6 @@ function validateStartNextRound(){
     ];
 }
 
-// All fields are optional so the admin can patch only what changed
 function validateUpdateTournament(){
     return [
         param("tournamentId")
@@ -138,7 +124,6 @@ function validateUpdateTournament(){
 
 export default {
     validateTournamentId,
-    // validateGetTournament reuses validateTournamentId since only the ID is needed to fetch a tournament
     validateGetTournament: validateTournamentId,
     validateGetAllTournaments,
     validateCreateTournament,

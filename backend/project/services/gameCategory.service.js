@@ -1,16 +1,11 @@
-// This service handles fetching game categories.
-
 import { GameCategory } from '../models/GameCategory.js';
 import { CustomError } from '../utils/customError.js';
 
-// getAllGameCategories returns all game categories
 export async function getAllGameCategories(){
     const gameCategory = await GameCategory.find();
     return gameCategory;
 }
 
-// getGameCategory finds a single category by its numeric gameCategoryId
-// and it throws a 404 if the category doesn't exist
 export async function getGameCategory(gameCategoryId){
     const gameCategory = await GameCategory.findOne({gameCategoryId});
 

@@ -1,5 +1,3 @@
-// This service computes platform statistics for the activity endpoint.
-
 import { Match } from '../models/Match.js';
 
 export async function getActivity(){
@@ -7,7 +5,6 @@ export async function getActivity(){
 
     const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const recentMatches = await Match.find({ startedAt: { $gte: oneWeekAgo } });
-    // Set deduplicates players who appeared in multiple matches this week
     const activeUsers = new Set(recentMatches.flatMap(match => match.players.map(player => player.toString()))).size;
 
     const gamesPlayedLastWeek = recentMatches.filter(match => match.status === 'finished').length;
