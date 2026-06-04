@@ -158,7 +158,7 @@ export async function refreshToken(req, res, next) {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'Lax',
-            maxAge: 60 * 60 * 1000 // 1 hour
+            maxAge: 60 * 60 * 1000 
         });
 
         res.status(200).json({ message: 'Access token refreshed' });
