@@ -1,5 +1,3 @@
-// Shared validation limits used/imported across model and validator files
-// Used to keep limits consistent, and to avoid having to update multiple places if something change
 export const MIN_USERNAME_LENGTH = 3; 
 export const MAX_USERNAME_LENGTH = 30;
 
@@ -25,8 +23,8 @@ export const MATCH_STATUS = ["waiting", "ongoing", "finished"];
 export const USER_ROLE = ["user", "admin"];
 export const COMMENT_TARGET = ["match", "tournament"];
 
-export const WEEKLY_COIN_GRANT = 100; // Coins awarded to the user once per week on login
-export const TOURNAMENT_WIN_BONUS = 500; // Extra coins awarded to the tournament winner
+export const WEEKLY_COIN_GRANT = 100;
+export const TOURNAMENT_WIN_BONUS = 500;
 
-export const REVEAL_DELAY_MS = 3000; // Pause before revealing hands at round end
+export const REVEAL_DELAY_MS = 3000;
 
