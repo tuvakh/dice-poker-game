@@ -307,7 +307,8 @@ export default function Game() {
 
         if (match.coinWager > 0) refreshUserStats(user.userId, updateUserData);
 
-        const ws = new WebSocket('ws://localhost:3000');
+        const WS_URL = import.meta.env.VITE_WS_URL;
+        const ws = new WebSocket(WS_URL);
         wsRef.current = ws;
 
         ws.onopen = () => {
