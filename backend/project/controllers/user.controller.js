@@ -44,16 +44,16 @@ export async function loginUser(req, res, next) {
 
         res.cookie('accessToken', accessToken, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'Lax',
-            maxAge: 60 * 60 * 1000 
+            secure: true,
+            sameSite: 'none',
+            maxAge: 60 * 60 * 1000
         });
 
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'Lax',
-            maxAge: 30 * 24 * 60 * 60 * 1000 
+            secure: true,
+            sameSite: 'none',
+            maxAge: 30 * 24 * 60 * 60 * 1000
         });
 
         res.status(200).json(result);
@@ -158,7 +158,7 @@ export async function refreshToken(req, res, next) {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'Lax',
-            maxAge: 60 * 60 * 1000 
+            maxAge: 60 * 60 * 1000
         });
 
         res.status(200).json({ message: 'Access token refreshed' });
