@@ -4,5 +4,3 @@ export async function getAdminStats() {
     const res = await fetchWithAuth(`${BASE_URL}/admin/stats`);
     return handleResponse(res);
 }
-
-export default { getAdminStats };

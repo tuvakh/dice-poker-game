@@ -22,8 +22,8 @@ export default function AdminTournamentEdit() {
     const [newTrophyPreview, setNewTrophyPreview] = useState(null);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
-    const [message, setMessage] = useState("");
-    const [error, setError] = useState("");
+    const [message, setMessage] = useState(null);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         let cancelled = false;
@@ -32,6 +32,7 @@ export default function AdminTournamentEdit() {
             getAllGameCategories(),
         ]).then(([tournament, catResult]) => {
             if (cancelled) return;
+
             if (["ongoing", "finished"].includes(tournament.status)) {
                 navigate(`/tournament/${id}`, { replace: true });
                 return;
@@ -41,10 +42,8 @@ export default function AdminTournamentEdit() {
                 : (catResult.gameCategories || catResult.categoryList || []);
             setGameCategories(categories);
 
-            // Pre-populate form with existing tournament data
             setTitle(tournament.title ?? "");
             setDescription(tournament.description ?? "");
-            // Convert ISO date string to datetime-local format (YYYY-MM-DDTHH:mm)
             if (tournament.date) {
                 const dateObj = new Date(tournament.date);
                 const pad = number => String(number).padStart(2, "0");
@@ -60,7 +59,7 @@ export default function AdminTournamentEdit() {
             if (!cancelled) setLoading(false);
         });
         return () => { cancelled = true; };
-    }, [id]);
+    }, [id, navigate]);
 
     function handleTrophyFileChange(event) {
         const file = event.target.files[0];
@@ -72,8 +71,8 @@ export default function AdminTournamentEdit() {
     async function handleSubmit(event) {
         event.preventDefault();
         setSubmitting(true);
-        setMessage("");
-        setError("");
+        setMessage(null);
+        setError(null);
         try {
             let trophyId = trophy;
             if (newTrophyFile && newTrophyTitle.trim()) {
@@ -87,7 +86,7 @@ export default function AdminTournamentEdit() {
                 breaks: Number(breaks),
                 numberOfRounds: Number(numberOfRounds),
                 gameCategory,
-                ...(trophyId ? { trophy: trophyId } : {})
+                ...(trophyId && { trophy: trophyId })
             });
             setMessage("Tournament updated!");
         } catch (err) {
@@ -183,9 +182,9 @@ export default function AdminTournamentEdit() {
                         {gameCategories.length === 0 ? (
                             <option value="">No categories available</option>
                         ) : (
-                            gameCategories.map(cat => (
-                                <option key={cat._id} value={cat._id}>
-                                    {cat.numberOfRounds} rounds - {cat.gameRules} - {cat.timeController}s
+                            gameCategories.map(category => (
+                                <option key={category._id} value={category._id}>
+                                    {category.numberOfRounds} rounds - {category.gameRules} - {category.timeController}s
                                 </option>
                             ))
                         )}

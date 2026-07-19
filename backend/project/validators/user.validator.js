@@ -1,23 +1,17 @@
-// This validator file validate incoming data for user endpoints using express-validator.
-
 import { param, body, query } from "express-validator";
 import { MIN_AGE, MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH } from "../config/constants.js";
 
-// This function validates the numeric userId route parameter
-// .bail() stops the chain if invalid
-// .toInt() converts the string param to a number
-export function validateUserId(){
+function validateUserId(){
     return [
         param("userId")
             .isInt({ min: 1, max: Number.MAX_SAFE_INTEGER })
             .withMessage("User IDs are supposed to be integers larger than 0")
-            .bail() // if the check before this (in the validation chain) fail, we quit (aka, do not run the check below in the validation chain)
-            .toInt() // all follow up fuctions will receive "uid" as a number - integer to be specific
+            .bail() 
+            .toInt() 
     ];
 }
 
-// All query params in this function are optional
-export function validateGetAllUsers(){
+function validateGetAllUsers(){
     return [
         query("page")
             .optional()
@@ -36,17 +30,14 @@ export function validateGetAllUsers(){
     ];
 }
 
-// This function validates all required fields for registration
-export function validateCreateUser(){
+function validateCreateUser(){
     return [
-        // .escape() on username and email replaces special characters to prevent XSS
         body("username")
             .trim()
-            .escape() // replaces all XSS-related characters with their HTML equivalents
-            .isAlphanumeric().withMessage("Only alphanumeric characters allowed in Username")
+            .escape()
+            .isAlphanumeric().withMessage("Only alphanumeric characters allowed in Username, sorry we are boring.")
             .isLength({ min: 3 }).withMessage("Username has to be longer than 3 characters")
             .bail(),
-        // password length is validated here, not in the model, since the model stores the hash
         body("password")
             .trim()
             .isLength({ min: MIN_PASSWORD_LENGTH, max: MAX_PASSWORD_LENGTH })
@@ -56,16 +47,13 @@ export function validateCreateUser(){
             .escape()
             .isEmail().withMessage("Not a valid email.")
             .bail(),
-        // age must meet the minimum age requirement imported from constants.js
         body("age")
-            .isInt({ min: MIN_AGE }).withMessage(`You must be at least ${MIN_AGE} years to play`)
+            .isInt({ min: MIN_AGE }).withMessage(`You must be at least ${MIN_AGE} years to play, go play outside instead.`)
             .bail()
     ];
 }
 
-// This function only checks that email format is valid and password is not empty
-// The actual password check happens in the user.service using checkPassword()
-export function validateLogin(){
+function validateLogin(){
     return [
         body("username")
             .trim()
@@ -76,7 +64,7 @@ export function validateLogin(){
     ];
 }
 
-export function validateForgotPassword() {
+function validateForgotPassword() {
     return [
         body('email')
             .trim()
@@ -86,7 +74,7 @@ export function validateForgotPassword() {
     ];
 }
 
-export function validateResetPassword() {
+function validateResetPassword() {
     return [
         body('code')
             .trim()
@@ -98,9 +86,7 @@ export function validateResetPassword() {
     ];
 }
 
-// All fields are optional since users can update one field at a time
-// Username is not included since it cannot be changed after registration
-export function validateUpdateUser(){
+function validateUpdateUser(){
     return [
         body("password")
             .optional()
@@ -124,20 +110,16 @@ export function validateUpdateUser(){
         body("profileImage")
             .optional()
             .trim(),
-        // theme must be 'light' or 'dark'
         body("preferences.theme")
             .optional()
             .isIn(['light', 'dark']).withMessage("Theme must be 'light' or 'dark'"),
-        // boardColor must be a valid hex color string
         body("preferences.boardColor")
             .optional()
             .trim()
             .isHexColor().withMessage("Board color must be a valid hex color"),
-        // soundEnabled must be a boolean
         body("preferences.soundEnabled")
             .optional()
             .isBoolean(),
-        // lobbyCount must be an integer between 1 and 20
         body("preferences.lobbyCount")
             .optional()
             .isInt({ min: 1, max: 20 }).withMessage("Lobby count must be between 1 and 20")
@@ -145,7 +127,7 @@ export function validateUpdateUser(){
     ];
 }
 
-export function validateChangeRole(){
+function validateChangeRole(){
     return [
         body('role')
             .notEmpty()
@@ -153,12 +135,21 @@ export function validateChangeRole(){
     ];
 }
 
-// Validates the verification token sent by the frontend
-export function validateVerifyEmail(){
+function validateVerifyEmail(){
     return [
         body('token')
             .trim()
             .notEmpty().withMessage('Verification token is required')
+    ];
+}
+
+function validateResendVerification() {
+    return [
+        body('email')
+            .trim()
+            .escape()
+            .isEmail().withMessage('Not a valid email.')
+            .bail()
     ];
 }
 
@@ -171,5 +162,6 @@ export default {
     validateChangeRole,
     validateVerifyEmail,
     validateForgotPassword,
-    validateResetPassword
+    validateResetPassword,
+    validateResendVerification
 };

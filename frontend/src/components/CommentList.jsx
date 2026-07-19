@@ -1,7 +1,6 @@
 import CommentItem from "./CommentItem";
 import { useRef, useEffect } from "react";
 
-// Renders a list of comments, or a friendly message if there are none yet
 export default function CommentList({ comments }) {
     const listRef = useRef(null);
     const prevLengthRef = useRef(0);

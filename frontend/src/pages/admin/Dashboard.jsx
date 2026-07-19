@@ -10,7 +10,6 @@ export default function AdminDashboard() {
 
     const [activity, setActivity] = useState(null);
 
-    // Fetch admin stats and live activity in parallel; cancelled flag prevents state updates after unmount
     useEffect(() => {
         let cancelled = false;
         Promise.all([getAdminStats(), getActivity()])
@@ -25,7 +24,6 @@ export default function AdminDashboard() {
         return () => { cancelled = true; };
     }, []);
 
-
     if (loading) return <Spinner />;
     if (error) return <p className="status status--error">{error}</p>;
 
@@ -33,7 +31,7 @@ export default function AdminDashboard() {
         <div className="admin__dashboard">
             <header className="admin__header">
                 <h1>Admin Dashboard</h1>
-                <p className="admin__subtitle">Overview of site statistics and quick actions</p>
+                <p className="admin__subtitle">Overview of site statistics and recent activity</p>
             </header>
 
             <section className="admin__stats">
@@ -60,7 +58,6 @@ export default function AdminDashboard() {
                 </section>
             )}
 
-            {/* Security incidents are only shown when the backend reports at least one */}
             {stats.recentIncidents?.length > 0 && (
                 <section className="admin__incidents">
                     <h2>Security Incidents</h2>

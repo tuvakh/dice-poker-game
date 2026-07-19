@@ -1,13 +1,7 @@
-// Chanya
-// This validator file validates incoming data for tournament endpoints using express-validator.
-
 import { param, body, query } from "express-validator";
 import { TOURNAMENT_STATUS } from "../config/constants.js";
 
-// This function validates the numeric tournamentId route parameter
-// .bail() stops the chain if the param is invalid so later validators don't run on bad data
-// .toInt() converts the string param to a number so it can be compared as an integer
-export function validateTournamentId(){
+function validateTournamentId(){
     return [
         param("tournamentId")
             .isInt({ min: 1, max: Number.MAX_SAFE_INTEGER })
@@ -17,8 +11,7 @@ export function validateTournamentId(){
     ];
 }
 
-// All query params in this function are optional — they only apply if the client sends them
-export function validateGetAllTournaments(){
+function validateGetAllTournaments(){
     return [
         query("page")
             .optional()
@@ -30,7 +23,6 @@ export function validateGetAllTournaments(){
             .isInt({ min: 1, max: 100 })
             .withMessage("Limit must be between 1 and 100")
             .toInt(),
-        // status must be one of the allowed values imported from constants.js
         query("status")
             .optional()
             .isIn(TOURNAMENT_STATUS)
@@ -38,7 +30,7 @@ export function validateGetAllTournaments(){
     ];
 }
 
-export function validateCreateTournament(){
+function validateCreateTournament(){
     return [
         body("title")
             .notEmpty()
@@ -49,7 +41,6 @@ export function validateCreateTournament(){
         body("date")
             .notEmpty()
             .withMessage(`Date is required`),
-        // breaks is optional — not all tournaments need breaks between rounds
         body("breaks")
             .optional()
             .isInt()
@@ -58,13 +49,11 @@ export function validateCreateTournament(){
             .notEmpty()
             .isInt()
             .withMessage("numberOfRounds must be an integer"),
-        // gameCategory must be a valid MongoDB ObjectId to reference an existing game category
         body("gameCategory")
             .notEmpty()
             .withMessage(`Game category is required`)
             .isMongoId()
             .withMessage("gameCategory must be a valid MongoDB ID"),
-        // eloMin, eloMax, buyIn are optional — only validated if provided
         body("eloMin")
             .optional()
             .isInt({ min: 0 })
@@ -87,37 +76,7 @@ export function validateCreateTournament(){
     ]
 };
 
-// This function validates both the route param and the request body for joining
-export function validateJoinTournament(){
-    return [
-        param("tournamentId")
-            .isInt({ min: 1 })
-            .withMessage("Tournament IDs are supposed to be integers larger than 0")
-            .toInt(),
-        // userId must be a valid MongoDB ObjectId to identify the user joining
-        body("userId")
-            .notEmpty()
-            .withMessage("UserId is required")
-            .isMongoId()
-            .withMessage("userId must be a valid MongoDB ID")
-    ];
-}
-
-export function validateLeaveTournament(){
-    return [
-        param("tournamentId")
-            .isInt({ min: 1 })
-            .withMessage("Tournament IDs are supposed to be integers larger than 0")
-            .toInt(),
-        body("userId")
-            .notEmpty()
-            .withMessage("UserId is required")
-            .isMongoId()
-            .withMessage("userId must be a valid MongoDB ID")
-    ];
-}
-
-export function validateKnockoutRounds(){
+function validateJoinTournament(){
     return [
         param("tournamentId")
             .isInt({ min: 1 })
@@ -126,17 +85,34 @@ export function validateKnockoutRounds(){
     ];
 }
 
-// All fields are optional so the admin can patch only what changed
-export function validateUpdateTournament(){
+function validateLeaveTournament(){
+    return [
+        param("tournamentId")
+            .isInt({ min: 1 })
+            .withMessage("Tournament IDs are supposed to be integers larger than 0")
+            .toInt()
+    ];
+}
+
+function validateStartNextRound(){
+    return [
+        param("tournamentId")
+            .isInt({ min: 1 })
+            .withMessage("Tournament IDs are supposed to be integers larger than 0")
+            .toInt()
+    ];
+}
+
+function validateUpdateTournament(){
     return [
         param("tournamentId")
             .isInt({ min: 1 })
             .withMessage("Tournament IDs are supposed to be integers larger than 0")
             .toInt(),
-        body("title").optional().notEmpty().withMessage("Title cannot be empty"),
-        body("description").optional().notEmpty().withMessage("Description cannot be empty"),
-        body("date").optional().notEmpty().withMessage("Date cannot be empty"),
-        body("breaks").optional().isInt({ min: 0 }).withMessage("breaks must be a non-negative integer").toInt(),
+        body("title").optional().notEmpty().withMessage("Title cannot be empty, be funny"),
+        body("description").optional().notEmpty().withMessage("Description cannot be empty, how are thy supposed to know what they are signing up for?"),
+        body("date").optional().notEmpty().withMessage("Date cannot be empty, go out there and find someone nice"),
+        body("breaks").optional().isInt({ min: 0 }).withMessage("breaks must be a non-negative integer, are you a meanie?").toInt(),
         body("numberOfRounds").optional().isInt({ min: 1 }).withMessage("numberOfRounds must be a positive integer").toInt(),
         body("gameCategory").optional().isMongoId().withMessage("gameCategory must be a valid MongoDB ID"),
         body("eloMin").optional().isInt({ min: 0 }).withMessage("eloMin must be a non-negative integer").toInt(),
@@ -148,12 +124,11 @@ export function validateUpdateTournament(){
 
 export default {
     validateTournamentId,
-    // validateGetTournament reuses validateTournamentId since only the ID is needed to fetch a tournament
     validateGetTournament: validateTournamentId,
     validateGetAllTournaments,
     validateCreateTournament,
     validateJoinTournament,
     validateLeaveTournament,
-    validateKnockoutRounds,
+    validateStartNextRound,
     validateUpdateTournament
 };

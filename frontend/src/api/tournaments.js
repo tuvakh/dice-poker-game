@@ -1,39 +1,30 @@
-// Chanya
 import { BASE_URL, handleResponse, fetchWithAuth } from "./config.js";
 
-// Fetches all tournaments, optionally filtered by status
 export async function getAllTournaments(params = {}) {
     const query = new URLSearchParams(params).toString();
     const res = await fetchWithAuth(`${BASE_URL}/tournaments${query ? "?" + query : ""}`);
     return handleResponse(res);
 }
 
-// Fetches a single tournament by its public tournamentId
 export async function getTournament(id) {
     const res = await fetchWithAuth(`${BASE_URL}/tournaments/${id}`);
     return handleResponse(res);
 }
 
-// Registers a user for a tournament
-// userId is sent in the request body so the backend knows who is joining
-export async function joinTournament(id, userId) {
+export async function joinTournament(id) {
     const res = await fetchWithAuth(`${BASE_URL}/tournaments/${id}/join`, {
-        method: "POST",
-        body: JSON.stringify({ userId })
+        method: "POST"
     });
     return handleResponse(res);
 }
 
-// Removes a user from a tournament — allowed at any point until the tournament is finished/cancelled
-export async function leaveTournament(id, userId) {
+export async function leaveTournament(id) {
     const res = await fetchWithAuth(`${BASE_URL}/tournaments/${id}/leave`, {
-        method: "DELETE",
-        body: JSON.stringify({ userId })
+        method: "DELETE"
     });
     return handleResponse(res);
 }
 
-// Creates a tournament (admin only)
 export async function createTournament(data) {
     const res = await fetchWithAuth(`${BASE_URL}/tournaments`, {
         method: "POST",
@@ -42,17 +33,14 @@ export async function createTournament(data) {
     return handleResponse(res);
 }
 
-// Updates a tournament's editable fields (admin only)
 export async function updateTournament(id, data) {
-    const res = await fetch(`${BASE_URL}/tournaments/${id}`, {
+    const res = await fetchWithAuth(`${BASE_URL}/tournaments/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
         body: JSON.stringify(data)
     });
     return handleResponse(res);
 }
 
-// Permanently deletes a tournament (admin only)
 export async function deleteTournament(id) {
     const res = await fetchWithAuth(`${BASE_URL}/tournaments/${id}`, {
         method: "DELETE"
@@ -60,7 +48,6 @@ export async function deleteTournament(id) {
     return handleResponse(res);
 }
 
-// Marks a tournament as cancelled without deleting it (admin only)
 export async function cancelTournament(id) {
     const res = await fetchWithAuth(`${BASE_URL}/tournaments/${id}/cancel`, {
         method: "PUT"
@@ -68,9 +55,8 @@ export async function cancelTournament(id) {
     return handleResponse(res);
 }
 
-// Starts the next round of a tournament — creates matches and transitions to ongoing
 export async function startRound(id) {
-    const res = await fetchWithAuth(`${BASE_URL}/tournaments/${id}/knockoutRounds`, {
+    const res = await fetchWithAuth(`${BASE_URL}/tournaments/${id}/nextRound`, {
         method: "PUT"
     });
     return handleResponse(res);

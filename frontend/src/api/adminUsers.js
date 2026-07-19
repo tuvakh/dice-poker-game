@@ -33,5 +33,3 @@ export async function changeRole(userId, role) {
     });
     return handleResponse(res);
 }
-
-export default { getUsers, banUser, unbanUser, changeRole };

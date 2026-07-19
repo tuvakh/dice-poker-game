@@ -1,4 +1,3 @@
-//Chanya
 import { useMemo, useState, useEffect } from "react";
 import { getAllTournaments } from "../api/tournaments.js";
 import { useSoundEffects } from "../hooks/useSoundEffects.js";
@@ -6,8 +5,7 @@ import TournamentCard from "../components/TournamentCard.jsx";
 
 import Hero from "../components/Hero.jsx";
 import Spinner from "../components/Spinner.jsx";
-import Button from "../components/Button.jsx"; 
-
+import Button from "../components/Button.jsx";
 
 const STATUS_TABS = [
     { value: "",         label: "All" },
@@ -16,7 +14,6 @@ const STATUS_TABS = [
     { value: "finished", label: "Finished" },
 ];
 
-// All sorting is done client-side so the backend does not need extra sort params
 const SORT_OPTIONS = [
     { value: "date-desc",    label: "Date (newest first)" },
     { value: "date-asc",     label: "Date (oldest first)" },
@@ -26,7 +23,6 @@ const SORT_OPTIONS = [
     { value: "players-asc",  label: "Players (fewest first)" },
 ];
 
-// Tournament list page: shows all tournaments with status tabs, search, sort, and load-more
 export default function Tournament() {
     const [statusFilter, setStatusFilter] = useState("");
     const [tournaments, setTournaments] = useState([]);
@@ -34,14 +30,13 @@ export default function Tournament() {
     const [error, setError] = useState(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [sortBy, setSortBy] = useState("date-desc");
-    const [visibleCount, setVisibleCount] = useState(6); // Chanya
+    const [visibleCount, setVisibleCount] = useState(6);
     const { playClick } = useSoundEffects();
 
     useEffect(() => {
         setLoading(true);
         setError(null);
-        // Reset visible count when the status tab changes so the user starts fresh
-        setVisibleCount(6); // Chanya
+        setVisibleCount(6);
         const params = statusFilter ? { status: statusFilter } : {};
         getAllTournaments(params)
             .then(data => setTournaments(data.tournamentList ?? []))
@@ -49,8 +44,6 @@ export default function Tournament() {
             .finally(() => setLoading(false));
     }, [statusFilter]);
 
-    // visibleTournaments is re-computed only when tournaments, searchQuery, or sortBy changes
-    // Search only activates at 3+ characters (requirement says "at least 3")
     const visibleTournaments = useMemo(() => {
         let list = [...tournaments];
 
@@ -61,8 +54,6 @@ export default function Tournament() {
             );
         }
 
-        // Sort the filtered list
-        // localeCompare handles accented characters correctly for title sort
         list.sort((tournamentA, tournamentB) => {
             switch (sortBy) {
                 case "date-asc":    return new Date(tournamentA.date) - new Date(tournamentB.date);
@@ -87,17 +78,17 @@ export default function Tournament() {
             <section>
                 <div className="tournament-tabs">
                     {STATUS_TABS.map(tab => (
-                        <button
+                        <Button
                             key={tab.value}
+                            type="button"
                             className={`tournament-tabs__btn${statusFilter === tab.value ? " tournament-tabs__btn--active" : ""}`}
                             onClick={() => { playClick(); setStatusFilter(tab.value); }}
                         >
                             {tab.label}
-                        </button>
+                        </Button>
                     ))}
                 </div>
                 
-                {/* Search input and sort dropdown - controls the visibleTournaments list above */}
                 <div className="tournament-controls">
                     <input
                         type="text"
@@ -117,11 +108,7 @@ export default function Tournament() {
                     </select>
                 </div>
 
-                <h2>
-                    {statusFilter
-                        ? statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)
-                        : "All"} tournaments
-                </h2>
+                <h2>{STATUS_TABS.find(tab => tab.value === statusFilter)?.label ?? "All"} tournaments</h2>
 
                 {loading && <Spinner />}
                 {error && <p className="status status--error">{error}</p>}
@@ -131,13 +118,11 @@ export default function Tournament() {
 
                 {!loading && !error && tournaments.length > 0 && (
                     <div className="cards-grid">
-                        {/* Show only the first visibleCount tournaments, more are loaded on button click */}
                         {visibleTournaments.slice(0, visibleCount).map(tournament => (
                             <TournamentCard key={tournament._id} tournament={tournament} onClick={playClick} />
                         ))}
                     </div>
                 )}
-                {/* Load more button appears only when there are more tournaments to show */}
                 {!loading && !error && visibleCount < visibleTournaments.length && (
                     <Button type="button" onClick={() => setVisibleCount(prev => prev + 6)}>
                         Load more

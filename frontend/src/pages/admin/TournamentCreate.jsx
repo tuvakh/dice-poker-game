@@ -19,13 +19,12 @@ export default function AdminTournamentCreate() {
     const [buyIn, setBuyIn] = useState(0);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
-    const [error, setError] = useState("");
+    const [error, setError] = useState(null);
 
     const [newTrophyTitle, setNewTrophyTitle] = useState("");
     const [newTrophyFile, setNewTrophyFile] = useState(null);
     const [newTrophyPreview, setNewTrophyPreview] = useState(null);
 
-    // Load game categories on mount so the dropdown is populated before the admin starts filling the form
     useEffect(() => {
         let cancelled = false;
         getAllGameCategories()
@@ -43,14 +42,12 @@ export default function AdminTournamentCreate() {
         return () => { cancelled = true; };
     }, []);
 
-
     async function handleSubmit(event) {
         event.preventDefault();
         setSubmitting(true);
-        setError("");
+        setError(null);
 
         try {
-            // If the admin uploaded a new trophy image, create the trophy first and attach its ID to the tournament
             let trophyId = "";
             if (newTrophyFile && newTrophyTitle.trim()) {
                 const created = await createTrophy({ title: newTrophyTitle.trim(), image: newTrophyFile });
@@ -89,7 +86,6 @@ export default function AdminTournamentCreate() {
     return (
         <div>
             <h1>Create Tournament</h1>
-            <p>Admin tournament creation</p>
 
             {error && <p className="status status--error">{error}</p>}
 
@@ -202,10 +198,10 @@ export default function AdminTournamentCreate() {
                         onChange={event => setGameCategory(event.target.value)}
                         required
                     >
-                        {(gameCategories || []).length === 0 ? (
+                        {gameCategories.length === 0 ? (
                             <option value="">No categories available</option>
                         ) : (
-                            (gameCategories || []).map(category => (
+                            gameCategories.map(category => (
                                 <option key={category._id} value={category._id}>
                                     {category.numberOfRounds} rounds - {category.gameRules} - {category.timeController}s
                                 </option>

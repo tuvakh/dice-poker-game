@@ -21,49 +21,39 @@ import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import '../components/dice-poker-board.js';
 import '../components/dice-poker-die.js';
 
-// The individual game page shows players, game board, and comments sidebar
+function refreshUserStats(userId, updateUserData) {
+    getUser(userId).then(freshUser => updateUserData({
+        coins: freshUser.coins,
+        eloRating: freshUser.eloRating
+    }));
+}
+
 export default function Game() {
     const navigate = useNavigate();
     const location = useLocation();
     const { id } = useParams();
     const { user, updateUserData } = useAuth();
-    // tournamentId is passed via navigation state when coming from a tournament page
     const tournamentId = location.state?.tournamentId ?? null;
     const { preferences } = useAppearance();
-    const { playClick, playJoin, playHold } = useSoundEffects();
+    const { playClick, playJoin, playHold, playRoundEnd } = useSoundEffects();
 
-    // Match data fetched from the backend and comments loaded for the sidebar
     const [match, setMatch] = useState(null);
     const [comments, setComments] = useState([]);
     const [error, setError] = useState(null);
 
-    // Refs persist across renders without triggering re-renders
-    // hasJoined prevents the auto-join effect from running twice
-    // wsRef holds the WebSocket connection so other handlers can send messages
-    // boardRef points at the dice-poker-board web component
-    // matchRef is a live copy of match used inside WebSocket callbacks that close over stale state
-    // timerRef holds the countdown interval so we can clear it when the round ends
     const hasJoined = useRef(false);
     const wsRef = useRef(null);
     const boardRef = useRef(null);
     const matchRef = useRef(null);
     const timerRef = useRef(null);
 
-    // gamePhase tracks which screen to show: null, 'ready', 'rolling', 'betting', 'ended', 'cancelled'
-    // readySent prevents showing the Ready button again after the player clicks it
-    // timeLeft counts down the rolling timer displayed to the player
-    // bettingState holds the current pot, highest bet, and whose turn it is
     const [gamePhase, setGamePhase] = useState(null);
     const [readySent, setReadySent] = useState(false);
     const [timeLeft, setTimeLeft] = useState(null);
     const [bettingState, setBettingState] = useState(null);
 
-    // standings is the final score list shown after the game ends
-    // forfeitBy is the userId of a player who disconnected mid-game, triggering a forfeit
-    // playerLeftNotice is a non-critical notice shown while the game is still running
     const [standings, setStandings] = useState(null);
     const [forfeitBy, setForfeitBy] = useState(null);
-    const [playerLeftNotice, setPlayerLeftNotice] = useState(null);
     const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
 
     const [readyTimeLeft, setReadyTimeLeft] = useState(null);
@@ -71,14 +61,12 @@ export default function Game() {
     const [canRoll, setCanRoll] = useState(false);
     const [roundResult, setRoundResult] = useState(null);
     const readyTimerRef = useRef(null);
-    const [rollCount, setRollCount] = useState(0);
+    const rollCountRef = useRef(0);
 
     const [betTimeLeft, setBetTimeLeft] = useState(null);
     const betTimerRef = useRef(null);
     const [betTimedOut, setBetTimedOut] = useState(false);
 
-    // Fetches the latest match data from the backend
-    // signal comes from usePolling's AbortController so cancelled requests don't update state
     async function fetchMatch(signal) {
         try {
             const data = await getMatch(id, signal);
@@ -91,34 +79,27 @@ export default function Game() {
         }
     }
 
-    // Fetches all comments for this match.
-    // Uses matchRef.current instead of match so the setInterval closure never goes stale.
+
     async function fetchComments() {
         const matchId = matchRef.current?._id;
         if (!matchId) return;
         try {
             const data = await getAllComments({ targetId: matchId, targetType: "match", limit: 100 });
             setComments(data.commentList);
-        } catch {
-            // keep existing comments on failed fetch
-        }
+        } catch {}
     }
 
-    // Sends 'ready' to the server and prevents the ready button from showing again
     function handleReady() {
         wsRef.current?.send(JSON.stringify({ type: 'ready' }));
         setReadySent(true);
     }
 
-    // Sends a betting action (fold / match / bet) to the server
     function sendBet(action, amount = 0) {
         clearInterval(betTimerRef.current);
         setBetTimeLeft(null);
         wsRef.current?.send(JSON.stringify({ type: 'bet', action, amount }));
     }
 
-
-    // Closes the WebSocket if the game is ongoing (triggers forfeit), or calls the REST leave endpoint if still waiting
     const handleLeave = async () => {
         if (!user || !match) return;
         if (match.status === 'ongoing') {
@@ -127,7 +108,7 @@ export default function Game() {
             return;
         }
         try {
-            await leaveMatch(match.matchId, user._id);
+            await leaveMatch(match.matchId);
             navigate('/');
         } catch (err) {
             setError(err.message);
@@ -150,19 +131,17 @@ export default function Game() {
         }, 1000);
     }
 
-    // Routes incoming WebSocket messages to the right board action
     function handleServerMessage(message) {
         const board = boardRef.current;
 
-        // Someone didn't click ready in time: cancel the game
         if (message.type === 'ready-timeout') {
             clearInterval(readyTimerRef.current);
             setReadyTimeLeft(null);
             setGamePhase('cancelled');
         }
 
-        // All required players have joined: show the Ready button
         if (message.type === 'all-joined') {
+            playJoin();
             setGamePhase('ready');
             setReadyTimeLeft(30);
             readyTimerRef.current = setInterval(() => {
@@ -177,19 +156,16 @@ export default function Game() {
             }, 1000);
         }
 
-        // A player disconnected mid-game: show a notice so the remaining player knows
         if (message.type === 'player-disconnected') {
-            setPlayerLeftNotice(message.userId);
             boardRef.current?.showPlayerLeft(message.userId);
         }
 
-        // A new round started: start the countdown timer and initialise the board
         if (message.type === 'game-started') {
             clearInterval(readyTimerRef.current);
             setReadyTimeLeft(null);
             setRoundResult(null);
             setCanRoll(true);
-            setRollCount(0);
+            rollCountRef.current = 0;
             setTimedOut(false);
             setGamePhase('rolling');
             playClick();
@@ -209,7 +185,6 @@ export default function Game() {
             if (board) {
                 const currentPlayers = matchRef.current?.players ?? match.players;
 
-                // message.players is the server's authoritative list — loop it to add each player to the board
                 message.players.forEach(playerId => {
                     const playerData = currentPlayers.find(player => String(player?._id ?? player) === String(playerId));
                     board.addPlayer(playerId, playerData?.username ?? playerId);
@@ -226,25 +201,20 @@ export default function Game() {
             }
         }
 
-        // Server re-rolled our non-held dice: update our board (die component plays its own sound)
         if (message.type === 'roll-result') {
             if (board) {
                 board.setDice(user?._id, message.yourDice, true);
             }
-            setRollCount(prev => {
-                if (prev + 1 >= 3) boardRef.current?.handleDoneRolling();
-                return prev + 1;
-            });
+            rollCountRef.current += 1;
+            if (rollCountRef.current >= 3) boardRef.current?.handleDoneRolling();
         }
 
-        // Another player re-rolled: show which of their dice are held (not the actual faces)
         if (message.type === 'player-rolled') {
             if (board && message.userId !== user?._id && message.held) {
                 board.setHeld(message.userId, message.held);
             }
         }
 
-        // We clicked Done Rolling: disable our dice and stop the timer
         if (message.type === 'player-done-rolling') {
             if (message.userId === user?._id) {
                 boardRef.current?.setInteractive(user._id, false);
@@ -254,16 +224,14 @@ export default function Game() {
             }
         }
 
-        // Rolling is over for everyone: switch to betting phase
         if (message.type === 'betting-start') {
             setGamePhase('betting');
             clearInterval(timerRef.current);
             setTimeLeft(null);
-            setBettingState({ currentBettor: message.currentBettor, pot: message.pot, highestBet: 0, yourStack: message.stacks?.[user?._id] ?? 0 });
+            setBettingState({ currentBettor: message.currentBettor, pot: message.pot, highestBet: 0, yourStack: message.stacks?.[user?._id] ?? match?.coinWager ?? 0 });
             if (message.currentBettor === user?._id) startBetTimer();
         }
 
-        // Someone placed a bet: update the pot and highest bet
         if (message.type === 'next-bettor') {
             setBettingState(prev => ({ ...prev, currentBettor: message.currentBettor, yourStack: message.stacks?.[user?._id] ?? prev.yourStack }));
             if (message.currentBettor === user?._id) {
@@ -274,12 +242,14 @@ export default function Game() {
             }
         }
 
-        // Someone matched the current bet: update the pot
+        if (message.type === 'player-bet') {
+            setBettingState(prev => ({ ...prev, pot: message.pot, highestBet: message.amount }));
+        }
+
         if (message.type === 'player-matched') {
             setBettingState(prev => ({ ...prev, pot: message.pot }));
         }
 
-        // Round finished: play the end sound, reveal all dice and show hand results
         if (message.type === 'round-end') {
             clearInterval(betTimerRef.current);
             setBetTimeLeft(null);
@@ -298,30 +268,21 @@ export default function Game() {
             }
         }
 
-        // A new comment was posted: append it without re-fetching
         if (message.type === 'new-comment') {
             setComments(prev => [...prev, message.comment]);
         }
 
-        // Game over: show standings and refresh coins/ELO
         if (message.type === 'game-end') {
             setGamePhase('ended');
-            playJoin();
+            playRoundEnd();
             setStandings(message.standings);
-            if (user) {
-                getUser(user.userId).then(freshUser => updateUserData({
-                    coins: freshUser.coins,
-                    eloRating: freshUser.eloRating
-                }));
-            }
+            if (user) refreshUserStats(user.userId, updateUserData);
             if (message.forfeitBy) setForfeitBy(message.forfeitBy);
         }
     }
 
-    // Poll only while waiting — once WebSocket takes over for ongoing games, stop polling
     usePolling(fetchMatch, 5000, match?.status !== "ongoing");
 
-    // Auto-join the match once if the logged-in user isn't already a player
     useEffect(() => {
         if (!match || hasJoined.current || !user) return;
 
@@ -329,11 +290,10 @@ export default function Game() {
 
         if (!isPlayer && match.status === "waiting") {
             hasJoined.current = true;
-            joinMatch(match.matchId, user._id).finally(fetchMatch);
+            joinMatch(match.matchId).finally(fetchMatch);
         }
     }, [match]);
 
-    // Poll comments on their own 5-second cycle, independent of match polling or WebSocket status
     useEffect(() => {
         if (!match?._id) return;
         fetchComments();
@@ -341,33 +301,22 @@ export default function Game() {
         return () => clearInterval(timer);
     }, [match?._id]);
 
-    // Opens the WebSocket connection once the match status becomes 'ongoing', and runs exactly once
-    // The cleanup (return) closes the socket when the component unmounts or status changes
     useEffect(() => {
         if (!match || match.status !== 'ongoing') return;
         if (!user || !match.players.some(player => String(player?._id ?? player) === String(user._id))) return;
 
-        // Refresh coin balance immediately when entering an ongoing wager game
-        if (match.coinWager > 0) {
-            getUser(user.userId).then(freshUser => updateUserData({
-                coins: freshUser.coins,
-                eloRating: freshUser.eloRating
-            }));
-        }
+        if (match.coinWager > 0) refreshUserStats(user.userId, updateUserData);
 
-        // Connect to the WebSocket server
         const ws = new WebSocket('ws://localhost:3000');
         wsRef.current = ws;
 
         ws.onopen = () => {
             const requiredPlayers = match.maxPlayers ?? 2;
 
-            // Join the game room
             ws.send(JSON.stringify({
                 type: 'join',
                 matchId: String(match.matchId),
                 matchObjectId: match._id,
-                userId: user?._id,
                 requiredPlayers,
                 totalRounds: match.gameCategory?.numberOfRounds ?? 3,
                 timeController: match.gameCategory?.timeController ?? 10,
@@ -381,11 +330,9 @@ export default function Game() {
             handleServerMessage(message);
         };
 
-        // Close the connection when leaving the page
         return () => ws.close();
     }, [match?.status]);
 
-    // Re-registers board event listeners every time gamePhase changes
     useEffect(() => {
         const board = boardRef.current;
         if (!board) return;
@@ -394,8 +341,6 @@ export default function Game() {
             wsRef.current?.send(JSON.stringify({ type: 'done-rolling' }));
         }
 
-        // dp:roll-again fires when the player picks which dice to hold and clicks roll
-        // playHold gives a soft click so the player knows their hold was registered
         function onRollAgain(event) {
             playHold();
             wsRef.current?.send(JSON.stringify({
@@ -413,12 +358,10 @@ export default function Game() {
         };
     }, [gamePhase]);
 
-    // Empty dependency array means this only runs on unmount. It catches browser back-button and tab-close
-    // Calls leaveMatch so the player slot is freed if they navigate away before the game starts
     useEffect(() => {
         return () => {
             if (matchRef.current?.status === 'waiting' && user) {
-                leaveMatch(matchRef.current.matchId, user._id).catch(() => { });
+                leaveMatch(matchRef.current.matchId).catch(() => { });
             }
         };
     }, []);
@@ -437,17 +380,22 @@ export default function Game() {
     if (!match) return <Spinner />;
 
     const isPlayer = !!user && match.players.some(player => player?._id === user._id);
+    const infoBarContent = match.gameCategory && (
+        <>
+            <span>{match.gameCategory.timeController}s · {match.gameCategory.numberOfRounds} rounds · {match.gameCategory.gameRules === 'straights_allowed' ? 'Straights allowed' : 'No straights'}</span>
+            <strong>Pot: {displayPot} {displayPot === 1 ? 'coin' : 'coins'}</strong>
+        </>
+    );
 
     return (
         <>
-            {!user && (
+            {!user && match.status === 'ongoing' && (
                 <div className="spectator-banner">
                     <p>You&apos;re spectating. <Link to="/login">Log in</Link> or <Link to="/register">register</Link> to play.</p>
                 </div>
             )}
             <div className="game">
                 <div className="game__main">
-                    {/* Player cards only shown while waiting */}
                     {(match.status === 'waiting' || gamePhase === 'ready' || isPreGame) && (
                         <div className="game__players">
                             {match.players.filter(Boolean).map(player =>
@@ -458,17 +406,14 @@ export default function Game() {
 
                     {!isPreGame && match.status !== 'waiting' && match.gameCategory && gamePhase !== 'ended' && gamePhase !== 'cancelled' && (
                         <div className="game__info-bar game__info-bar--standalone">
-                            <span>{match.gameCategory.timeController}s · {match.gameCategory.numberOfRounds} rounds · {match.gameCategory.gameRules === 'straights_allowed' ? 'Straights allowed' : 'No straights'}</span>
-                            <strong>Pot: {displayPot} {displayPot === 1 ? 'coin' : 'coins'}</strong>
+                            {infoBarContent}
                         </div>
                     )}
 
                     <div className="game__game-board" style={{ backgroundColor: preferences.boardColor }}>
-                        {/* Info bar inside the box only when waiting */}
                         {(match.status === 'waiting' || isPreGame) && match.gameCategory && (
                             <div className="game__info-bar">
-                                <span>{match.gameCategory.timeController}s · {match.gameCategory.numberOfRounds} rounds · {match.gameCategory.gameRules === 'straights_allowed' ? 'Straights allowed' : 'No straights'}</span>
-                                <strong>Pot: {displayPot} {displayPot === 1 ? 'coin' : 'coins'}</strong>
+                                {infoBarContent}
                             </div>
                         )}
 
@@ -596,7 +541,6 @@ export default function Game() {
                         </div>
                     )}
 
-
                     {gamePhase === 'betting' && bettingState && !forfeitBy && (
                         <div className="game__bet-controls">
                             <BettingControls
@@ -633,7 +577,6 @@ export default function Game() {
                 </aside>
             </div>
 
-            {/* Leave game confirmation popup */}
             {showLeaveConfirm && (
                 <ConfirmDialog
                     message={match?.status === 'ongoing'

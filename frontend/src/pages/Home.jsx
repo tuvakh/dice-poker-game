@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router";
 
 import Hero from "../components/Hero.jsx";
 import Button from "../components/Button.jsx";
@@ -8,17 +8,15 @@ import TournamentCard from "../components/TournamentCard.jsx";
 import Spinner from "../components/Spinner.jsx";
 
 import { getActivity } from "../api/activity.js";
-import "./_Home.scss";
 import { getAllMatches } from "../api/matches.js";
 import { getAllTournaments } from "../api/tournaments.js";
 import { useAppearance } from "../contexts/AppearanceContext.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
-
 import { filterLobbyMatches } from "../hooks/useLobbyGames.js";
 import { usePolling } from "../hooks/usePolling.js";
 
+import "./_Home.scss";
 
-// Ranks matches by the average ELO of their players so the highest-rated games surface first
 function sortByAverageElo(matches) {
     return matches
         .map(match => ({
@@ -28,8 +26,6 @@ function sortByAverageElo(matches) {
         .sort((matchA, matchB) => matchB.avgElo - matchA.avgElo);
 }
 
-// Defers the data fetch until the browser is idle so the initial paint isn't blocked by API calls.
-// Falls back to setTimeout(0) in environments that don't support requestIdleCallback.
 function getIdleDelaySetter(setReady) {
     if (typeof window === "undefined") return () => { };
 
@@ -42,7 +38,6 @@ function getIdleDelaySetter(setReady) {
     return () => window.clearTimeout(timeoutId);
 }
 
-// The homepage introduces the platform and shows the lobby preview, top 5 games, and tournaments
 export default function Home() {
     const navigate = useNavigate();
     const { preferences } = useAppearance();
@@ -62,7 +57,6 @@ export default function Home() {
 
         let cancelled = false;
 
-        // All four requests fire in parallel to avoid a waterfall; activity failure is non-fatal
         async function load() {
             try {
                 const [waitingData, ongoingData, tournamentData, activityData] = await Promise.all([
@@ -75,10 +69,9 @@ export default function Home() {
                 if (cancelled) return;
 
                 setLobbyGames(waitingData.matchList);
-                setTournaments(tournamentData.tournamentList.slice(0, 5));
+                setTournaments(tournamentData.tournamentList);
                 setActivity(activityData);
 
-                // Fill the top 5 slots with ongoing games first; backfill with finished games if fewer than 5 are live
                 const topOngoing = sortByAverageElo(ongoingData.matchList);
                 const remaining = 5 - topOngoing.length;
                 const topFinished = remaining > 0
@@ -160,6 +153,10 @@ export default function Home() {
                         <div className="home-activity__stat">
                             <span className="home-activity__label">Players active this week</span>
                             <span className="home-activity__number">{activity.activeUsers}</span>
+                        </div>
+                        <div className="home-activity__stat">
+                            <span className="home-activity__label">Games played this week</span>
+                            <span className="home-activity__number">{activity.gamesPlayedLastWeek}</span>
                         </div>
                     </div>
                 </section>

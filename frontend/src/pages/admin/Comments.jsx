@@ -9,12 +9,9 @@ import Button from "../../components/Button.jsx";
 export default function AdminComments() {
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState("");
-    // Holds the ID of the comment pending deletion so the ConfirmDialog can reference it without closing early
     const [confirmDelete, setConfirmDelete] = useState(null);
     const limit = 10;
-    // 250 ms debounce prevents an API call on every keystroke while the admin is typing a search term
     const debouncedSearch = useDebouncedValue(search, 250);
-
     const { data, loading, error } = useFetch((signal) => getAllComments({ page, limit, search: debouncedSearch }, signal), [page, debouncedSearch]);
 
     if (error) return <p className="status status--error">{error}</p>;
@@ -23,15 +20,13 @@ export default function AdminComments() {
         <div>
             <header>
                 <h1>Comment Administration</h1>
-                <div style={{ marginTop: 8 }}>
-                    <input
-                        style={{ marginBottom: 20, padding: 5 }}
-                        aria-label="Search comments"
-                        placeholder="Search comments"
-                        value={search}
-                        onChange={event => { setSearch(event.target.value); setPage(1); }}
-                    />
-                </div>
+                <input
+                    style={{ marginBottom: 20, padding: 5 }}
+                    aria-label="Search comments"
+                    placeholder="Search comments"
+                    value={search}
+                    onChange={event => { setSearch(event.target.value); setPage(1); }}
+                />
             </header>
 
             {loading && !data && <Spinner />}
@@ -71,21 +66,20 @@ export default function AdminComments() {
             </table>
 
             <div className="pagination" style={{ marginTop: 12 }}>
-                <button className="btn" disabled={!data || data.page === 1} onClick={() => setPage(prev => Math.max(1, prev - 1))}>Prev</button>
+                <Button disabled={!data || data.page === 1} onClick={() => setPage(prev => Math.max(1, prev - 1))}>Prev</Button>
                 <span style={{ margin: '0 8px' }}>Page {data?.page || 1} of {data?.totalPages || 1}</span>
-                <button className="btn" disabled={!data || data.page === data.totalPages} onClick={() => setPage(prev => Math.min(data.totalPages || 1, prev + 1))}>Next</button>
+                <Button disabled={!data || data.page === data.totalPages} onClick={() => setPage(prev => Math.min(data.totalPages || 1, prev + 1))}>Next</Button>
             </div>
 
             {confirmDelete && (
                 <ConfirmDialog
                     message="Delete this comment? This cannot be undone."
                     confirmLabel="Yes, delete"
-                    onConfirm={
-                        async () => {
-                            setConfirmDelete(null);
-                            await deleteComment(confirmDelete);
-                            window.location.reload();
-                        }}
+                    onConfirm={async () => {
+                        setConfirmDelete(null);
+                        await deleteComment(confirmDelete);
+                        window.location.reload();
+                    }}
                     onCancel={() => setConfirmDelete(null)}
                 />
             )}

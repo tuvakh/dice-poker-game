@@ -1,8 +1,3 @@
-// This is the min seed file
-// It connects to the database and runs all seed functions in the correct order before it disconnects. 
-
-// You run it with: npm run seed (defined in package.json).
-
 import { connectDB, disconnectDB } from "../config/db.config.js";
 import { User } from "../models/User.js";
 
@@ -22,13 +17,11 @@ try {
     const matches = await seedMatches(users, categories);
     await seedComments(users, tournaments, matches);
 
-    // Award all trophies to dragonslayer (users[0])
     await User.findByIdAndUpdate(users[0]._id, {
         $push: { trophies: { $each: trophies.map(trophy => trophy._id) } }
     });
     console.log("Awarded all trophies to dragonslayer");
     
-// This ensures the DB connection is always closed, even if seeding fails.
 } finally {
     await disconnectDB();
 }

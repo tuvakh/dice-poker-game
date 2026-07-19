@@ -1,4 +1,3 @@
-// Lets the user choose whether straights are allowed in the game
 export default function GameRulesSelector({ onChange }) {
     return (
         <label>

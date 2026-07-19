@@ -237,7 +237,7 @@ input[type=range] {
 [data-theme=dark] {
   --primary-color: #203B33;
   --secondary-color: #598276;
-  --tertiary-color: #201717;
+  --tertiary-color: #0a0808;
   --box-color: #900A49;
   --button-color: #BC1E68;
   --button-border-color: #E78BB6;
@@ -375,7 +375,6 @@ input[type=range] {
     justify-content: center;
     align-items: center;
     gap: var(--small-space);
-    margin-block-start: var(--norma-sapce);
     padding-top: var(--small-space);
     border-top: 1px solid var(--secondary-color);
   }
@@ -409,7 +408,7 @@ input[type=range] {
   text-decoration: underline;
 }
 
-.button, .greeting__button, .all-games-btn {
+.button, .greeting__button {
   background-color: var(--button-color);
   border: 0.1rem solid var(--button-border-color);
   border-radius: 50px;
@@ -419,20 +418,20 @@ input[type=range] {
   font-weight: normal;
   cursor: pointer;
 }
-.button--danger, .greeting__button--danger, .all-games-btn--danger {
+.button--danger, .greeting__button--danger {
   background-color: #a91756;
   border-color: #e679a8;
   color: #ffd4e7;
   margin-block-start: 0.5rem;
 }
-.button--danger:hover, .greeting__button--danger:hover, .all-games-btn--danger:hover {
+.button--danger:hover, .greeting__button--danger:hover {
   background-color: #7a2020;
 }
-.button--plain, .greeting__button--plain, .all-games-btn--plain {
+.button--plain, .greeting__button--plain {
   background-color: white;
   color: #333;
 }
-.button:disabled, .greeting__button:disabled, .all-games-btn:disabled {
+.button:disabled, .greeting__button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -703,6 +702,11 @@ input[type=range] {
   flex-direction: column;
   gap: 0.25rem;
   font-size: 0.85rem;
+}
+.tournament-card__meta span {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 .tournament-card__status {
   display: inline-block;
@@ -1193,6 +1197,19 @@ input[type=range] {
   display: inline-block;
 }
 
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--small-space);
+  margin-block-start: var(--medium-space);
+}
+.pagination span {
+  color: var(--secondary-color);
+  font-size: 0.9rem;
+}
+
 .tournament-tabs {
   display: flex;
   gap: var(--small-space);
@@ -1439,7 +1456,6 @@ input[type=range] {
   margin-block-start: var(--normal-space);
 }
 
-/* Admin layout and dashboard styles */
 .admin {
   display: flex;
   align-items: flex-start;

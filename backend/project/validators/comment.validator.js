@@ -1,12 +1,7 @@
-// This validator validate incoming data for comment endpoints using express-validator.
-
 import { param, body, query } from "express-validator";
 import { COMMENT_TARGET } from "../config/constants.js";
 
-// This function validates the numeric commentId route parameter
-// .bail() stops the chain if the ID is invalid, so .toInt() is not called on an invalid value
-// .toInt() converts the string param to a number so the service receives the correct type
-export function validateCommentId(){
+function validateCommentId(){
     return [
         param("commentId")
             .isInt({ min: 1, max: Number.MAX_SAFE_INTEGER })
@@ -16,8 +11,7 @@ export function validateCommentId(){
     ]
 }
 
-// All query params in this function are optional for filtering and pagination
-export function validateGetAllComments(){
+function validateGetAllComments(){
     return [
         query("page")
             .optional()
@@ -44,10 +38,7 @@ export function validateGetAllComments(){
     ]
 }
 
-// This function validates the body fields required to create a comment
-// targetId and userId must be valid MongoDB ObjectIds so they can reference documents
-// targetType must be one of the allowed values imported from constants.js
-export function validateCreateComment(){
+function validateCreateComment(){
     return [
         body("targetId")
             .notEmpty()
@@ -61,12 +52,7 @@ export function validateCreateComment(){
             .withMessage("targetType must be 'match' or 'tournament'"),
         body("comment")
             .notEmpty()
-            .withMessage(`comment is required`),
-        body("userId")
-            .notEmpty()
-            .withMessage(`userId is required`)
-            .isMongoId()
-            .withMessage("userId must be a valid MongoDB ObjectId")
+            .withMessage(`comment is required`)
     ]
 }
 

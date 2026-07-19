@@ -139,4 +139,18 @@
     display: inline-block;
 }
 
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: var(--small-space);
+    margin-block-start: var(--medium-space);
+
+    span {
+        color: var(--secondary-color);
+        font-size: 0.9rem;
+    }
+}
+
 
