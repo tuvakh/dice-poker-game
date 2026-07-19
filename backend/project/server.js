@@ -49,10 +49,23 @@ const allowedOrigins = [
     process.env.FRONTEND_URL
 ].filter(Boolean);
 
-app.use(cors({ 
-    origin: allowedOrigins,
-    credentials: true 
+app.use(cors({
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error("Blocked by CORS"));
+        }
+    },
+    credentials: true
 }));
+
+app.get('/health', (req, res) => {
+    res.status(200).json({
+        status: "ok",
+        timestamp: new Date()
+    });
+});
 
 app.use(limiter);
 app.use(express.json());

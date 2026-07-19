@@ -52,8 +52,9 @@ export default function TournamentPage() {
 
     useEffect(() => {
         if (!tournament?._id) return;
-        const WS_URL = import.meta.env.VITE_WS_URL;
-        const ws = new WebSocket(WS_URL);
+        const ws = new WebSocket(
+            import.meta.env.VITE_WS_URL
+        );
         wsRef.current = ws;
         ws.onopen = () => {
             ws.send(JSON.stringify({ type: 'join-tournament', tournamentObjectId: tournament._id }));
