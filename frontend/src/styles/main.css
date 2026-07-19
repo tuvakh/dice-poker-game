@@ -1456,7 +1456,6 @@ input[type=range] {
   margin-block-start: var(--normal-space);
 }
 
-/* Admin layout and dashboard styles */
 .admin {
   display: flex;
   align-items: flex-start;

@@ -8,7 +8,6 @@ import FormField from "../components/FormField.jsx";
 
 const RESEND_COOLDOWN = 30;
 
-// Registration page — success shows a "check your inbox" message rather than auto-logging in (email verification required)
 export default function Register() {
     const { register } = useAuth();
 
@@ -19,7 +18,6 @@ export default function Register() {
     const [dateOfBirth, setDateOfBirth] = useState("");
     const [agreeToTerms, setAgreeToTerms] = useState(false);
 
-    // fieldErrors maps field names to messages shown under each input; error is a fallback for general failures
     const [error, setError] = useState(null);
     const [fieldErrors, setFieldErrors] = useState({});
     const [successMessage, setSuccessMessage] = useState(null);
@@ -27,7 +25,6 @@ export default function Register() {
     const [resendMessage, setResendMessage] = useState(null);
     const [isResending, setIsResending] = useState(false);
     const [cooldown, setCooldown] = useState(0);
-    // submittingRef prevents a double-submit if the user clicks faster than the state update cycle
     const submittingRef = useRef(false);
 
     useEffect(() => {
@@ -57,7 +54,6 @@ export default function Register() {
         setIsSubmitting(true);
 
         try {
-            // Backend stores age as a number, so we derive it from the date of birth here
             const age = new Date().getFullYear() - new Date(dateOfBirth).getFullYear();
             await register({email, username, password, age});
             setSuccessMessage("Check your inbox and click the verification link before logging in.");

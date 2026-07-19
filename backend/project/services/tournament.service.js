@@ -1,5 +1,3 @@
-// This service handles tournament creation, joining, and round progression.
-
 import { Tournament } from '../models/Tournament.js';
 import { Match } from '../models/Match.js';
 import { User } from '../models/User.js';
@@ -8,8 +6,6 @@ import { CustomError } from '../utils/customError.js';
 export async function getAllTournaments({ page = 1, limit = 10, status }){
     const filter = {};
 
-    // only add status to the filter if it was provided
-    // otherwise return all tournaments
     if (status) filter.status = status;
 
     const tournamentList = await Tournament.find(filter)
@@ -40,8 +36,6 @@ export async function getTournament(tournamentId){
         throw new CustomError(`A tournament with the id ${tournamentId} doesn't exist. Maybe it was cancelled? :(`, 404, "NOT_FOUND");
     }
 
-    // This populates match details for each round
-    // endedAt is included so the frontend can calculate a countdown to the next round
     const populatedRounds = await Promise.all(
         tournament.rounds.map(async (round) => {
             return Promise.all(
@@ -55,8 +49,6 @@ export async function getTournament(tournamentId){
         })
     );
 
-    // This builds standings by extracting the winner from each match in each round
-    // filter(Boolean) removes null values in case a match has no winner yet
     const standings = populatedRounds.map((round, index) => ({
         round: index + 1,
         winners: round.map(match => match?.winner).filter(Boolean)
@@ -70,7 +62,6 @@ export async function leaveTournament(tournamentId, userId){
     if(!tournament){
         throw new CustomError(`A tournament with the id ${tournamentId} doesn't exist.`, 404, "NOT_FOUND");
     }
-    // Players can leave at any point unless the tournament is already finished or cancelled
     if(["finished", "cancelled"].includes(tournament.status)){
         throw new CustomError("This tournament is already done — you can't leave now.", 400, "BAD_REQUEST");
     }
@@ -84,7 +75,6 @@ export async function leaveTournament(tournamentId, userId){
 }
 
 export async function createTournament(tournamentData){
-    // createdBy is the numeric public-facing userId — resolve it to the MongoDB _id for the ObjectId ref
     if (tournamentData.createdBy) {
         const creator = await User.findOne({ userId: tournamentData.createdBy }).select('_id');
         tournamentData.createdBy = creator?._id ?? undefined;
@@ -99,12 +89,10 @@ export async function joinTournament(tournamentId, userId){
         throw new CustomError(`A tournament with the id ${tournamentId} doesn't exist. Maybe it was cancelled? :(`, 404, "NOT_FOUND");
     }
 
-    // Prevent joining a finished or cancelled tournament
     if (["finished", "cancelled"].includes(tournament.status)) {
         throw new CustomError("This tournament is done or cancelled. You missed it!", 400, "BAD_REQUEST");
     }
 
-    // .equals() is used here instead of === because participants are MongoDB ObjectIds, not plain strings
     if (tournament.participants.some(player => player.equals(userId))){
         throw new CustomError("You're already in this tournament, no need to join twice!", 409, "CONFLICT");
     }
@@ -114,15 +102,12 @@ export async function joinTournament(tournamentId, userId){
     return tournament;
 }
 
-// Points-based format: ALL participants play every round.
-// Winner is determined by total wins accumulated across all rounds (not knockout).
 export async function startNextRound(tournamentId){
     const tournament = await Tournament.findOne({ tournamentId });
     if(!tournament){
         throw new CustomError(`A tournament with the id ${tournamentId} doesn't exist. Maybe it was cancelled? :(`, 404, "NOT_FOUND");
     }
 
-    // Block if we've already run all the rounds
     if (tournament.rounds.length >= tournament.numberOfRounds) {
         throw new CustomError("All rounds have already been played!", 400, "BAD_REQUEST");
     }
@@ -131,7 +116,6 @@ export async function startNextRound(tournamentId){
         throw new CustomError("A tournament with no players? That's just an empty room!", 400, "BAD_REQUEST");
     }
 
-    // Require previous round to be fully finished before starting a new one
     if (tournament.rounds.length > 0) {
         const lastRound = tournament.rounds[tournament.rounds.length - 1];
         const unfinished = await Match.countDocuments({
@@ -143,20 +127,16 @@ export async function startNextRound(tournamentId){
         }
     }
 
-    // Points-based: ALL participants play every round, not just the winners
     const participants = [...tournament.participants];
 
-    // shuffle participants randomly for fair pairing
     for (let i = participants.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [participants[i], participants[j]] = [participants[j], participants[i]];
     }
 
-    // pair participants and create matches
     const roundMatches = [];
     for (let i = 0; i < participants.length; i += 2) {
         if (participants[i + 1]) {
-            // create match for this pair
             const match = await Match.create({
                 players: [participants[i], participants[i + 1]],
                 gameCategory: tournament.gameCategory,
@@ -165,10 +145,8 @@ export async function startNextRound(tournamentId){
             });
             roundMatches.push({ matchId: match._id });
         }
-        // if odd number of players, last player gets a bye (sits this round out)
     }
 
-    // change status from upcoming to ongoing when the first round starts
     if (tournament.status === "upcoming") tournament.status = "ongoing";
 
     tournament.rounds.push(roundMatches);
@@ -176,9 +154,6 @@ export async function startNextRound(tournamentId){
     return getTournament(tournament.tournamentId);
 }
 
-
-// Updates editable fields of a tournament (admin only)
-// Only the fields that are provided in the update object are changed
 export async function updateTournament(tournamentId, updates){
     const tournament = await Tournament.findOne({ tournamentId });
     if(!tournament){
@@ -195,7 +170,6 @@ export async function updateTournament(tournamentId, updates){
     return tournament;
 }
 
-// Permanently removes a tournament from the database (admin only)
 export async function deleteTournament(tournamentId){
     const tournament = await Tournament.findOneAndDelete({ tournamentId });
     if(!tournament){
@@ -204,7 +178,6 @@ export async function deleteTournament(tournamentId){
     return tournament;
 }
 
-// Marks a tournament as cancelled without deleting it (admin only)
 export async function cancelTournament(tournamentId){
     const tournament = await Tournament.findOne({ tournamentId });
     if(!tournament){

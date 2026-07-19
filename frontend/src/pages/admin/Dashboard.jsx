@@ -3,16 +3,13 @@ import { getAdminStats } from "../../api/admin.js";
 import Spinner from "../../components/Spinner.jsx";
 import { getActivity } from "../../api/activity.js";
 
-// Admin dashboard showing site stats, live activity, and recent security incidents
 export default function AdminDashboard() {
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // activity is separate from stats — it can be null if the activity endpoint fails without blocking the rest of the dashboard
     const [activity, setActivity] = useState(null);
 
-    // Both requests run in parallel; the cancelled flag prevents setState calls after the component unmounts
     useEffect(() => {
         let cancelled = false;
         Promise.all([getAdminStats(), getActivity()])
@@ -61,7 +58,6 @@ export default function AdminDashboard() {
                 </section>
             )}
 
-            {/* Only rendered when the backend reports at least one incident — avoids an empty section in the normal case */}
             {stats.recentIncidents?.length > 0 && (
                 <section className="admin__incidents">
                     <h2>Security Incidents</h2>

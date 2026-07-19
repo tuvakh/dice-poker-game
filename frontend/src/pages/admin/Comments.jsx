@@ -6,17 +6,12 @@ import Spinner from "../../components/Spinner.jsx";
 import ConfirmDialog from "../../components/ConfirmDialog.jsx";
 import Button from "../../components/Button.jsx";
 
-// Admin page for reviewing and deleting user comments across all matches and tournaments
 export default function AdminComments() {
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState("");
-    // Stores the commentId awaiting deletion; keeps the dialog open without losing the target while async work runs
     const [confirmDelete, setConfirmDelete] = useState(null);
     const limit = 10;
-    // 250 ms debounce so the API is not called on every keystroke
     const debouncedSearch = useDebouncedValue(search, 250);
-
-    // Abort signal cancels any in-flight request when page or search term changes
     const { data, loading, error } = useFetch((signal) => getAllComments({ page, limit, search: debouncedSearch }, signal), [page, debouncedSearch]);
 
     if (error) return <p className="status status--error">{error}</p>;
@@ -47,7 +42,6 @@ export default function AdminComments() {
                     </tr>
                 </thead>
                 <tbody>
-                    {/* Spread into a new array before sorting so the original API response is not mutated */}
                     {[...(data?.commentList || [])]
                         .sort((commentA, commentB) => new Date(commentB.createdAt) - new Date(commentA.createdAt))
                         .map(comment => (
@@ -84,7 +78,6 @@ export default function AdminComments() {
                     onConfirm={async () => {
                         setConfirmDelete(null);
                         await deleteComment(confirmDelete);
-                        // Full reload so the table re-fetches without needing to thread the deletion through local state
                         window.location.reload();
                     }}
                     onCancel={() => setConfirmDelete(null)}

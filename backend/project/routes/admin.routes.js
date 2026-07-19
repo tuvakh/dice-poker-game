@@ -4,7 +4,6 @@ import { requireAdmin } from "../middleware/role.js";
 
 const adminApiRouter = express.Router();
 
-// Stats endpoint (admin only)
 adminApiRouter.get('/admin/stats', requireAdmin, adminController.getStats);
 
 export default adminApiRouter;

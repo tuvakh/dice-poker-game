@@ -1,11 +1,6 @@
-// This validator validate incoming data for comment endpoints using express-validator.
-
 import { param, body, query } from "express-validator";
 import { COMMENT_TARGET } from "../config/constants.js";
 
-// This function validates the numeric commentId route parameter
-// .bail() stops the chain if the ID is invalid, so .toInt() is not called on an invalid value
-// .toInt() converts the string param to a number so the service receives the correct type
 function validateCommentId(){
     return [
         param("commentId")
@@ -16,7 +11,6 @@ function validateCommentId(){
     ]
 }
 
-// All query params in this function are optional for filtering and pagination
 function validateGetAllComments(){
     return [
         query("page")
@@ -44,8 +38,6 @@ function validateGetAllComments(){
     ]
 }
 
-// This function validates the body fields required to create a comment
-// userId is not accepted from the body — it is injected from the verified JWT in the controller
 function validateCreateComment(){
     return [
         body("targetId")

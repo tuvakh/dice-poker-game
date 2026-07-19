@@ -1,4 +1,3 @@
-// The About Us page shows information about the platform and its history
 export default function AboutUs (){
     return (
         <section className="information-page">

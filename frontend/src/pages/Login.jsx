@@ -5,7 +5,6 @@ import { useAuth } from "../contexts/AuthContext.jsx";
 import Button from "../components/Button.jsx";
 import FormField from "../components/FormField.jsx";
 
-// Login page — on success navigates to "/", on ban redirects to the ban screen via handleBan
 export default function Login() {
     const navigate = useNavigate();
     const location = useLocation();
@@ -14,10 +13,8 @@ export default function Login() {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
 
-    // fieldErrors maps field names to messages shown under each input; error is a fallback for general failures
     const [error, setError] = useState(null);
     const [fieldErrors, setFieldErrors] = useState({});
-    // infoMessage is passed via navigation state (e.g. "Please log in to continue") from protected routes
     const infoMessage = location.state?.message ?? "";
 
     async function handleSubmit(event) {
@@ -28,7 +25,6 @@ export default function Login() {
             await login(username, password);
             navigate("/");
         } catch (err) {
-            // Banned users get a dedicated ban screen rather than a generic error message
             if (err.message.includes("banned") || err.code === "FORBIDDEN") {
                 handleBan(err.message);
             } else if (err.fieldErrors) {

@@ -6,12 +6,10 @@ import { resetPassword as apiResetPassword } from "../api/users.js";
 import Button from "../components/Button.jsx";
 import FormField from "../components/FormField.jsx";
 
-// Reads the ?code= param from the email link and submits the new password to the API
 export default function ResetPassword() {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const { logout } = useAuth();
-    // The reset code is embedded in the email link as ?code=... and read here on page load
     const code = searchParams.get('code');
 
     const [password, setPassword] = useState("");
@@ -27,7 +25,7 @@ export default function ResetPassword() {
         setError(null);
         setMessage(null);
 
-        // Validate all inputs before locking the form — avoids showing a disabled button for simple input errors
+
         if (!code) {
             setError("Missing reset code. Please use the link from your email.");
             return;
@@ -54,7 +52,6 @@ export default function ResetPassword() {
         try {
             const result = await apiResetPassword(code, password);
             setMessage(result.message || "Password reset successfully. Redirecting to login...");
-            // Clear cached session so the user must log in fresh with the new password
             logout();
             setTimeout(() => navigate('/login'), 2000);
         } catch (err) {
