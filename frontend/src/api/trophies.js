@@ -1,7 +1,7 @@
-import { BASE_URL, getAuthHeaders, handleResponse } from "./config.js";
+import { BASE_URL, fetchWithAuth, handleResponse } from "./config.js";
 
 export async function getAllTrophies() {
-    const res = await fetch(`${BASE_URL}/trophies`);
+    const res = await fetchWithAuth(`${BASE_URL}/trophies`);
     return handleResponse(res);
 }
 
@@ -10,9 +10,8 @@ export async function createTrophy({ title, image }) {
     const form = new FormData();
     form.append("title", title);
     form.append("image", image);
-    const res = await fetch(`${BASE_URL}/trophies`, {
+    const res = await fetchWithAuth(`${BASE_URL}/trophies`, {
         method: "POST",
-        headers: getAuthHeaders(),
         body: form
     });
     return handleResponse(res);

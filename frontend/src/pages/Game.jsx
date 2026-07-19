@@ -30,7 +30,7 @@ export default function Game() {
     // tournamentId is passed via navigation state when coming from a tournament page
     const tournamentId = location.state?.tournamentId ?? null;
     const { preferences } = useAppearance();
-    const { playClick, playJoin, playHold, playRoundEnd } = useSoundEffects();
+    const { playClick, playJoin, playHold } = useSoundEffects();
 
     // Match data fetched from the backend and comments loaded for the sidebar
     const [match, setMatch] = useState(null);
@@ -91,11 +91,13 @@ export default function Game() {
         }
     }
 
-    // Fetches all comments for this match
+    // Fetches all comments for this match.
+    // Uses matchRef.current instead of match so the setInterval closure never goes stale.
     async function fetchComments() {
-        if (!match?._id) return;
+        const matchId = matchRef.current?._id;
+        if (!matchId) return;
         try {
-            const data = await getAllComments({ targetId: match._id, targetType: "match" });
+            const data = await getAllComments({ targetId: matchId, targetType: "match", limit: 100 });
             setComments(data.commentList);
         } catch {
             // keep existing comments on failed fetch
@@ -190,7 +192,7 @@ export default function Game() {
             setRollCount(0);
             setTimedOut(false);
             setGamePhase('rolling');
-            playClick(); // Chanya
+            playClick();
             clearInterval(timerRef.current);
             setTimeLeft(message.timeRemaining);
             timerRef.current = setInterval(() => {
@@ -230,10 +232,7 @@ export default function Game() {
                 board.setDice(user?._id, message.yourDice, true);
             }
             setRollCount(prev => {
-                if (prev + 1 >= 3) {
-                    boardRef.current?.handleDoneRolling();
-                    return prev + 1;
-                }
+                if (prev + 1 >= 3) boardRef.current?.handleDoneRolling();
                 return prev + 1;
             });
         }
@@ -307,7 +306,7 @@ export default function Game() {
         // Game over: show standings and refresh coins/ELO
         if (message.type === 'game-end') {
             setGamePhase('ended');
-            playJoin(); // Chanya
+            playJoin();
             setStandings(message.standings);
             if (user) {
                 getUser(user.userId).then(freshUser => updateUserData({
@@ -334,10 +333,13 @@ export default function Game() {
         }
     }, [match]);
 
-    // Refetch comments whenever the match updates
+    // Poll comments on their own 5-second cycle, independent of match polling or WebSocket status
     useEffect(() => {
+        if (!match?._id) return;
         fetchComments();
-    }, [match]);
+        const timer = setInterval(fetchComments, 5000);
+        return () => clearInterval(timer);
+    }, [match?._id]);
 
     // Opens the WebSocket connection once the match status becomes 'ongoing', and runs exactly once
     // The cleanup (return) closes the socket when the component unmounts or status changes
@@ -346,7 +348,7 @@ export default function Game() {
         if (!user || !match.players.some(player => String(player?._id ?? player) === String(user._id))) return;
 
         // Refresh coin balance immediately when entering an ongoing wager game
-        if (match.coinWager > 0 && user) {
+        if (match.coinWager > 0) {
             getUser(user.userId).then(freshUser => updateUserData({
                 coins: freshUser.coins,
                 eloRating: freshUser.eloRating
@@ -423,13 +425,18 @@ export default function Game() {
 
     const displayPot = bettingState?.pot ?? match?.coinWager ?? 0;
     const isPreGame = match?.status === 'ongoing' && gamePhase === null && !roundResult && !forfeitBy;
-    const sortedStandings = standings ? [...standings].sort((standingA, standingB) => standingB.stack - standingA.stack) : [];
-    const topStack = sortedStandings[0]?.stack;
-    const isTie = sortedStandings.filter(entry => entry.stack === topStack).length > 1;
-    const isWinner = sortedStandings[0]?.userId === user?._id;
+    const sortedStandings = standings ? [...standings].sort((standingA, standingB) => {
+        if (standingB.stack !== standingA.stack) return standingB.stack - standingA.stack;
+        return (standingB.roundWins ?? 0) - (standingA.roundWins ?? 0);
+    }) : [];
+    const topStanding = sortedStandings[0];
+    const isTie = sortedStandings.filter(entry => entry.stack === topStanding?.stack && (entry.roundWins ?? 0) === (topStanding?.roundWins ?? 0)).length > 1;
+    const isWinner = topStanding?.userId === user?._id;
 
     if (error) return <p className="status status--error">{error}</p>;
     if (!match) return <Spinner />;
+
+    const isPlayer = !!user && match.players.some(player => player?._id === user._id);
 
     return (
         <>
@@ -476,7 +483,7 @@ export default function Game() {
                                 {user ? (
                                     <>
                                         <p>Waiting for {(match.maxPlayers ?? 2) - match.players.length} more opponents....</p>
-                                        {match.players.some(player => player?._id === user._id) && (
+                                        {isPlayer && (
                                             <Button onClick={handleLeave}>
                                                 {match.players.length === 1 ? 'Cancel game' : 'Leave game'}
                                             </Button>
@@ -536,12 +543,13 @@ export default function Game() {
                                             {sortedStandings.map((entry, i) => {
                                                 const playerName = match.players.find(player => player?._id === entry.userId)?.username ?? 'Unknown';
                                                 const isMe = entry.userId === user?._id;
+                                                const isTopEntry = entry.stack === topStanding?.stack && (entry.roundWins ?? 0) === (topStanding?.roundWins ?? 0);
                                                 const coinDisplay = entry.stack >= 0
-                                                    ? `+ ${entry.stack} coin${entry.stack !== 1 ? 's' : ''}`
-                                                    : `- ${Math.abs(entry.stack)} coin${Math.abs(entry.stack) !== 1 ? 's' : ''}`;
+                                                    ? `+${entry.stack} coin${entry.stack !== 1 ? 's' : ''}`
+                                                    : `-${Math.abs(entry.stack)} coin${Math.abs(entry.stack) !== 1 ? 's' : ''}`;
                                                 return (
                                                     <li key={entry.userId} className={isMe ? 'game__standings-me' : ''}>
-                                                        {i + 1}. {entry.stack === topStack && '🎉 '}{playerName} {coinDisplay}
+                                                        {i + 1}. {isTopEntry && !isTie && '🎉 '}{playerName} {coinDisplay}
                                                     </li>
                                                 );
                                             })}
@@ -551,10 +559,11 @@ export default function Game() {
                                 ) : (
                                     gamePhase === 'cancelled' && <p>Not all players were ready in time.</p>
                                 )}
-                                {tournamentId && (
+                                {tournamentId ? (
                                     <Button onClick={() => navigate(`/tournament/${tournamentId}`)}>Back to tournament</Button>
+                                ) : (
+                                    <Button onClick={() => navigate('/')}>Back to homepage</Button>
                                 )}
-                                <Button onClick={() => navigate('/')}>Back to homepage</Button>
                             </div>
                         )}
                     </div>
@@ -576,7 +585,7 @@ export default function Game() {
                                 </p>
                             )}
                             <div className="game__roll-buttons">
-                                {user && match.players.some(player => player?._id === user._id) && (
+                                {isPlayer && (
                                     <>
                                         <Button variant="plain" disabled={!canRoll} onClick={() => boardRef.current?.handleRollAgain()}>Roll</Button>
                                         <Button variant="plain" disabled={!canRoll} onClick={() => boardRef.current?.handleDoneRolling()}>Done rolling</Button>
@@ -598,13 +607,13 @@ export default function Game() {
                                 betTimeLeft={betTimeLeft}
                                 betTimedOut={betTimedOut}
                             />
-                            {user && match.players.some(player => player?._id === user._id) && (
+                            {isPlayer && (
                                 <Button variant="plain" onClick={() => setShowLeaveConfirm(true)}>Leave game</Button>
                             )}
                         </div>
                     )}
 
-                    {match.status === 'ongoing' && gamePhase === null && !isPreGame && !forfeitBy && user && match.players.some(player => player?._id === user._id) && (
+                    {match.status === 'ongoing' && gamePhase === null && !isPreGame && !forfeitBy && isPlayer && (
                         <Button variant="plain" className="game__leave-btn" onClick={() => setShowLeaveConfirm(true)}>Leave game</Button>
                     )}
                 </div>
@@ -612,7 +621,7 @@ export default function Game() {
                 <aside className="game__comments">
                     <CommentList comments={comments} />
                     {user
-                        ? <CommentForm targetId={match._id} targetType="match" onCommentAdded={fetchComments} />
+                        ? <CommentForm targetId={match._id} targetType="match" />
                         : <>
                             <p className="greeting--game">You need to log in to leave a comment</p>
                             <div className="greeting greeting--game">

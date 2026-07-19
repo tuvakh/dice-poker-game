@@ -70,7 +70,7 @@
         align-items: center;
         justify-content: center;
         gap: var(--normal-space);
-        font-size: 1.4rem;
+        font-size: 1.2rem;
         font-weight: bold;
         text-align: center;
     }
@@ -109,6 +109,7 @@
         font-weight: 900;
         letter-spacing: 0.05em;
         margin: 0;
+        color: var(--text-color);
     }
 
     &__ready-buttons {
@@ -119,7 +120,10 @@
     &__ready-yes--confirmed {
         background-color: #2a6644;
         color: white;
-        border-color: #2a6644;
+        border-color: #a0afa6;
+        &:disabled {
+            opacity: 1;
+        }
     }
 
     &__ready-waiting {
@@ -181,12 +185,12 @@
         font-size: 1rem;
 
         &--urgent {
-            color: #c0392b;
+            color: #c02b6c;
         }
     }
 
     &__player-left {
-        color: #c0392b;
+        color: var(--text-color);
         font-weight: bold;
         font-size: 0.9rem;
         margin-block-start: var(--mini-space);
@@ -200,11 +204,11 @@
         text-align: center;
 
         &--won {
-            color: #2a8c4a;
+            color: var(--text-color);
         }
 
         &--lost {
-            color: #c0392b;
+            color: var(--button-color);
         }
     }
 
@@ -247,7 +251,27 @@
     &__comments {
         grid-area: right;
         padding: var(--normal-space);
+        padding-block-start: 0;
         background-color: var(--box-color);
+        display: flex;
+        flex-direction: column;
+        max-height: 90vh;
+        position: sticky;
+        top: 0;
+
+        @media (max-width: 1000px) {
+            padding-block-start: var(--normal-space);
+        }
+
+        .comments-list {
+            flex: 1;
+            overflow-y: auto;
+            min-height: 0;
+        }
+
+        .comments-form {
+            flex-shrink: 0;
+        }
 
         button {
             display: block;

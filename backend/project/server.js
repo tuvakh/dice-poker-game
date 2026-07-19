@@ -17,7 +17,6 @@ import matchApiRouter from './routes/match.routes.js';
 import tournamentApiRouter from './routes/tournament.routes.js';
 import commentApiRouter from './routes/comment.routes.js';
 import adminApiRouter from './routes/admin.routes.js';
-import leaderboardApiRouter from './routes/leaderboard.routes.js';
 import activityApiRouter from './routes/activity.routes.js';
 import rateLimit from 'express-rate-limit';
 import trophyApiRouter from './routes/trophy.routes.js';
@@ -29,10 +28,11 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const server = http.createServer(app); // Express handles HTTP requests
 
-// This limits each IP to 100 requests per 15 minutes to prevent abuse
+// This limits each IP to 200 requests per minute to prevent abuse
+// Normal gameplay uses ~25 req/min (polling + API calls), so this only triggers on actual abuse
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 500,
+    windowMs: 60 * 1000,
+    max: 200,
     handler: async (req, res) => {
         try {
             await Security.create({
@@ -67,7 +67,6 @@ app.use(gameCategoryApiRouter);
 app.use(matchApiRouter);
 app.use(tournamentApiRouter);
 app.use(commentApiRouter);
-app.use(leaderboardApiRouter);
 app.use(activityApiRouter);
 app.use(trophyApiRouter);
 app.use(adminApiRouter);

@@ -16,7 +16,6 @@ const Game = lazy(() => import("./pages/Game.jsx"));
 const Lobby = lazy(() => import("./pages/Lobby.jsx"));
 const Tournament = lazy(() => import("./pages/Tournament.jsx"));
 const TournamentPage = lazy(() => import("./pages/TournamentPage.jsx"));
-const LeaderBoard = lazy(() => import("./pages/LeaderBoard.jsx"));
 const User = lazy(() => import("./pages/User.jsx"));
 const CreateGame = lazy(() => import("./pages/CreateGame.jsx"));
 const AboutUs = lazy(() => import("./pages/AboutUs"));
@@ -51,7 +50,6 @@ function AppContent() {
               <Route path="/game/:id" element={<Game />} />
               <Route path="/createGame" element={<CreateGame />} />
               <Route path="/lobby" element={<Lobby />} />
-              <Route path="/leaderboard" element={<LeaderBoard />} />
               <Route path="/tournament" element={<Tournament />} />
               <Route path="/tournament/:id" element={<TournamentPage />} />
               <Route path="/user/:id" element={<User />} />

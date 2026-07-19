@@ -2,9 +2,8 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import { getTournament, updateTournament } from "../../api/tournaments.js";
 import { getAllGameCategories } from "../../api/gameCategories.js";
-import { getAllTrophies } from "../../api/trophies.js";
+import { createTrophy } from "../../api/trophies.js";
 import Spinner from "../../components/Spinner.jsx";
-import "./_TournamentCreate.scss";
 
 export default function AdminTournamentEdit() {
     const { id } = useParams();
@@ -18,7 +17,9 @@ export default function AdminTournamentEdit() {
     const [gameCategory, setGameCategory] = useState("");
     const [trophy, setTrophy] = useState("");
     const [gameCategories, setGameCategories] = useState([]);
-    const [trophies, setTrophies] = useState([]);
+    const [newTrophyTitle, setNewTrophyTitle] = useState("");
+    const [newTrophyFile, setNewTrophyFile] = useState(null);
+    const [newTrophyPreview, setNewTrophyPreview] = useState(null);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [message, setMessage] = useState("");
@@ -29,23 +30,25 @@ export default function AdminTournamentEdit() {
         Promise.all([
             getTournament(id),
             getAllGameCategories(),
-            getAllTrophies().catch(() => [])
-        ]).then(([tournament, catResult, trophyResult]) => {
+        ]).then(([tournament, catResult]) => {
             if (cancelled) return;
+            if (["ongoing", "finished"].includes(tournament.status)) {
+                navigate(`/tournament/${id}`, { replace: true });
+                return;
+            }
             const categories = Array.isArray(catResult)
                 ? catResult
                 : (catResult.gameCategories || catResult.categoryList || []);
             setGameCategories(categories);
-            setTrophies(Array.isArray(trophyResult) ? trophyResult : []);
 
             // Pre-populate form with existing tournament data
             setTitle(tournament.title ?? "");
             setDescription(tournament.description ?? "");
             // Convert ISO date string to datetime-local format (YYYY-MM-DDTHH:mm)
             if (tournament.date) {
-                const d = new Date(tournament.date);
-                const pad = n => String(n).padStart(2, "0");
-                setDate(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`);
+                const dateObj = new Date(tournament.date);
+                const pad = number => String(number).padStart(2, "0");
+                setDate(`${dateObj.getFullYear()}-${pad(dateObj.getMonth() + 1)}-${pad(dateObj.getDate())}T${pad(dateObj.getHours())}:${pad(dateObj.getMinutes())}`);
             }
             setBreaks(tournament.breaks ?? 0);
             setNumberOfRounds(tournament.numberOfRounds ?? 3);
@@ -59,12 +62,24 @@ export default function AdminTournamentEdit() {
         return () => { cancelled = true; };
     }, [id]);
 
-    async function handleSubmit(e) {
-        e.preventDefault();
+    function handleTrophyFileChange(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        setNewTrophyFile(file);
+        setNewTrophyPreview(URL.createObjectURL(file));
+    }
+
+    async function handleSubmit(event) {
+        event.preventDefault();
         setSubmitting(true);
         setMessage("");
         setError("");
         try {
+            let trophyId = trophy;
+            if (newTrophyFile && newTrophyTitle.trim()) {
+                const created = await createTrophy({ title: newTrophyTitle.trim(), image: newTrophyFile });
+                trophyId = created._id;
+            }
             await updateTournament(id, {
                 title,
                 description,
@@ -72,7 +87,7 @@ export default function AdminTournamentEdit() {
                 breaks: Number(breaks),
                 numberOfRounds: Number(numberOfRounds),
                 gameCategory,
-                ...(trophy ? { trophy } : {})
+                ...(trophyId ? { trophy: trophyId } : {})
             });
             setMessage("Tournament updated!");
         } catch (err) {
@@ -101,7 +116,7 @@ export default function AdminTournamentEdit() {
                         id="te-title"
                         className="tournament-create-form__input"
                         value={title}
-                        onChange={e => setTitle(e.target.value)}
+                        onChange={event => setTitle(event.target.value)}
                         required
                     />
                 </div>
@@ -112,7 +127,7 @@ export default function AdminTournamentEdit() {
                         id="te-description"
                         className="tournament-create-form__textarea"
                         value={description}
-                        onChange={e => setDescription(e.target.value)}
+                        onChange={event => setDescription(event.target.value)}
                         required
                     />
                 </div>
@@ -124,7 +139,8 @@ export default function AdminTournamentEdit() {
                         className="tournament-create-form__input"
                         type="datetime-local"
                         value={date}
-                        onChange={e => setDate(e.target.value)}
+                        onChange={event => setDate(event.target.value)}
+                        min={new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)}
                         required
                     />
                 </div>
@@ -137,7 +153,7 @@ export default function AdminTournamentEdit() {
                         type="number"
                         min="0"
                         value={breaks}
-                        onChange={e => setBreaks(e.target.value)}
+                        onChange={event => setBreaks(event.target.value)}
                     />
                 </div>
 
@@ -147,7 +163,7 @@ export default function AdminTournamentEdit() {
                         id="te-rounds"
                         className="tournament-create-form__select"
                         value={numberOfRounds}
-                        onChange={e => setNumberOfRounds(e.target.value)}
+                        onChange={event => setNumberOfRounds(event.target.value)}
                     >
                         <option value={3}>3</option>
                         <option value={5}>5</option>
@@ -161,7 +177,7 @@ export default function AdminTournamentEdit() {
                         id="te-category"
                         className="tournament-create-form__select"
                         value={gameCategory}
-                        onChange={e => setGameCategory(e.target.value)}
+                        onChange={event => setGameCategory(event.target.value)}
                         required
                     >
                         {gameCategories.length === 0 ? (
@@ -176,33 +192,28 @@ export default function AdminTournamentEdit() {
                     </select>
                 </div>
 
-                <div className="tournament-create-form__field">
-                    <span className="tournament-create-form__label">Trophy (optional)</span>
-                    <div className="trophy-picker">
-                        <button
-                            type="button"
-                            className={`trophy-option trophy-option--none${trophy === "" ? " trophy-option--selected" : ""}`}
-                            onClick={() => setTrophy("")}
-                        >
-                            <span className="trophy-option__icon">🚫</span>
-                            <span className="trophy-option__title">No trophy</span>
-                        </button>
-                        {trophies.map(t => (
-                            <button
-                                type="button"
-                                key={t._id}
-                                className={`trophy-option${trophy === t._id ? " trophy-option--selected" : ""}`}
-                                onClick={() => setTrophy(t._id)}
-                            >
-                                <img
-                                    className="trophy-option__img"
-                                    src={`/${t.image}`}
-                                    alt={t.title}
-                                    onError={e => { e.target.replaceWith(Object.assign(document.createElement("span"), { className: "trophy-option__icon", textContent: "🏆" })); }}
-                                />
-                                <span className="trophy-option__title">{t.title}</span>
-                            </button>
-                        ))}
+                <div className="trophy-upload">
+                    <h3 className="trophy-upload__heading">Trophy (optional)</h3>
+                    <div className="trophy-upload__form">
+                        <input
+                            className="tournament-create-form__input"
+                            type="text"
+                            placeholder="Trophy title"
+                            value={newTrophyTitle}
+                            onChange={event => setNewTrophyTitle(event.target.value)}
+                        />
+                        <label className="trophy-upload__file-label">
+                            {newTrophyPreview
+                                ? <img className="trophy-upload__preview" src={newTrophyPreview} alt="preview" />
+                                : <span className="trophy-upload__placeholder">Choose image</span>
+                            }
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleTrophyFileChange}
+                                style={{ display: "none" }}
+                            />
+                        </label>
                     </div>
                 </div>
 

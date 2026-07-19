@@ -3,16 +3,20 @@
     border: 0.1rem solid var(--button-border-color);
     border-radius: 50px;
     padding: var(--mini-space) var(--normal-space);
-    color: var(--text-color);
+    color: #fff;
     min-width: 130px;
+    font-weight: normal;
     cursor: pointer;
 
     &--danger {
-        background-color: #5a1a1a;
-        border-color: #c0392b;
-        color: #ff6b6b;
+        background-color: #a91756;
+        border-color: #e679a8;
+        color: #ffd4e7;
+        margin-block-start: 0.5rem;
 
-        &:hover { background-color: #7a2020; }
+        &:hover { 
+            background-color: #7a2020; 
+        }
     }
 
     &--plain {

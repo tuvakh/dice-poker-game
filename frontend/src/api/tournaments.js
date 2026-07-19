@@ -68,11 +68,10 @@ export async function cancelTournament(id) {
     return handleResponse(res);
 }
 
-// Starts the next round of a tournament (admin only) — creates matches and transitions to ongoing
+// Starts the next round of a tournament — creates matches and transitions to ongoing
 export async function startRound(id) {
-    const res = await fetch(`${BASE_URL}/tournaments/${id}/knockoutRounds`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json", ...getAuthHeaders() }
+    const res = await fetchWithAuth(`${BASE_URL}/tournaments/${id}/knockoutRounds`, {
+        method: "PUT"
     });
     return handleResponse(res);
 }

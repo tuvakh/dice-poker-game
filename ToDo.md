@@ -71,7 +71,7 @@ Players may be given some extra points (see the point on points below) for winni
 
 
 Tuva styling:
-- Legg til border rundt profilbildet tilfelle noen har gjennomsiktig bakgrunn
+- ✅ Legg til border rundt profilbildet tilfelle noen har gjennomsiktig bakgrunn
 - Farge på tekst på darkmode/lightmode. Teksten forsvinner på hvitt game board 
 - Endre gameboard fargene
-- Nav bar
+- ✅ Nav bar

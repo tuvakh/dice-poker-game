@@ -1,21 +1,30 @@
-import "./_Admin.scss";
 import { useEffect, useState } from "react";
 import { getAdminStats } from "../../api/admin.js";
 import Spinner from "../../components/Spinner.jsx";
+import { getActivity } from "../../api/activity.js";
 
 export default function AdminDashboard() {
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    const [activity, setActivity] = useState(null);
+
+    // Fetch admin stats and live activity in parallel; cancelled flag prevents state updates after unmount
     useEffect(() => {
         let cancelled = false;
-        getAdminStats()
-            .then(res => { if (!cancelled) setStats(res); })
+        Promise.all([getAdminStats(), getActivity()])
+            .then(([statsRes, activityRes]) => {
+                if (!cancelled) {
+                    setStats(statsRes);
+                    setActivity(activityRes);
+                }
+            })
             .catch(err => { if (!cancelled) setError(err.message); })
             .finally(() => { if (!cancelled) setLoading(false); });
         return () => { cancelled = true; };
     }, []);
+
 
     if (loading) return <Spinner />;
     if (error) return <p className="status status--error">{error}</p>;
@@ -29,10 +38,6 @@ export default function AdminDashboard() {
 
             <section className="admin__stats">
                 <div className="stat-card">
-                    <div className="stat-card__value">{stats.totalUsers}</div>
-                    <div className="stat-card__label">Total Users</div>
-                </div>
-                <div className="stat-card">
                     <div className="stat-card__value">{stats.activeMatches24h}</div>
                     <div className="stat-card__label">Active Matches (24h)</div>
                 </div>
@@ -40,12 +45,22 @@ export default function AdminDashboard() {
                     <div className="stat-card__value">{stats.newSignups7d}</div>
                     <div className="stat-card__label">New Signups (7d)</div>
                 </div>
-                <div className="stat-card">
-                    <div className="stat-card__value">{stats.pendingReports}</div>
-                    <div className="stat-card__label">Pending Reports</div>
-                </div>
             </section>
 
+            {activity && (
+                <section className="admin__stats">
+                    <div className="stat-card">
+                        <div className="stat-card__value">{activity.activeUsers}</div>
+                        <div className="stat-card__label">Active Players (7d)</div>
+                    </div>
+                    <div className="stat-card">
+                        <div className="stat-card__value">{activity.ongoingMatches}</div>
+                        <div className="stat-card__label">Available Games Now</div>
+                    </div>
+                </section>
+            )}
+
+            {/* Security incidents are only shown when the backend reports at least one */}
             {stats.recentIncidents?.length > 0 && (
                 <section className="admin__incidents">
                     <h2>Security Incidents</h2>
@@ -59,8 +74,8 @@ export default function AdminDashboard() {
                             </tr>
                         </thead>
                         <tbody>
-                            {stats.recentIncidents.map((incident, index) => (
-                                <tr key={index}>
+                            {stats.recentIncidents.map((incident, i) => (
+                                <tr key={i}>
                                     <td>{incident.type}</td>
                                     <td>{incident.ip}</td>
                                     <td>{incident.userAgent}</td>

@@ -2,17 +2,16 @@
 // tournmanet will take rounds instead of every body playing at the same time.
 // Individual tournament detail page
 import { useState, useEffect, useRef } from "react";
-import { useParams, Link, useNavigate } from "react-router";
+import { useParams, useNavigate, Link } from "react-router";
 import { getTournament, joinTournament, leaveTournament, deleteTournament, cancelTournament, startRound } from "../api/tournaments.js";
 import { useAuth } from "../contexts/AuthContext.jsx";
-import { useSoundEffects } from "../hooks/useSoundEffects.js";
 import { getAllComments } from "../api/comments.js";
-
-import CommentList from "../components/CommentList.jsx";
-import CommentForm from "../components/CommentForm.jsx";
+import { useSoundEffects } from "../hooks/useSoundEffects.js";
 import Spinner from "../components/Spinner.jsx";
 import Button from "../components/Button.jsx";
 import ConfirmDialog from "../components/ConfirmDialog.jsx";
+import CommentList from "../components/CommentList.jsx";
+import CommentForm from "../components/CommentForm.jsx";
 
 export default function TournamentPage() {
     const { id } = useParams();
@@ -39,7 +38,7 @@ export default function TournamentPage() {
     // countdown state: seconds remaining until the next round is expected to start
     const [countdownSecs, setCountdownSecs] = useState(null);
 
-    // Fetches tournament data when the page loads or the URL id changes 
+    // Fetches tournament data when the page loads or the URL id changes
     useEffect(() => {
         setLoading(true);
         setError(null);
@@ -53,7 +52,7 @@ export default function TournamentPage() {
     useEffect(() => {
         if (!tournament?._id) return;
         getAllComments({ targetId: tournament._id, targetType: 'tournament' })
-            .then(data => setComments(data.commentList))
+            .then(data => setComments(data.commentList ?? []))
             .catch(() => { });
     }, [tournament?._id]);
 
@@ -94,8 +93,8 @@ export default function TournamentPage() {
 
         // Find the most recent endedAt across all matches in the latest round
         const latestEndedAt = latestRound.reduce((maxTime, match) => {
-            const t = match?.endedAt ? new Date(match.endedAt).getTime() : 0;
-            return t > maxTime ? t : maxTime;
+            const endTime = match?.endedAt ? new Date(match.endedAt).getTime() : 0;
+            return endTime > maxTime ? endTime : maxTime;
         }, 0);
 
         if (!latestEndedAt) {
@@ -116,7 +115,8 @@ export default function TournamentPage() {
                 startRound(id)
                     .then(updated => setTournament(updated))
                     .catch(() => {
-                        getTournament(id).then(updated => setTournament(updated)).catch(() => {});
+                        nextRoundFiredRef.current = false;
+                        getTournament(id).then(updated => setTournament(updated)).catch(() => { });
                     });
             }
         };
@@ -129,11 +129,22 @@ export default function TournamentPage() {
         };
     }, [tournament]);
 
+    // Poll every 5 seconds while the tournament is upcoming so both players see each other join
+    // and the auto-start fires on both browsers once 2+ participants are present.
+    useEffect(() => {
+        if (!tournament || tournament.status !== 'upcoming') return;
+        const interval = setInterval(() => {
+            getTournament(id).then(data => setTournament(data)).catch(() => { });
+        }, 5000);
+        return () => clearInterval(interval);
+    }, [tournament?.status, id]);
+
     // Auto-start: when the tournament date arrives and there are enough players, kick off the first round.
     // Any logged-in user viewing the page can trigger this — the backend rejects duplicates gracefully.
+    // ← change 'upcoming' to 'ongoing' here if you want to skip the countdown and test immediately
     useEffect(() => {
         if (!tournament || !user) return;
-        if (tournament.status !== 'upcoming') return;
+        if (tournament.status !== 'upcoming') return; // ← 'upcoming' = auto-start when date arrives
         if ((tournament.participants?.length ?? 0) < 2) return;
         if (autoStartedRef.current) return;
 
@@ -145,8 +156,8 @@ export default function TournamentPage() {
             startRound(id)
                 .then(updated => setTournament(updated))
                 .catch(() => {
-                    // If another user already started it, just re-fetch the latest state
-                    getTournament(id).then(updated => setTournament(updated)).catch(() => {});
+                    autoStartedRef.current = false;
+                    getTournament(id).then(updated => setTournament(updated)).catch(() => { });
                 });
         };
 
@@ -159,19 +170,20 @@ export default function TournamentPage() {
         }
     }, [tournament?.tournamentId, tournament?.status, tournament?.participants?.length, user, id]);
 
-    // Auto-redirect participants to their ongoing match in the latest round.
-    // redirectedRef prevents redirecting again when the user navigates back after the game.
-    //SO this puts users in a game when it starts
+    // Auto-redirect: when a round is ongoing and this user has a match, send them to it.
     useEffect(() => {
-        if (!tournament || !user || tournament.status !== 'ongoing') return;
+        if (!tournament || !user) return;
         if (redirectedRef.current) return;
         const rounds = tournament.rounds ?? [];
         if (rounds.length === 0) return;
         const latestRound = rounds[rounds.length - 1];
         for (const match of latestRound) {
-            if (!match || match.status !== 'ongoing') continue;
+            if (!match || match.status === 'finished') continue;
             const players = match.players ?? [];
-            const isPlayer = players.some(pl => (pl._id ?? pl)?.toString() === user._id?.toString());
+            const isPlayer = players.some(player =>
+                (player.username && player.username === user.username) ||
+                (player._id ?? player)?.toString() === (user.userId ?? user._id)?.toString()
+            );
             if (isPlayer && match.matchId) {
                 redirectedRef.current = true;
                 // Pass tournamentId in state so Game.jsx can show "Back to tournament"
@@ -275,18 +287,18 @@ export default function TournamentPage() {
         }
     }
     // Include all participants so players with 0 wins still appear
-    for (const p of (tournament.participants ?? [])) {
-        const pId = (p._id ?? p)?.toString();
-        if (pId && !winMap[pId]) winMap[pId] = { username: p.username ?? '?', wins: 0 };
+    for (const participant of (tournament.participants ?? [])) {
+        const participantId = (participant._id ?? participant)?.toString();
+        if (participantId && !winMap[participantId]) winMap[participantId] = { username: participant.username ?? '?', wins: 0 };
     }
-    const standingsList = Object.values(winMap).sort((a, b) => b.wins - a.wins);
+    const standingsList = Object.values(winMap).sort((entryA, entryB) => entryB.wins - entryA.wins);
 
     // alreadyIn checks the fetched data so returning visitors who were already registered see the right UI
     // joined is set when the user joins in this browser session (optimistic)
     // Username comparison is used because participants are populated objects with plain string usernames,
     // while _id ObjectId serialisation can vary across Mongoose versions causing string mismatches.
-    const alreadyIn = user && tournament.participants?.some(p =>
-        p.username && p.username === user.username
+    const alreadyIn = user && tournament.participants?.some(participant =>
+        participant.username && participant.username === user.username
     );
 
     // Players can leave as long as the tournament has not finished or been cancelled
@@ -337,10 +349,19 @@ export default function TournamentPage() {
             )}
 
             {/* Admin controls: delete and cancel are only shown to admin users */}
-            {user?.role === 'admin' && !["finished", "cancelled"].includes(tournament.status) && (
+            {user?.role === 'admin' && tournament.status !== 'finished' && (
                 <div className="tournament-detail__admin">
-                    <Button onClick={() => navigate(`/admin/tournaments/${tournament.tournamentId}/edit`)}>Edit tournament</Button>
-                    <Button onClick={() => setShowCancelConfirm(true)} variant="danger">Cancel tournament</Button>
+                    {tournament.status !== 'cancelled' && (
+                        <>
+                            {tournament.status === 'upcoming' && (
+                                <Button onClick={() => navigate(`/admin/tournaments/${tournament.tournamentId}/edit`)}>Edit tournament</Button>
+                            )}
+                            {tournament.status === 'ongoing' && (tournament.rounds?.length ?? 0) < (tournament.numberOfRounds ?? 0) && (
+                                <Button onClick={handleStartRound}>Start next round</Button>
+                            )}
+                            <Button onClick={() => setShowCancelConfirm(true)} variant="danger">Cancel tournament</Button>
+                        </>
+                    )}
                     <Button onClick={() => setShowDeleteConfirm(true)} variant="danger">Delete tournament</Button>
                 </div>
             )}
@@ -348,6 +369,7 @@ export default function TournamentPage() {
             {showCancelConfirm && (
                 <ConfirmDialog
                     message="Cancel this tournament? Players will be notified it won't run."
+                    confirmLabel="Yes, cancel"
                     onConfirm={() => { setShowCancelConfirm(false); handleCancel(); }}
                     onCancel={() => setShowCancelConfirm(false)}
                 />
@@ -355,6 +377,7 @@ export default function TournamentPage() {
             {showDeleteConfirm && (
                 <ConfirmDialog
                     message="Permanently delete this tournament? This cannot be undone."
+                    confirmLabel="Yes, delete"
                     onConfirm={() => { setShowDeleteConfirm(false); handleDelete(); }}
                     onCancel={() => setShowDeleteConfirm(false)}
                 />
@@ -428,7 +451,7 @@ export default function TournamentPage() {
                     <div className="tournament-detail__trophy">
                         {tournament.trophy.image && (
                             <img
-                                src={`/${tournament.trophy.image}`}
+                                src={tournament.trophy.image?.startsWith('data:') ? tournament.trophy.image : `/${tournament.trophy.image}`}
                                 alt={tournament.trophy.title ?? "Trophy"}
                                 className="tournament-detail__trophy-img"
                             />
@@ -492,7 +515,7 @@ export default function TournamentPage() {
                                 <div key={rIdx} className="bracket__round">
                                     <p className="bracket__round-label">Round {rIdx + 1}</p>
                                     {round.map((entry, mIdx) => {
-                                        const match = entry?.matchId ?? entry;
+                                        const match = entry;
                                         const players = match?.players ?? [];
                                         const winner = match?.winner;
                                         const matchId = match?.matchId;
@@ -506,15 +529,15 @@ export default function TournamentPage() {
                                                 {players.length === 0 ? (
                                                     <p className="bracket__match-player bracket__match-player--tbd">TBD</p>
                                                 ) : (
-                                                    players.map((pl, pIdx) => (
+                                                    players.map((player, playerIdx) => (
                                                         <p
-                                                            key={pIdx}
-                                                            className={`bracket__match-player${winner && (pl._id ?? pl)?.toString() === (winner._id ?? winner)?.toString()
+                                                            key={playerIdx}
+                                                            className={`bracket__match-player${winner && (player._id ?? player)?.toString() === (winner._id ?? winner)?.toString()
                                                                 ? " bracket__match-player--winner"
                                                                 : ""
                                                                 }`}
                                                         >
-                                                            {pl.username ?? pl}
+                                                            {player.username ?? player}
                                                         </p>
                                                     ))
                                                 )}
@@ -539,7 +562,7 @@ export default function TournamentPage() {
                 targetType="tournament"
                 onCommentAdded={() =>
                     getAllComments({ targetId: tournament._id, targetType: 'tournament' })
-                        .then(data => setComments(data.commentList))
+                        .then(data => setComments(data.commentList ?? []))
                         .catch(() => { })
                 }
             />

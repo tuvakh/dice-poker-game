@@ -71,7 +71,7 @@ figcaption {
     }
 }
 
-section:not(.hero) {
+section:not(.hero, .admin__stats, .admin__incidents) {
     width: 80%;
     margin: auto;
     padding: var(--big-space);
@@ -114,10 +114,12 @@ input[type="range"] {
 .status {    
     &--error {
         color: var(--error-color);
+        font-weight: bold;
     }
 
     &--success {
-        color: var(--secondary-color);
+        color: var(--success-color);
+        font-style: italic;
     }
 }
 

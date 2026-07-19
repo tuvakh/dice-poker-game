@@ -13,6 +13,7 @@ export default async function seedTournaments(users, categories, trophies) {
     await Tournament.deleteMany({});
 
     const tournaments = await Promise.all([
+        // Already finished — played in spring, safe to browse without triggering auto-start
         new Tournament({
             title: "Spring Championship",
             description: "First tournament of the year",
@@ -21,13 +22,14 @@ export default async function seedTournaments(users, categories, trophies) {
             numberOfRounds: 3,
             gameCategory: categories[0]._id,
             participants: [users[0]._id, users[1]._id, users[2]._id, users[3]._id],
-            status: "upcoming",
+            status: "finished",
             trophy: trophies[0]._id
         }).save(),
+        // Upcoming — date is one week from now so it stays upcoming until then
         new Tournament({
             title: "Summer Slam",
             description: "Hot summer tournament",
-            date: "2026-06-01T10:00:00.000Z",
+            date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
             breaks: 15,
             numberOfRounds: 5,
             gameCategory: categories[6]._id,
@@ -35,18 +37,15 @@ export default async function seedTournaments(users, categories, trophies) {
             status: "upcoming",
             trophy: trophies[1]._id
         }).save(),
-        // Demo tournament: starts today so it can be played immediately.
-        // Admin clicks "Start Next Round" on the tournament page to kick off matches.
-        // Uses the straights variant with a 30-second timer (categories[6]).
-        // eloMin/eloMax are unset so any player can join.
+        // Demo tournament: date is in the past so it auto-starts as soon as 2+ players have joined
         new Tournament({
             title: "Demo Open — Play Now!",
-            description: "A live demo tournament you can join and play today. Sign in, click 'Start Next Round' as admin to create matches, then jump straight into your game from the bracket.",
-            date: new Date(Date.now() + 30 * 1000),
-            breaks: 5,
-            numberOfRounds: 3,
+            description: "A live demo tournament — join and it starts automatically once 2 players are in.",
+            date: new Date(Date.now() - 10 * 1000),
+            breaks: 1,
+            numberOfRounds: 2,
             gameCategory: categories[6]._id,
-            participants: [users[22]._id, users[0]._id, users[1]._id, users[2]._id, users[3]._id, users[4]._id],
+            participants: [], // ← no pre-seeded players, join via the Join button
             status: "upcoming",
             trophy: trophies[2]._id
         }).save()

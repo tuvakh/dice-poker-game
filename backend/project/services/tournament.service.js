@@ -44,7 +44,10 @@ export async function getTournament(tournamentId){
         tournament.rounds.map(async (round) => {
             return Promise.all(
                 round.map(async (entry) => {
-                    return await Match.findById(entry.matchId).select("players winner outcome status matchId endedAt");
+                    return await Match.findById(entry.matchId)
+                        .select("players winner outcome status matchId endedAt")
+                        .populate('players', 'username _id')
+                        .populate('winner', 'username _id');
                 })
             );
         })
@@ -163,7 +166,7 @@ export async function knockoutRounds(tournamentId){
 
     tournament.rounds.push(roundMatches);
     await tournament.save();
-    return tournament;
+    return getTournament(tournament.tournamentId);
 }
 
 // Updates editable fields of a tournament (admin only)
@@ -172,6 +175,9 @@ export async function updateTournament(tournamentId, updates){
     const tournament = await Tournament.findOne({ tournamentId });
     if(!tournament){
         throw new CustomError(`A tournament with id ${tournamentId} doesn't exist.`, 404, "NOT_FOUND");
+    }
+    if (["ongoing", "finished"].includes(tournament.status)) {
+        throw new CustomError("You can't edit a tournament that has already started or finished.", 400, "BAD_REQUEST");
     }
     const allowed = ["title", "description", "date", "breaks", "numberOfRounds", "gameCategory", "eloMin", "eloMax", "buyIn", "trophy"];
     for (const key of allowed) {

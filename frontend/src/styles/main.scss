@@ -23,3 +23,5 @@
 @use "../pages/Tournament";
 @use "../pages/TournamentPage";
 @use "../pages/Error404";
+@use "../pages/admin/AdminLayout";
+@use "../pages/admin/TournamentCreate";

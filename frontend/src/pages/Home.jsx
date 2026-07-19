@@ -8,15 +8,17 @@ import TournamentCard from "../components/TournamentCard.jsx";
 import Spinner from "../components/Spinner.jsx";
 
 import { getActivity } from "../api/activity.js";
+import "./_Home.scss";
 import { getAllMatches } from "../api/matches.js";
 import { getAllTournaments } from "../api/tournaments.js";
 import { useAppearance } from "../contexts/AppearanceContext.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
 
 import { filterLobbyMatches } from "../hooks/useLobbyGames.js";
+import { usePolling } from "../hooks/usePolling.js";
 
-import homeHero from "../assets/home-hero.webp";
 
+// Ranks matches by the average ELO of their players so the highest-rated games surface first
 function sortByAverageElo(matches) {
     return matches
         .map(match => ({
@@ -26,8 +28,10 @@ function sortByAverageElo(matches) {
         .sort((matchA, matchB) => matchB.avgElo - matchA.avgElo);
 }
 
+// Defers the data fetch until the browser is idle so the initial paint isn't blocked by API calls.
+// Falls back to setTimeout(0) in environments that don't support requestIdleCallback.
 function getIdleDelaySetter(setReady) {
-    if (typeof window === "undefined") return () => {};
+    if (typeof window === "undefined") return () => { };
 
     if (typeof window.requestIdleCallback === "function") {
         const idleId = window.requestIdleCallback(() => setReady(true));
@@ -58,6 +62,7 @@ export default function Home() {
 
         let cancelled = false;
 
+        // All four requests fire in parallel to avoid a waterfall; activity failure is non-fatal
         async function load() {
             try {
                 const [waitingData, ongoingData, tournamentData, activityData] = await Promise.all([
@@ -73,6 +78,7 @@ export default function Home() {
                 setTournaments(tournamentData.tournamentList.slice(0, 5));
                 setActivity(activityData);
 
+                // Fill the top 5 slots with ongoing games first; backfill with finished games if fewer than 5 are live
                 const topOngoing = sortByAverageElo(ongoingData.matchList);
                 const remaining = 5 - topOngoing.length;
                 const topFinished = remaining > 0
@@ -93,6 +99,13 @@ export default function Home() {
         return () => { cancelled = true; };
     }, [ready, preferences.lobbyCount]);
 
+    usePolling((signal) => {
+        if (!ready) return;
+        getAllMatches({ status: "waiting", limit: preferences.lobbyCount }, signal)
+            .then(data => setLobbyGames(data.matchList))
+            .catch(err => { if (err?.name !== "AbortError") setError("Failed to load games."); });
+    }, 8000, ready);
+
     if (!ready) return null;
     if (loading) return <Spinner />;
     if (error) return <p className="status status--error">{error}</p>;
@@ -102,7 +115,7 @@ export default function Home() {
 
     return (
         <>
-            <Hero title="Spanish Dice Poker" heroImg={homeHero}>
+            <Hero title="Spanish Dice Poker" heroImg="/home-hero.webp">
                 <p>Challenge players from around the world in the classic dice game. Roll your hand, hold your best dice, and outplay your opponent.</p>
                 {user && (
                     <Button onClick={() => navigate("/createGame")}>
@@ -111,22 +124,6 @@ export default function Home() {
                 )}
                 <Link to="/aboutGame">Learn how to play</Link>
             </Hero>
-
-            {activity && (
-                <section className="home-details__section home-activity">
-                    <h2>Platform activity</h2>
-                    <div className="home-activity__stats">
-                        <div className="home-activity__stat">
-                            <span className="home-activity__number">{activity.ongoingMatches}</span>
-                            <span>games live right now</span>
-                        </div>
-                        <div className="home-activity__stat">
-                            <span className="home-activity__number">{activity.activeUsers}</span>
-                            <span>players active this week</span>
-                        </div>
-                    </div>
-                </section>
-            )}
 
             <section className="home-details__section">
                 <h2>Games available for joining</h2>
@@ -151,6 +148,22 @@ export default function Home() {
                     {tournaments.map(tournament => <TournamentCard key={tournament.tournamentId} tournament={tournament} />)}
                 </div>
             </section>
+
+            {activity && (
+                <section className="home-details__section home-activity">
+                    <h2>Platform activity</h2>
+                    <div className="home-activity__stats">
+                        <div className="home-activity__stat">
+                            <span className="home-activity__label">Games live right now</span>
+                            <span className="home-activity__number">{activity.ongoingMatches}</span>
+                        </div>
+                        <div className="home-activity__stat">
+                            <span className="home-activity__label">Players active this week</span>
+                            <span className="home-activity__number">{activity.activeUsers}</span>
+                        </div>
+                    </div>
+                </section>
+            )}
         </>
     );
 }
