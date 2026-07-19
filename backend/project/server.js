@@ -46,15 +46,16 @@ const allowedOrigins = [
     "http://localhost:5173",
     "http://localhost:5174",
     "http://localhost:5175",
+    "https://dice-poker-game.vercel.app",
     process.env.FRONTEND_URL
 ].filter(Boolean);
 
 app.use(cors({
-    origin: (origin, callback) => {
+    origin: function (origin, callback) {
         if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
-            callback(new Error("Blocked by CORS"));
+            callback(new Error("Not allowed by CORS"));
         }
     },
     credentials: true
